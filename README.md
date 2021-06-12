@@ -1,1 +1,1 @@
-[![Build Status](https://travis-ci.com/carterax/benevolent.svg?token=gWPzuGERN8x1jjUxpVod&branch=main)](https://travis-ci.com/carterax/benevolent)
+[![Build Status](https://travis-ci.com/carterax/benevolent.svg?token=gWPzuGERN8x1jjUxpVod&branch=main)](https://travis-ci.com/carterax/benevolent) [![codecov](https://codecov.io/gh/carterax/benevolent/branch/main/graph/badge.svg?token=9NQURT1YJD)](https://codecov.io/gh/carterax/benevolent)
