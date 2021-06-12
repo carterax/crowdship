@@ -215,5 +215,4 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
   });
 
   // TODO: test toggleCampaignFeatured
-  //it.todo('toggleCampaignFeatured');
 });
