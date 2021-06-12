@@ -5,9 +5,6 @@
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
 # next.js
 /.next/
 /out/
@@ -32,3 +29,8 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# Coverage directory used by tools like istanbul
+coverage
+coverage.json
+coverageEnv
