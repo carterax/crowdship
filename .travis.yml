@@ -5,5 +5,9 @@ node_js:
 install:
   - npm ci
 script:
+  - ganache-cli > /dev/null &
+  - sleep 5
+  - npm run migrate
   - npm run test
   - npm run coverage
+  - npx codechecks
