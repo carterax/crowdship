@@ -15,6 +15,8 @@ abstract contract CampaignFactoryInterface {
     }
     CampaignInfo[] public deployedCampaigns;
     mapping(address => uint256) public campaignToID;
+
+    mapping(address => bool) public userIsVerified;
 }
 
 // setup default roles
@@ -38,15 +40,12 @@ contract Campaign is Initializable, AccessControl {
     /// @dev `Reward`
     struct Reward {
         uint256 value;
-        string description;
-        bytes32[] inclusions;
         string deliveryDate;
-        bytes32[] excludedCountries;
         uint256 stock;
         bool exists;
         bool active;
-        mapping(address => bool) rewardee;
-        mapping(address => bool) rewarded;
+        mapping(address => bool) rewardee; // address being rewarded
+        mapping(address => bool) rewarded; // address is rewarded
     }
     mapping(uint256 => uint256) rewardeeCount;
     Reward[] public rewards;
@@ -60,27 +59,29 @@ contract Campaign is Initializable, AccessControl {
     uint256 public approversCount;
     bool canContributeAfterDeadline;
     string deadline;
-    string public title;
-    string public pitch;
-    string public location;
 
     mapping(address => bool) public approvers;
 
-    modifier canContribute() {
-        bool campaignIsActive;
+    modifier campaignIsActive() {
+        bool campaignIsEnabled;
         bool campaignIsApproved;
 
-        (, , campaignIsActive, campaignIsApproved) = campaignFactoryContract
+        (, , campaignIsEnabled, campaignIsApproved) = campaignFactoryContract
             .deployedCampaigns(
             campaignFactoryContract.campaignToID(address(this))
         );
 
         require(
             campaignIsApproved &&
-                campaignIsActive &&
+                campaignIsEnabled &&
                 canContributeAfterDeadline &&
                 msg.value >= minimumContribution
         );
+        _;
+    }
+
+    modifier canVoteOrContribute() {
+        require(campaignFactoryContract.userIsVerified(msg.sender));
         _;
     }
 
@@ -108,21 +109,15 @@ contract Campaign is Initializable, AccessControl {
     }
 
     function setCampaignDetails(
-        string memory _title,
-        string memory _pitch,
         uint256 _category,
         uint256 _minimumContribution,
         bool _canContributeAfterDeadline,
-        string memory _deadline,
-        string memory _location
+        string memory _deadline
     ) external onlyAdmin {
-        title = _title;
-        pitch = _pitch;
         category = _category;
         minimumContribution = _minimumContribution;
         canContributeAfterDeadline = _canContributeAfterDeadline;
         deadline = _deadline;
-        location = _location;
     }
 
     function createRequest(
@@ -140,33 +135,28 @@ contract Campaign is Initializable, AccessControl {
 
     function createReward(
         uint256 _value,
-        string memory _description,
-        bytes32[] memory _inclusions,
         string memory _deliveryDate,
-        bytes32[] memory _excludedCountries,
         uint256 _stock,
         bool _active
     ) external onlyAdmin {
         Reward storage newReward = rewards[rewards.length.add(1)];
 
         newReward.value = _value;
-        newReward.description = _description;
-        newReward.inclusions = _inclusions;
         newReward.deliveryDate = _deliveryDate;
-        newReward.excludedCountries = _excludedCountries;
         newReward.stock = _stock;
         newReward.exists = true;
         newReward.active = _active;
     }
 
-    function contribute() public payable canContribute {
+    function contribute() public payable campaignIsActive canVoteOrContribute {
         _contribute();
     }
 
     function contributeWithReward(uint256 _rewardId)
         public
         payable
-        canContribute
+        campaignIsActive
+        canVoteOrContribute
     {
         if (
             rewards[_rewardId].value == msg.value &&

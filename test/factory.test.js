@@ -11,10 +11,25 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
   beforeEach(async function () {
     this.factory = await Factory.new();
     await this.factory.__CampaignFactory_init(owner);
+    await this.factory.approveUser(owner);
   });
 
   it('deployer owns contract', async function () {
     expect(await this.factory.root()).to.equal(owner);
+  });
+
+  it('address with role can approve user', async function () {
+    const MANAGE_USERS = await this.factory.MANAGE_USERS();
+
+    await this.factory.addRole(addr1, MANAGE_USERS);
+    await this.factory.approveUser(addr2, { from: addr1 });
+    expect(await this.factory.userIsVerified(addr2)).to.equal(true);
+  });
+
+  it('address without role cannot approve user', async function () {
+    await expectRevert.unspecified(
+      this.factory.approveUser(addr2, { from: addr1 })
+    );
   });
 
   it('deployer can create category', async function () {
@@ -106,7 +121,7 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
   it('can create campaign', async function () {
     await this.factory.createCategory('Sports', true);
 
-    const receipt = await this.factory.createCampaign(300, 0, { from: addr1 });
+    const receipt = await this.factory.createCampaign(300, 0);
     const campaigns = await this.factory.getDeployedCampaigns();
 
     expect(campaigns.length).to.equal(1);
@@ -114,7 +129,7 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
     expect(campaigns[0].featured).to.equal(false);
     expect(campaigns[0].active).to.equal(false);
     expect(await this.factory.campaignToOwner(campaigns[0].campaign)).to.equal(
-      addr1
+      owner
     );
     expect(
       await this.factory.campaignToID(campaigns[0].campaign)
@@ -122,6 +137,13 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
     expectEvent(receipt, 'CampaignDeployed', {
       campaign: campaigns[0].campaign,
     });
+  });
+
+  it('cannot create campaign if user is not verified', async function () {
+    await this.factory.createCategory('Sports', true);
+    await expectRevert.unspecified(
+      this.factory.createCampaign(300, 0, { from: addr1 })
+    );
   });
 
   it('address without role cannot approve campaigns', async function () {
@@ -159,29 +181,6 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
     expect(campaigns[0].approved).to.equal(true);
   });
 
-  it('cannot delete campaign without role', async function () {
-    const MANAGE_CAMPAIGNS = await this.factory.MANAGE_CAMPAIGNS();
-    const campaignID = 0;
-    const catID = 0;
-
-    await this.factory.createCategory('Gaming', true);
-    await this.factory.createCampaign(300, catID, { from: addr1 });
-
-    await expectRevert.unspecified(
-      this.factory.destroyCampaign(campaignID, { from: addr2 })
-    );
-
-    await this.factory.addRole(addr2, MANAGE_CAMPAIGNS);
-
-    const receipt = await this.factory.destroyCampaign(campaignID, {
-      from: addr2,
-    });
-    const campaigns = await this.factory.getDeployedCampaigns();
-
-    expect(campaigns[campaignID].exists).to.equal(false);
-    expectEvent(receipt, 'CampaignDestroyed', { id: new BN(campaignID) });
-  });
-
   it('can toggle campaign state', async function () {
     let campaign;
 
@@ -212,6 +211,50 @@ contract('CampaignFactory', function ([owner, addr1, addr2]) {
 
   it('cannot toggle campaign state if it does not exist', async function () {
     expectRevert.unspecified(this.factory.toggleCampaignState(0, true));
+  });
+
+  it('should return total count of campaigns', async function () {
+    await this.factory.createCategory('Fitness', true);
+    await this.factory.createCategory('Cooking', true);
+    await this.factory.createCampaign(300, 0);
+    await this.factory.createCampaign(300, 1);
+
+    expect(
+      await this.factory.getDeployedCampaignsCount()
+    ).to.be.bignumber.equal(new BN('2'));
+  });
+
+  it('should return all campaings', async function () {
+    await this.factory.createCategory('Fitness', true);
+    await this.factory.createCampaign(300, 0);
+    await this.factory.createCampaign(500, 0);
+    await this.factory.createCampaign(600, 0);
+
+    expect((await this.factory.getDeployedCampaigns()).length).to.equal(3);
+  });
+
+  it('cannot delete campaign without role', async function () {
+    const MANAGE_CAMPAIGNS = await this.factory.MANAGE_CAMPAIGNS();
+    const campaignID = 0;
+    const catID = 0;
+
+    await this.factory.createCategory('Gaming', true);
+    await this.factory.approveUser(addr1);
+    await this.factory.createCampaign(300, catID, { from: addr1 });
+
+    await expectRevert.unspecified(
+      this.factory.destroyCampaign(campaignID, { from: addr2 })
+    );
+
+    await this.factory.addRole(addr2, MANAGE_CAMPAIGNS);
+
+    const receipt = await this.factory.destroyCampaign(campaignID, {
+      from: addr2,
+    });
+    const campaigns = await this.factory.getDeployedCampaigns();
+
+    expect(campaigns[campaignID].exists).to.equal(false);
+    expectEvent(receipt, 'CampaignDestroyed', { id: new BN(campaignID) });
   });
 
   // TODO: test toggleCampaignFeatured

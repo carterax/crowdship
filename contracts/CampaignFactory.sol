@@ -16,12 +16,14 @@ contract CampaignFactory is Initializable, AccessControl {
     bytes32 public constant MANAGE_CATEGORIES = keccak256("MANAGE CATEGORIES");
     bytes32 public constant MANAGE_CAMPAIGNS = keccak256("MANAGE CAMPAIGNS");
     bytes32 public constant MANAGE_SETTINGS = keccak256("MANAGE SETTINGS");
+    bytes32 public constant MANAGE_USERS = keccak256("MANAGE USERS");
 
     event CampaignDeployed(address campaign);
     event CampaignDestroyed(uint256 indexed id);
 
     address public root;
 
+    /// @dev `Campaigns`
     struct CampaignInfo {
         address campaign;
         bool featured;
@@ -42,6 +44,9 @@ contract CampaignFactory is Initializable, AccessControl {
     }
     CampaignCategory[] public campaignCategories; // array of campaign categories
     mapping(string => bool) public categoryIsTaken; // maintain unique category names
+
+    /// @dev `Users`
+    mapping(address => bool) public userIsVerified;
 
     modifier campaignOwnerOrManager(uint256 _id) {
         require(
@@ -70,11 +75,13 @@ contract CampaignFactory is Initializable, AccessControl {
         _setupRole(MANAGE_CATEGORIES, _root);
         _setupRole(MANAGE_CAMPAIGNS, _root);
         _setupRole(MANAGE_SETTINGS, _root);
+        _setupRole(MANAGE_USERS, _root);
 
         _setRoleAdmin(MANAGE_ANALYTICS, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_CATEGORIES, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_CAMPAIGNS, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_SETTINGS, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(MANAGE_USERS, DEFAULT_ADMIN_ROLE);
     }
 
     /// @dev Add an account to the manager role. Restricted to admins.
@@ -96,11 +103,17 @@ contract CampaignFactory is Initializable, AccessControl {
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    function approveUser(address _user) external onlyManager(MANAGE_USERS) {
+        userIsVerified[_user] = true;
+    }
+
     function createCampaign(uint256 _minimum, uint256 _category) external {
-        // TODO: check `_category` exists
+        // check `_category` exists
+        // check `user` verified
         require(
             campaignCategories[_category].exists &&
-                campaignCategories[_category].active
+                campaignCategories[_category].active &&
+                userIsVerified[msg.sender]
         );
 
         Campaign newCampaign = new Campaign();
@@ -160,6 +173,10 @@ contract CampaignFactory is Initializable, AccessControl {
         return deployedCampaigns;
     }
 
+    function getDeployedCampaignsCount() public view returns (uint256) {
+        return deployedCampaigns.length;
+    }
+
     // TODO: user concensus feature
     function destroyCampaign(uint256 _id) public campaignOwnerOrManager(_id) {
         // delete the campaign from array
@@ -206,10 +223,6 @@ contract CampaignFactory is Initializable, AccessControl {
 
         // set the category name as being available
         categoryIsTaken[campaignCategories[_id].title] = false;
-    }
-
-    function getDeployedCampaignsCount() public view returns (uint256) {
-        return deployedCampaigns.length;
     }
 
     function getCategoriesCount() public view returns (uint256) {
