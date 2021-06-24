@@ -54,7 +54,6 @@ contract Campaign is Initializable, AccessControl {
 
     address public root;
 
-    uint256 public category;
     uint256 public minimumContribution;
     uint256 public approversCount;
     bool canContributeAfterDeadline;
@@ -96,7 +95,6 @@ contract Campaign is Initializable, AccessControl {
     function __Campaign_init(
         address _campaignFactory,
         address _root,
-        uint256 _category,
         uint256 _minimum
     ) public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _root);
@@ -104,17 +102,14 @@ contract Campaign is Initializable, AccessControl {
         campaignFactoryContract = CampaignFactoryInterface(_campaignFactory);
 
         root = _root;
-        category = _category;
         minimumContribution = _minimum;
     }
 
     function setCampaignDetails(
-        uint256 _category,
         uint256 _minimumContribution,
         bool _canContributeAfterDeadline,
         string memory _deadline
     ) external onlyAdmin {
-        category = _category;
         minimumContribution = _minimumContribution;
         canContributeAfterDeadline = _canContributeAfterDeadline;
         deadline = _deadline;
@@ -180,8 +175,8 @@ contract Campaign is Initializable, AccessControl {
         requests[_requestId].approvalCount.add(1);
     }
 
-    function finalizeRequest(uint256 index) public onlyAdmin {
-        Request storage request = requests[index];
+    function finalizeRequest(uint256 _id) public onlyAdmin {
+        Request storage request = requests[_id];
         require(
             request.approvalCount > (approversCount.div(2)) && !request.complete
         );
@@ -214,4 +209,7 @@ contract Campaign is Initializable, AccessControl {
 
         delete rewards[_rewardId];
     }
+
+    // add ability for users to pull out funds if a request election isn't ongoing
+    // delete request
 }

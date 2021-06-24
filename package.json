@@ -24,6 +24,7 @@
     "@openzeppelin/truffle-upgrades": "^1.7.0",
     "chai": "^4.3.4",
     "eth-gas-reporter": "^0.2.22",
+    "faker": "^5.5.3",
     "solidity-coverage": "^0.7.16"
   }
 }

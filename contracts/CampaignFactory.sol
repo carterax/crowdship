@@ -21,11 +21,20 @@ contract CampaignFactory is Initializable, AccessControl {
     event CampaignDeployed(address campaign);
     event CampaignDestroyed(uint256 indexed id);
 
+    event UserAdded(uint256 indexed id);
+    event UserRemoved(uint256 indexed id);
+
     address public root;
 
     /// @dev `Campaigns`
     struct CampaignInfo {
         address campaign;
+        string title;
+        string pitch;
+        uint256 createdAt;
+        uint256 updatedAt;
+        uint256 category;
+        uint256 featureFor;
         bool featured;
         bool active;
         bool approved;
@@ -39,6 +48,8 @@ contract CampaignFactory is Initializable, AccessControl {
     struct CampaignCategory {
         string title;
         uint256 campaignCount;
+        uint256 createdAt;
+        uint256 updatedAt;
         bool active;
         bool exists;
     }
@@ -46,7 +57,19 @@ contract CampaignFactory is Initializable, AccessControl {
     mapping(string => bool) public categoryIsTaken; // maintain unique category names
 
     /// @dev `Users`
-    mapping(address => bool) public userIsVerified;
+    struct User {
+        address wallet;
+        string email;
+        string username;
+        uint256 joined;
+        uint256 updatedAt;
+        bool verified;
+        bool exists;
+    }
+    User[] public users;
+    mapping(address => uint256) public userID;
+    mapping(string => bool) public usernameIsTaken;
+    mapping(string => bool) public emailIsTaken;
 
     modifier campaignOwnerOrManager(uint256 _id) {
         require(
@@ -66,8 +89,19 @@ contract CampaignFactory is Initializable, AccessControl {
         _;
     }
 
+    modifier userOrManager(uint256 _id) {
+        require(
+            users[_id].wallet == msg.sender || hasRole(MANAGE_USERS, msg.sender)
+        );
+        _;
+    }
+
     /// @dev Add `root` to the admin role as a member.
-    function __CampaignFactory_init(address _root) public initializer {
+    function __CampaignFactory_init(
+        address _root,
+        string memory _email,
+        string memory _username
+    ) public initializer {
         root = _root;
 
         _setupRole(DEFAULT_ADMIN_ROLE, _root);
@@ -82,6 +116,9 @@ contract CampaignFactory is Initializable, AccessControl {
         _setRoleAdmin(MANAGE_CAMPAIGNS, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_SETTINGS, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_USERS, DEFAULT_ADMIN_ROLE);
+
+        // add root as user
+        signUp(_email, _username);
     }
 
     /// @dev Add an account to the manager role. Restricted to admins.
@@ -103,56 +140,152 @@ contract CampaignFactory is Initializable, AccessControl {
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function approveUser(address _user) external onlyManager(MANAGE_USERS) {
-        userIsVerified[_user] = true;
+    function signUp(string memory _email, string memory _username) public {
+        require(!usernameIsTaken[_username] && !emailIsTaken[_email]);
+
+        User memory newUser = User(
+            msg.sender,
+            _email,
+            _username,
+            block.timestamp,
+            0,
+            false,
+            true
+        );
+        users.push(newUser);
+        userID[msg.sender] = users.length.sub(1);
+        usernameIsTaken[_username] = true;
+        emailIsTaken[_email] = true;
+
+        emit UserAdded(users.length.sub(1));
     }
 
-    function createCampaign(uint256 _minimum, uint256 _category) external {
+    function toggleUserApproval(uint256 _userId, bool _approval)
+        external
+        onlyManager(MANAGE_USERS)
+    {
+        users[_userId].verified = _approval;
+    }
+
+    function modifyUser(
+        uint256 _id,
+        string memory _email,
+        string memory _username
+    ) external userOrManager(_id) {
+        require(users[_id].exists);
+
+        if (!emailIsTaken[_email]) {
+            string storage oldMail = users[_id].email;
+            emailIsTaken[oldMail] = false;
+
+            users[_id].email = _email;
+            users[_id].verified = false;
+            emailIsTaken[_email] = true;
+        }
+
+        if (!usernameIsTaken[_username]) {
+            string storage oldUsername = users[_id].username;
+            usernameIsTaken[oldUsername] = false;
+
+            users[_id].username = _username;
+            usernameIsTaken[_username] = true;
+        }
+
+        users[_id].updatedAt = block.timestamp;
+    }
+
+    function destroyUser(uint256 _id) external onlyManager(MANAGE_USERS) {
+        User storage user = users[_id];
+        require(user.exists);
+        usernameIsTaken[user.username] = false;
+        emailIsTaken[user.email] = false;
+        delete users[_id];
+
+        emit UserRemoved(_id);
+    }
+
+    function getUsersCount() external view returns (uint256) {
+        return users.length;
+    }
+
+    function createCampaign(
+        uint256 _minimum,
+        uint256 _category,
+        string memory _title,
+        string memory _pitch
+    ) external {
         // check `_category` exists
         // check `user` verified
         require(
             campaignCategories[_category].exists &&
                 campaignCategories[_category].active &&
-                userIsVerified[msg.sender]
+                users[userID[msg.sender]].verified
         );
 
         Campaign newCampaign = new Campaign();
-        newCampaign.__Campaign_init(
-            address(this),
-            msg.sender,
-            _category,
-            _minimum
-        );
-        CampaignInfo memory campaignInfo =
-            CampaignInfo({
-                campaign: address(newCampaign),
-                featured: false,
-                active: false,
-                approved: false,
-                exists: true
-            });
+        newCampaign.__Campaign_init(address(this), msg.sender, _minimum);
+        CampaignInfo memory campaignInfo = CampaignInfo({
+            campaign: address(newCampaign),
+            title: _title,
+            pitch: _pitch,
+            category: _category,
+            createdAt: block.timestamp,
+            updatedAt: 0,
+            featured: false,
+            featureFor: 0,
+            active: false,
+            approved: false,
+            exists: true
+        });
         deployedCampaigns.push(campaignInfo);
         campaignToOwner[address(newCampaign)] = msg.sender; // keep track of campaign owner
         campaignToID[address(newCampaign)] = deployedCampaigns.length.sub(1);
+        campaignCategories[_category].campaignCount = campaignCategories[
+            _category
+        ]
+        .campaignCount
+        .add(1);
 
         // emit event
         emit CampaignDeployed(address(newCampaign));
     }
 
-    function approveCampaign(uint256 _id)
+    function toggleCampaignApproval(uint256 _id, bool _state)
         external
         onlyManager(MANAGE_CAMPAIGNS)
         campaignExists(_id)
     {
-        deployedCampaigns[_id].approved = true;
+        deployedCampaigns[_id].approved = _state;
+        deployedCampaigns[_id].updatedAt = block.timestamp;
     }
 
-    function toggleCampaignState(uint256 _id, bool _state)
-        external
-        campaignOwnerOrManager(_id)
-        campaignExists(_id)
-    {
+    function modifyCampaignSummary(
+        uint256 _id,
+        uint256 _newCategory,
+        string memory _newTitle,
+        string memory _newPitch,
+        bool _state
+    ) external campaignOwnerOrManager(_id) campaignExists(_id) {
+        uint256 _oldCategory = deployedCampaigns[_id].category;
+
+        if (_oldCategory != _newCategory) {
+            deployedCampaigns[_id].category = _newCategory;
+            campaignCategories[_oldCategory].campaignCount = campaignCategories[
+                _oldCategory
+            ]
+            .campaignCount
+            .sub(1);
+            campaignCategories[_newCategory].campaignCount = campaignCategories[
+                _newCategory
+            ]
+            .campaignCount
+            .add(1);
+        }
+
+        deployedCampaigns[_id].title = _newTitle;
+        deployedCampaigns[_id].pitch = _newPitch;
         deployedCampaigns[_id].active = _state;
+        deployedCampaigns[_id].updatedAt = block.timestamp;
     }
 
     // TODO:
@@ -163,14 +296,8 @@ contract CampaignFactory is Initializable, AccessControl {
     {
         // check amount sent matches specified time in which campaign can be featured
         deployedCampaigns[_id].featured = _state;
-    }
-
-    function getDeployedCampaigns()
-        public
-        view
-        returns (CampaignInfo[] memory)
-    {
-        return deployedCampaigns;
+        deployedCampaigns[_id].featureFor = 0; // switch statement needed here
+        deployedCampaigns[_id].updatedAt = block.timestamp;
     }
 
     function getDeployedCampaignsCount() public view returns (uint256) {
@@ -194,21 +321,38 @@ contract CampaignFactory is Initializable, AccessControl {
         require(!categoryIsTaken[_title]);
 
         // create category with `campaignCount` default to 0
-        CampaignCategory memory newCategory =
-            CampaignCategory({
-                title: _title,
-                campaignCount: 0,
-                active: _active,
-                exists: true
-            });
+        CampaignCategory memory newCategory = CampaignCategory({
+            title: _title,
+            campaignCount: 0,
+            createdAt: block.timestamp,
+            updatedAt: 0,
+            active: _active,
+            exists: true
+        });
         campaignCategories.push(newCategory);
 
         // set category name as taken
         categoryIsTaken[_title] = true;
     }
 
-    function getCategories() public view returns (CampaignCategory[] memory) {
-        return campaignCategories;
+    function getCategoriesCount() public view returns (uint256) {
+        return campaignCategories.length;
+    }
+
+    function modifyCategory(
+        uint256 _id,
+        string memory _title,
+        bool _active
+    ) external onlyManager(MANAGE_CATEGORIES) {
+        require(campaignCategories[_id].exists);
+
+        if (!categoryIsTaken[_title]) {
+            categoryIsTaken[campaignCategories[_id].title] = false;
+            campaignCategories[_id].title = _title;
+            categoryIsTaken[_title] = true;
+        }
+        campaignCategories[_id].active = _active;
+        campaignCategories[_id].updatedAt = block.timestamp;
     }
 
     function destroyCategory(uint256 _id)
@@ -223,9 +367,5 @@ contract CampaignFactory is Initializable, AccessControl {
 
         // set the category name as being available
         categoryIsTaken[campaignCategories[_id].title] = false;
-    }
-
-    function getCategoriesCount() public view returns (uint256) {
-        return campaignCategories.length;
     }
 }
