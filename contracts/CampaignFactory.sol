@@ -4,11 +4,19 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PullPaymentUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import "./utils/AccessControl.sol";
 import "./Campaign.sol";
 
-contract CampaignFactory is Initializable, AccessControl {
+contract CampaignFactory is
+    Initializable,
+    AccessControl,
+    PullPaymentUpgradeable,
+    PausableUpgradeable
+{
     using SafeMathUpgradeable for uint256;
 
     /// @dev default role(s)
@@ -24,11 +32,18 @@ contract CampaignFactory is Initializable, AccessControl {
     event UserAdded(uint256 indexed id);
     event UserRemoved(uint256 indexed id);
 
+    /// @dev Settings
     address public root;
+    address public campaignImplementation;
+    uint256 public factoryCutPercentage;
+    uint256 public deadlineStrikesAllowed;
+    uint256 public maxDeadline;
+    uint256 public minDeadline;
 
     /// @dev `Campaigns`
     struct CampaignInfo {
         address campaign;
+        address owner;
         string title;
         string pitch;
         uint256 createdAt;
@@ -42,6 +57,7 @@ contract CampaignFactory is Initializable, AccessControl {
     }
     CampaignInfo[] public deployedCampaigns;
     mapping(address => address) public campaignToOwner;
+    mapping(address => uint256[]) public campaignsByUser;
     mapping(address => uint256) public campaignToID;
 
     /// @dev `Categories`
@@ -55,6 +71,7 @@ contract CampaignFactory is Initializable, AccessControl {
     }
     CampaignCategory[] public campaignCategories; // array of campaign categories
     mapping(string => bool) public categoryIsTaken; // maintain unique category names
+    mapping(uint256 => uint256[]) public campaignToCategories;
 
     /// @dev `Users`
     struct User {
@@ -104,6 +121,11 @@ contract CampaignFactory is Initializable, AccessControl {
     ) public initializer {
         root = _root;
 
+        factoryCutPercentage = 5;
+        deadlineStrikesAllowed = 3;
+        maxDeadline = 7 days;
+        minDeadline = 1 days;
+
         _setupRole(DEFAULT_ADMIN_ROLE, _root);
         _setupRole(MANAGE_ANALYTICS, _root);
         _setupRole(MANAGE_CATEGORIES, _root);
@@ -121,6 +143,13 @@ contract CampaignFactory is Initializable, AccessControl {
         signUp(_email, _username);
     }
 
+    function setCampaignImplementationAddress(address _implementation)
+        external
+        onlyAdmin
+    {
+        campaignImplementation = _implementation;
+    }
+
     /// @dev Add an account to the manager role. Restricted to admins.
     function addRole(address account, bytes32 role) public virtual onlyAdmin {
         grantRole(role, account);
@@ -135,12 +164,23 @@ contract CampaignFactory is Initializable, AccessControl {
         revokeRole(role, account);
     }
 
+    function canManageCampaigns(address _user) external view returns (bool) {
+        return hasRole(MANAGE_CAMPAIGNS, _user);
+    }
+
     /// @dev Remove oneself from the admin role.
     function renounceAdmin() public virtual {
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function signUp(string memory _email, string memory _username) public {
+    function setFactoryCut(uint256 _cut) external onlyAdmin {
+        factoryCutPercentage = _cut;
+    }
+
+    function signUp(string memory _email, string memory _username)
+        public
+        whenNotPaused
+    {
         require(!usernameIsTaken[_username] && !emailIsTaken[_email]);
 
         User memory newUser = User(
@@ -163,6 +203,7 @@ contract CampaignFactory is Initializable, AccessControl {
     function toggleUserApproval(uint256 _userId, bool _approval)
         external
         onlyManager(MANAGE_USERS)
+        whenNotPaused
     {
         users[_userId].verified = _approval;
     }
@@ -171,7 +212,7 @@ contract CampaignFactory is Initializable, AccessControl {
         uint256 _id,
         string memory _email,
         string memory _username
-    ) external userOrManager(_id) {
+    ) external userOrManager(_id) whenNotPaused {
         require(users[_id].exists);
 
         if (!emailIsTaken[_email]) {
@@ -194,7 +235,11 @@ contract CampaignFactory is Initializable, AccessControl {
         users[_id].updatedAt = block.timestamp;
     }
 
-    function destroyUser(uint256 _id) external onlyManager(MANAGE_USERS) {
+    function destroyUser(uint256 _id)
+        external
+        onlyManager(MANAGE_USERS)
+        whenNotPaused
+    {
         User storage user = users[_id];
         require(user.exists);
         usernameIsTaken[user.username] = false;
@@ -204,16 +249,12 @@ contract CampaignFactory is Initializable, AccessControl {
         emit UserRemoved(_id);
     }
 
-    function getUsersCount() external view returns (uint256) {
-        return users.length;
-    }
-
     function createCampaign(
         uint256 _minimum,
         uint256 _category,
         string memory _title,
         string memory _pitch
-    ) external {
+    ) external whenNotPaused {
         // check `_category` exists
         // check `user` verified
         require(
@@ -221,14 +262,15 @@ contract CampaignFactory is Initializable, AccessControl {
                 campaignCategories[_category].active &&
                 users[userID[msg.sender]].verified
         );
+        address campaign = ClonesUpgradeable.clone(campaignImplementation);
+        Campaign(campaign).__Campaign_init(address(this), msg.sender, _minimum);
 
-        Campaign newCampaign = new Campaign();
-        newCampaign.__Campaign_init(address(this), msg.sender, _minimum);
         CampaignInfo memory campaignInfo = CampaignInfo({
-            campaign: address(newCampaign),
+            campaign: address(campaign),
             title: _title,
             pitch: _pitch,
             category: _category,
+            owner: msg.sender,
             createdAt: block.timestamp,
             updatedAt: 0,
             featured: false,
@@ -238,8 +280,14 @@ contract CampaignFactory is Initializable, AccessControl {
             exists: true
         });
         deployedCampaigns.push(campaignInfo);
-        campaignToOwner[address(newCampaign)] = msg.sender; // keep track of campaign owner
-        campaignToID[address(newCampaign)] = deployedCampaigns.length.sub(1);
+        campaignToOwner[address(campaign)] = msg.sender; // keep track of campaign owner
+
+        uint256 campaignId = deployedCampaigns.length.sub(1);
+        campaignToID[address(campaign)] = campaignId;
+
+        campaignsByUser[msg.sender].push(campaignId);
+        campaignToCategories[_category].push(_category);
+
         campaignCategories[_category].campaignCount = campaignCategories[
             _category
         ]
@@ -247,15 +295,25 @@ contract CampaignFactory is Initializable, AccessControl {
         .add(1);
 
         // emit event
-        emit CampaignDeployed(address(newCampaign));
+        emit CampaignDeployed(address(campaign));
     }
 
-    function toggleCampaignApproval(uint256 _id, bool _state)
+    function toggleCampaignApproval(uint256 _id, bool _approval)
         external
         onlyManager(MANAGE_CAMPAIGNS)
-        campaignExists(_id)
+        whenNotPaused
     {
-        deployedCampaigns[_id].approved = _state;
+        deployedCampaigns[_id].approved = _approval;
+        deployedCampaigns[_id].updatedAt = block.timestamp;
+    }
+
+    function toggleCampaignActive(uint256 _id, bool _active)
+        external
+        campaignOwnerOrManager(_id)
+        campaignExists(_id)
+        whenNotPaused
+    {
+        deployedCampaigns[_id].active = _active;
         deployedCampaigns[_id].updatedAt = block.timestamp;
     }
 
@@ -263,9 +321,8 @@ contract CampaignFactory is Initializable, AccessControl {
         uint256 _id,
         uint256 _newCategory,
         string memory _newTitle,
-        string memory _newPitch,
-        bool _state
-    ) external campaignOwnerOrManager(_id) campaignExists(_id) {
+        string memory _newPitch
+    ) external campaignOwnerOrManager(_id) campaignExists(_id) whenNotPaused {
         uint256 _oldCategory = deployedCampaigns[_id].category;
 
         if (_oldCategory != _newCategory) {
@@ -284,7 +341,6 @@ contract CampaignFactory is Initializable, AccessControl {
 
         deployedCampaigns[_id].title = _newTitle;
         deployedCampaigns[_id].pitch = _newPitch;
-        deployedCampaigns[_id].active = _state;
         deployedCampaigns[_id].updatedAt = block.timestamp;
     }
 
@@ -293,6 +349,7 @@ contract CampaignFactory is Initializable, AccessControl {
         external
         onlyCampaignOwner(_id)
         campaignExists(_id)
+        whenNotPaused
     {
         // check amount sent matches specified time in which campaign can be featured
         deployedCampaigns[_id].featured = _state;
@@ -300,12 +357,11 @@ contract CampaignFactory is Initializable, AccessControl {
         deployedCampaigns[_id].updatedAt = block.timestamp;
     }
 
-    function getDeployedCampaignsCount() public view returns (uint256) {
-        return deployedCampaigns.length;
-    }
-
-    // TODO: user concensus feature
-    function destroyCampaign(uint256 _id) public campaignOwnerOrManager(_id) {
+    function destroyCampaign(uint256 _id)
+        public
+        campaignOwnerOrManager(_id)
+        whenNotPaused
+    {
         // delete the campaign from array
         delete deployedCampaigns[_id];
 
@@ -316,6 +372,7 @@ contract CampaignFactory is Initializable, AccessControl {
     function createCategory(string memory _title, bool _active)
         public
         onlyManager(MANAGE_CATEGORIES)
+        whenNotPaused
     {
         // check if category exists
         require(!categoryIsTaken[_title]);
@@ -335,15 +392,11 @@ contract CampaignFactory is Initializable, AccessControl {
         categoryIsTaken[_title] = true;
     }
 
-    function getCategoriesCount() public view returns (uint256) {
-        return campaignCategories.length;
-    }
-
     function modifyCategory(
         uint256 _id,
         string memory _title,
         bool _active
-    ) external onlyManager(MANAGE_CATEGORIES) {
+    ) external onlyManager(MANAGE_CATEGORIES) whenNotPaused {
         require(campaignCategories[_id].exists);
 
         if (!categoryIsTaken[_title]) {
@@ -358,6 +411,7 @@ contract CampaignFactory is Initializable, AccessControl {
     function destroyCategory(uint256 _id)
         public
         onlyManager(MANAGE_CATEGORIES)
+        whenNotPaused
     {
         // check if category exists
         require(campaignCategories[_id].exists);
@@ -367,5 +421,13 @@ contract CampaignFactory is Initializable, AccessControl {
 
         // set the category name as being available
         categoryIsTaken[campaignCategories[_id].title] = false;
+    }
+
+    function unPauseCampaign() external whenPaused onlyAdmin {
+        _unpause();
+    }
+
+    function pauseCampaign() external whenNotPaused onlyAdmin {
+        _pause();
     }
 }
