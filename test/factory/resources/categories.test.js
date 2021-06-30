@@ -7,7 +7,7 @@ module.exports = function () {
     await this.factory.createCategory('Technology', true);
     await this.factory.createCategory('Health', true);
 
-    expect(await this.factory.getCategoriesCount()).to.be.bignumber.equal(
+    expect(await this.factory.categoryCount()).to.be.bignumber.equal(
       new BN('2')
     );
     expect(await this.factory.categoryIsTaken('Technology')).to.equal(true);
@@ -21,10 +21,10 @@ module.exports = function () {
   });
 
   it('address with role can create category', async function () {
-    const MANAGE_ANALYTICS = await this.factory.MANAGE_ANALYTICS();
+    const MANAGE_USERS = await this.factory.MANAGE_USERS();
     const MANAGE_CATEGORIES = await this.factory.MANAGE_CATEGORIES();
 
-    await this.factory.addRole(this.addr1, MANAGE_ANALYTICS);
+    await this.factory.addRole(this.addr1, MANAGE_USERS);
     await expectRevert.unspecified(
       this.factory.createCategory('Technology', true, { from: this.addr1 })
     );
@@ -32,7 +32,7 @@ module.exports = function () {
     await this.factory.addRole(this.addr1, MANAGE_CATEGORIES);
     await this.factory.createCategory('Sports', false, { from: this.addr1 });
 
-    expect(await this.factory.getCategoriesCount()).to.be.bignumber.equal(
+    expect(await this.factory.categoryCount()).to.be.bignumber.equal(
       new BN('1')
     );
     expect(await this.factory.categoryIsTaken('Technology')).to.equal(false);
@@ -78,7 +78,7 @@ module.exports = function () {
     await this.factory.createCategory('Health', false);
     await this.factory.createCategory('Technology', false);
 
-    expect(await this.factory.getCategoriesCount()).to.be.bignumber.equal(
+    expect(await this.factory.categoryCount()).to.be.bignumber.equal(
       new BN('3')
     );
   });
@@ -88,7 +88,7 @@ module.exports = function () {
     await this.factory.createCategory('Health', false);
     await this.factory.createCategory('Technology', false);
 
-    expect(await this.factory.getCategoriesCount()).to.be.bignumber.equal(
+    expect(await this.factory.categoryCount()).to.be.bignumber.equal(
       new BN('3')
     );
   });

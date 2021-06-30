@@ -9,7 +9,7 @@ module.exports = function () {
     const receipt = await this.factory.signUp(email, username, {
       from: this.addr3,
     });
-    const usersCount = await this.factory.getUsersCount();
+    const usersCount = await this.factory.userCount();
     const userId = await this.factory.userID(this.addr3);
     const user = await this.factory.users(userId);
     const block = await web3.eth.getBlock(receipt.receipt.blockNumber);
@@ -34,7 +34,7 @@ module.exports = function () {
   });
 
   it('should return total amount of users', async function () {
-    const users = await this.factory.getUsersCount();
+    const users = await this.factory.userCount();
     expect(users).to.be.bignumber.equal(new BN('3'));
   });
 
@@ -117,8 +117,6 @@ module.exports = function () {
   });
 
   it('should get users count', async function () {
-    expect(await this.factory.getUsersCount()).to.be.bignumber.equal(
-      new BN('3')
-    );
+    expect(await this.factory.userCount()).to.be.bignumber.equal(new BN('3'));
   });
 };

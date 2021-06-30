@@ -3,8 +3,8 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PullPaymentUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./utils/AccessControl.sol";
 import "./utils/FactoryInterface.sol";
@@ -12,8 +12,8 @@ import "./utils/FactoryInterface.sol";
 contract Campaign is
     Initializable,
     AccessControl,
-    PullPaymentUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
 
@@ -138,7 +138,7 @@ contract Campaign is
         address _campaignFactory,
         address _root,
         uint256 _minimum
-    ) public initializer {
+    ) public initializer nonReentrant {
         _setupRole(DEFAULT_ADMIN_ROLE, _root);
 
         campaignFactoryContract = CampaignFactoryInterface(_campaignFactory);
@@ -154,12 +154,18 @@ contract Campaign is
         external
         adminOrFactory
         whenNotPaused
+        nonReentrant
     {
         target = _target;
         minimumContribution = _minimumContribution;
     }
 
-    function setGoalType(uint256 _type) external adminOrFactory whenNotPaused {
+    function setGoalType(uint256 _type)
+        external
+        adminOrFactory
+        whenNotPaused
+        nonReentrant
+    {
         // check that deadline is expired
         require(block.timestamp > deadline);
 
@@ -170,6 +176,7 @@ contract Campaign is
         external
         adminOrFactory
         whenNotPaused
+        nonReentrant
     {
         require(
             block.timestamp > deadline &&
@@ -189,8 +196,15 @@ contract Campaign is
         }
     }
 
-    function revertDeadlineSetTimes() external adminOrFactory whenNotPaused {
+    function resetDeadlineSetTimes()
+        external
+        adminOrFactory
+        whenNotPaused
+        nonReentrant
+    {
         deadlineSetTimes = 0;
+
+        // FAILSAFE: hold up now cowboy!
         _pause();
     }
 
@@ -198,7 +212,14 @@ contract Campaign is
         string memory _description,
         address payable _recipient,
         uint256 _value
-    ) external adminOrFactory targetIsMet whenNotPaused {
+    )
+        external
+        adminOrFactory
+        targetIsMet
+        whenNotPaused
+        userIsVerified(msg.sender)
+        nonReentrant
+    {
         // before creating a new request all previous request should be complete
         require(!requestOngoing);
 
@@ -218,7 +239,7 @@ contract Campaign is
         uint256 _stock,
         bytes32[] memory _inclusions,
         bool _active
-    ) external adminOrFactory whenNotPaused {
+    ) external adminOrFactory whenNotPaused nonReentrant {
         Reward storage newReward = rewards[rewards.length.add(1)];
         newReward.value = _value;
         newReward.deliveryDate = _deliveryDate;
@@ -235,7 +256,7 @@ contract Campaign is
         uint256 _stock,
         bytes32[] memory _inclusions,
         bool _active
-    ) external adminOrFactory whenNotPaused {
+    ) external adminOrFactory whenNotPaused nonReentrant {
         require(rewards[_id].exists);
         rewards[_id].value = _value;
         rewards[_id].deliveryDate = _deliveryDate;
@@ -245,9 +266,10 @@ contract Campaign is
     }
 
     function destroyReward(uint256 _rewardId)
-        public
+        external
         adminOrFactory
         whenNotPaused
+        nonReentrant
     {
         require(rewards[_rewardId].exists);
 
@@ -258,12 +280,13 @@ contract Campaign is
     }
 
     function contribute(uint256 _rewardId, bool _withReward)
-        public
+        external
         payable
         campaignIsActive
         userIsVerified(msg.sender)
         deadlineIsUp
         whenNotPaused
+        nonReentrant
     {
         if (_withReward) {
             require(
@@ -294,18 +317,14 @@ contract Campaign is
         emit ContributionMade(msg.sender, msg.value);
     }
 
-    function pullOwnContribution(address payable _addr)
+    function pullOwnContribution(uint256 _amount)
         external
         userIsVerified(msg.sender)
         whenNotPaused
+        nonReentrant
     {
         // check if person is a contributor
-        require(approvers[msg.sender]);
-
-        uint256 balance = userBalance[msg.sender];
-
-        // transfer to msg.sender
-        _asyncTransfer(_addr, balance);
+        require(approvers[msg.sender] && _amount <= userBalance[msg.sender]);
 
         // check if user has reward
         // remove member from persons meant to receive rewards
@@ -332,7 +351,14 @@ contract Campaign is
         approversCount.sub(1);
 
         // decrement total contributions to campaign
-        totalCampaignContribution = totalCampaignContribution.sub(balance);
+        totalCampaignContribution = totalCampaignContribution.sub(_amount);
+
+        // transfer to msg.sender
+        (bool success, ) = msg.sender.call{value: _amount}("");
+        require(success, "Transfer failed.");
+
+        userBalance[msg.sender].sub(_amount);
+        userTotalContribution[msg.sender].sub(_amount);
     }
 
     function voteOnRequest(
@@ -340,10 +366,11 @@ contract Campaign is
         bool _vote,
         string memory _comment
     )
-        public
+        external
         canApproveRequest(_requestId)
         userIsVerified(msg.sender)
         whenNotPaused
+        nonReentrant
     {
         requests[_requestId].approvals[msg.sender].approved = _vote;
         requests[_requestId].approvals[msg.sender].comment = _comment;
@@ -364,22 +391,40 @@ contract Campaign is
         }
     }
 
-    function finalizeRequest(uint256 _id) public adminOrFactory whenNotPaused {
+    function finalizeRequest(uint256 _id)
+        external
+        adminOrFactory
+        userIsVerified(msg.sender)
+        whenNotPaused
+        nonReentrant
+    {
         Request storage request = requests[_id];
         require(
             request.approvalCount > (approversCount.div(2)) && !request.complete
         );
+
         // get factory cut
-        _asyncTransfer(request.recepient, request.value);
+        uint256 factoryCutPercentage = campaignFactoryContract
+        .factoryCutPercentage();
+        uint256 factoryCut = request.value.sub(
+            factoryCutPercentage.div(100).mul(request.value)
+        );
+        uint256 requestCut = request.value.sub(factoryCut);
+
+        (bool success, ) = request.recepient.call{value: requestCut}("");
+        require(success, "Transfer to request recepient failed.");
+
+        campaignFactoryContract.receiveCampaignCut(factoryCut, address(this));
+
         request.complete = true;
         requestOngoing = false;
     }
 
-    function unPauseCampaign() external whenPaused onlyFactory {
+    function unPauseCampaign() external whenPaused onlyFactory nonReentrant {
         _unpause();
     }
 
-    function pauseCampaign() external whenNotPaused onlyFactory {
+    function pauseCampaign() external whenNotPaused onlyFactory nonReentrant {
         _pause();
     }
 }

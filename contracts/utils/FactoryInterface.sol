@@ -3,6 +3,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 abstract contract CampaignFactoryInterface {
+    address public root;
     uint256 public factoryCutPercentage;
     uint256 public deadlineStrikesAllowed;
     uint256 public maxDeadline;
@@ -40,14 +41,12 @@ abstract contract CampaignFactoryInterface {
     mapping(address => uint256) public userID;
 
     function canManageCampaigns(address _user)
-        external
+        public
         view
         virtual
         returns (bool);
 
-    function campaignOwnerOrFactory(uint256 _id)
+    function receiveCampaignCut(uint256 _amount, address campaign)
         external
-        view
-        virtual
-        returns (bool);
+        virtual;
 }

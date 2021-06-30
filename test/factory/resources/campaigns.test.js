@@ -18,12 +18,11 @@ module.exports = function () {
     expect(
       (await this.factory.campaignCategories(0)).campaignCount
     ).to.be.bignumber.equal(new BN('1'));
-    expect(
-      await this.factory.getDeployedCampaignsCount()
-    ).to.be.bignumber.equal(new BN('1'));
+    expect(await this.factory.campaignCount()).to.be.bignumber.equal(
+      new BN('1')
+    );
     expect(campaign.category).to.be.bignumber.equal(new BN('0'));
     expect(campaign.approved).to.equal(false);
-    expect(campaign.featured).to.equal(false);
     expect(campaign.exists).to.equal(true);
     expect(campaign.createdAt).to.be.bignumber.equal(new BN(block.timestamp));
     expect(campaign.updatedAt).to.be.bignumber.equal(new BN('0'));
@@ -114,7 +113,6 @@ module.exports = function () {
       1,
       newTitle,
       newPitch,
-      true,
       {
         from: this.addr1,
       }
@@ -126,7 +124,6 @@ module.exports = function () {
     expect(campaign.title).to.equal(newTitle);
     expect(campaign.pitch).to.equal(newPitch);
     expect(campaign.category).to.be.bignumber.equal(new BN('1'));
-    expect(campaign.active).to.equal(true);
     expect(campaign.updatedAt).to.be.bignumber.equal(new BN(block.timestamp));
     expect(
       (await this.factory.campaignCategories(1)).campaignCount
@@ -151,7 +148,6 @@ module.exports = function () {
         0,
         lorem.sentence(),
         lorem.paragraph(),
-        true,
         { from: this.addr2 }
       )
     );
@@ -163,8 +159,7 @@ module.exports = function () {
         0,
         0,
         lorem.sentence(),
-        lorem.paragraph(),
-        true
+        lorem.paragraph()
       )
     );
   });
@@ -185,9 +180,9 @@ module.exports = function () {
       lorem.paragraph()
     );
 
-    expect(
-      await this.factory.getDeployedCampaignsCount()
-    ).to.be.bignumber.equal(new BN('2'));
+    expect(await this.factory.campaignCount()).to.be.bignumber.equal(
+      new BN('2')
+    );
   });
 
   it('should return total amount of campaigns', async function () {
@@ -211,9 +206,9 @@ module.exports = function () {
       lorem.paragraph()
     );
 
-    expect(
-      await this.factory.getDeployedCampaignsCount()
-    ).to.be.bignumber.equal(new BN('3'));
+    expect(await this.factory.campaignCount()).to.be.bignumber.equal(
+      new BN('3')
+    );
   });
 
   it('should delete campaign with right role', async function () {
