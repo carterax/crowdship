@@ -1,5 +1,5 @@
 // contracts/CampaignFactory.sol
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -39,6 +39,9 @@ contract CampaignFactory is
     uint256 public maxDeadline;
     uint256 public minDeadline;
     uint256 public factoryRevenue; // total from all activities
+    address[] public tokenList;
+    mapping(address => bool) public tokenInList;
+    mapping(address => bool) public tokensApproved;
     mapping(uint256 => uint256) public campaignRevenueFromCuts; // revenue from cuts
     mapping(uint256 => uint256) public campaignRevenueFromFeatures; // revenue from ads
 
@@ -48,6 +51,7 @@ contract CampaignFactory is
         address owner;
         string title;
         string pitch;
+        address acceptedToken;
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
@@ -92,6 +96,7 @@ contract CampaignFactory is
     }
     User[] public users;
     uint256 public userCount;
+    mapping(address => uint256[]) public userSponsoredCampaigns;
     mapping(address => uint256) public userID;
     mapping(string => bool) public usernameIsTaken;
     mapping(string => bool) public emailIsTaken;
@@ -111,37 +116,44 @@ contract CampaignFactory is
     modifier campaignOwnerOrManager(uint256 _id) {
         require(
             campaignToOwner[deployedCampaigns[_id].campaign] == msg.sender ||
-                hasRole(MANAGE_CAMPAIGNS, msg.sender)
+                hasRole(MANAGE_CAMPAIGNS, msg.sender),
+            "only campaign owner or manager"
         );
         _;
     }
 
     modifier onlyCampaignOwner(uint256 _id) {
-        require(campaignToOwner[deployedCampaigns[_id].campaign] == msg.sender);
+        require(
+            campaignToOwner[deployedCampaigns[_id].campaign] == msg.sender,
+            "only campaign owner"
+        );
         _;
     }
 
     modifier campaignExists(uint256 _id) {
-        require(deployedCampaigns[_id].exists);
+        require(deployedCampaigns[_id].exists, "campaign doesn't exist");
         _;
     }
 
     modifier campaignIsEnabled(uint256 _id) {
         require(
-            deployedCampaigns[_id].exists && deployedCampaigns[_id].approved
+            deployedCampaigns[_id].exists && deployedCampaigns[_id].approved,
+            "campaign isn't approved"
         );
         _;
     }
 
     modifier userOrManager(uint256 _id) {
         require(
-            users[_id].wallet == msg.sender || hasRole(MANAGE_USERS, msg.sender)
+            users[_id].wallet == msg.sender ||
+                hasRole(MANAGE_USERS, msg.sender),
+            "not user or manager"
         );
         _;
     }
 
     modifier userIsVerified(address _user) {
-        require(users[userID[_user]].verified);
+        require(users[userID[_user]].verified, "user not verified");
         _;
     }
 
@@ -202,6 +214,25 @@ contract CampaignFactory is
         campaignImplementation = address(_implementation);
     }
 
+    function setFactoryCut(uint256 _cut) external onlyAdmin nonReentrant {
+        factoryCutPercentage = _cut;
+    }
+
+    function addAcceptedToken(address _token) external onlyAdmin nonReentrant {
+        require(!tokenInList[_token]);
+        tokenList.push(_token);
+        tokenInList[_token] = true;
+    }
+
+    function toggleAcceptedToken(address _token, bool _state)
+        external
+        onlyAdmin
+        nonReentrant
+    {
+        require(tokenInList[_token]);
+        tokensApproved[_token] = _state;
+    }
+
     /// @dev Add an account to the manager role. Restricted to admins.
     function addRole(address account, bytes32 role)
         public
@@ -229,10 +260,6 @@ contract CampaignFactory is
 
     function canManageCampaigns(address _user) public view returns (bool) {
         return hasRole(MANAGE_CAMPAIGNS, _user);
-    }
-
-    function setFactoryCut(uint256 _cut) external onlyAdmin nonReentrant {
-        factoryCutPercentage = _cut;
     }
 
     function signUp(string memory _email, string memory _username)
@@ -311,25 +338,48 @@ contract CampaignFactory is
         emit UserRemoved(_id);
     }
 
+    function addCampaignToUser(address _campaign)
+        external
+        campaignExists(campaignToID[_campaign])
+        whenNotPaused
+        nonReentrant
+    {
+        CampaignInfo storage campaign = deployedCampaigns[
+            campaignToID[_campaign]
+        ];
+        require(Campaign(campaign.campaign).approvers(msg.sender));
+        userSponsoredCampaigns[msg.sender].push(campaignToID[_campaign]);
+    }
+
     function createCampaign(
         uint256 _minimum,
         uint256 _category,
         string memory _title,
-        string memory _pitch
+        string memory _pitch,
+        address _token
     ) external userIsVerified(msg.sender) whenNotPaused nonReentrant {
         // check `_category` exists and active
         require(
             campaignCategories[_category].exists &&
-                campaignCategories[_category].active
+                campaignCategories[_category].active,
+            "category doesn't exist or not approved"
         );
+        require(tokensApproved[_token], "Token not accepted");
+
         address campaign = ClonesUpgradeable.clone(campaignImplementation);
-        Campaign(campaign).__Campaign_init(address(this), msg.sender, _minimum);
+        Campaign(campaign).__Campaign_init(
+            address(this),
+            msg.sender,
+            _token,
+            _minimum
+        );
 
         CampaignInfo memory campaignInfo = CampaignInfo({
             campaign: address(campaign),
             title: _title,
             pitch: _pitch,
             category: _category,
+            acceptedToken: _token,
             owner: msg.sender,
             createdAt: block.timestamp,
             updatedAt: 0,
@@ -424,8 +474,12 @@ contract CampaignFactory is
         nonReentrant
     {
         require(
-            featurePackages[_featurePackageId].exists &&
-                featurePackages[_featurePackageId].cost == msg.value
+            featurePackages[_featurePackageId].exists,
+            "feature package does't exist"
+        );
+        require(
+            featurePackages[_featurePackageId].cost == msg.value,
+            "amount not enough"
         );
 
         // transfer funds to factory wallet
@@ -460,8 +514,14 @@ contract CampaignFactory is
         userIsVerified(msg.sender)
         nonReentrant
     {
-        require(deployedCampaigns[_campaignId].featureFor > block.timestamp); // check time in campaign feature hasn't expired
-        require(!featuredCampaignIsPaused[_campaignId]); // make sure campaign feature isn't paused
+        require(
+            deployedCampaigns[_campaignId].featureFor > block.timestamp,
+            "feautre already expired"
+        ); // check time in campaign feature hasn't expired
+        require(
+            !featuredCampaignIsPaused[_campaignId],
+            "campaign is already paused"
+        ); // make sure campaign feature isn't paused
 
         // time in campaign currently - current time
         pausedFeaturedCampaignTimeLeft[_campaignId] = deployedCampaigns[
@@ -480,7 +540,7 @@ contract CampaignFactory is
         userIsVerified(msg.sender)
         nonReentrant
     {
-        require(deployedCampaigns[_campaignId].featureFor > block.timestamp);
+        //require(deployedCampaigns[_campaignId].featureFor > block.timestamp, "feature is");
         require(featuredCampaignIsPaused[_campaignId]); // make sure campaign feature is paused
 
         featuredCampaignIsPaused[_campaignId] = false;

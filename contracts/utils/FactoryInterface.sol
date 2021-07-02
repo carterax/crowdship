@@ -49,4 +49,6 @@ abstract contract CampaignFactoryInterface {
     function receiveCampaignCut(uint256 _amount, address campaign)
         external
         virtual;
+
+    function addCampaignToUser(address _campaign) external virtual;
 }

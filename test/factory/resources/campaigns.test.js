@@ -1,6 +1,11 @@
 const { expect } = require('chai');
 const { lorem } = require('faker');
-const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
+const {
+  BN,
+  expectEvent,
+  expectRevert,
+  constants,
+} = require('@openzeppelin/test-helpers');
 
 module.exports = function () {
   it('can create campaign', async function () {
