@@ -4,13 +4,15 @@ pragma solidity >=0.4.22 <0.9.0;
 
 abstract contract CampaignFactoryInterface {
     address public root;
-    uint256 public factoryCutPercentage;
+    uint256 public defaultCommission;
     uint256 public deadlineStrikesAllowed;
     uint256 public maxDeadline;
     uint256 public minDeadline;
+    mapping(uint256 => uint256) public categoryCommission;
 
     struct CampaignInfo {
         address campaign;
+        uint256 category;
         bool featured;
         bool active;
         bool approved;
@@ -46,9 +48,9 @@ abstract contract CampaignFactoryInterface {
         virtual
         returns (bool);
 
-    function receiveCampaignCut(uint256 _amount, address campaign)
+    function receiveCampaignCommission(uint256 _amount, address campaign)
         external
         virtual;
 
-    function addCampaignToUser(address _campaign) external virtual;
+    function addCampaignToUserHistory(address _campaign) external virtual;
 }
