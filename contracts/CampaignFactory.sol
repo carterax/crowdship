@@ -787,7 +787,7 @@ contract CampaignFactory is
         emit FeaturePackageDestroyed(_packageId);
     }
 
-    function unPauseCampaign() external whenPaused onlyAdmin nonReentrant {
+    function unpauseCampaign() external whenPaused onlyAdmin nonReentrant {
         _unpause();
     }
 

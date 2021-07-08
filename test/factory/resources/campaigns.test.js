@@ -47,6 +47,9 @@ async function featureCampaignSetup(
 }
 
 module.exports = function () {
+  /* -------------------------------------------------------------------------- */
+  /*                               createCampaign                               */
+  /* -------------------------------------------------------------------------- */
   it('can create campaign', async function () {
     const minimum = 300,
       category = 0,
@@ -141,6 +144,21 @@ module.exports = function () {
       )
     );
   });
+  it('campaign creation should fail if factory is paused', async function () {
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(campaignSetup(this.factory, this.testToken));
+  });
+  it('campaign creation should work if factory is unpaused', async function () {
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(campaignSetup(this.factory, this.testToken));
+    await this.factory.unpauseCampaign();
+    await campaignSetup(this.factory, this.testToken);
+    expect((await this.factory.deployedCampaigns(0)).exists).to.equal(true);
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /*                           toggleCampaignApproval                           */
+  /* -------------------------------------------------------------------------- */
   it('address without role cannot approve campaigns', async function () {
     await this.factory.createCategory('Sports', true);
     await this.factory.createCampaign(
@@ -184,6 +202,10 @@ module.exports = function () {
       approval: false,
     });
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                            toggleCampaignActive                            */
+  /* -------------------------------------------------------------------------- */
   it('campaign owner can disable their campaigns', async function () {
     await campaignSetup(this.factory, this.testToken);
     const receipt = await this.factory.toggleCampaignActive(0, true);
@@ -214,6 +236,10 @@ module.exports = function () {
       this.factory.toggleCampaignApproval(0, true, { from: this.addr2 })
     );
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                            modifyCampaignSummary                           */
+  /* -------------------------------------------------------------------------- */
   it('should modify campaign summary with correct role', async function () {
     let campaign,
       newTitle = lorem.sentence(),
@@ -279,6 +305,10 @@ module.exports = function () {
       )
     );
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                                campaignCount                               */
+  /* -------------------------------------------------------------------------- */
   it('should return total count of campaigns', async function () {
     await this.factory.createCategory('Fitness', true);
     await this.factory.createCategory('Cooking', true);
@@ -300,6 +330,10 @@ module.exports = function () {
       new BN('2')
     );
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                               destroyCampaign                              */
+  /* -------------------------------------------------------------------------- */
   it('should delete campaign with right role', async function () {
     const campaignID = 0;
     await campaignSetup(this.factory, this.testToken);
@@ -330,11 +364,12 @@ module.exports = function () {
     const campaign = await this.factory.deployedCampaigns(campaignID);
     expect(campaign.exists).to.equal(true);
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                               featureCampaign                              */
+  /* -------------------------------------------------------------------------- */
   it('should feature campaign', async function () {
-    await featureCampaignSetup(this.factory, this.testToken, 86400, {
-      approveCampaign: true,
-      activateCampaign: true,
-    });
+    await featureCampaignSetup(this.factory, this.testToken);
     const receipt = await this.factory.featureCampaign(
       0,
       0,
@@ -435,6 +470,10 @@ module.exports = function () {
       })
     );
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                            pauseCampaignFeatured                           */
+  /* -------------------------------------------------------------------------- */
   it('should pause running campaign feature', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
@@ -515,6 +554,10 @@ module.exports = function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.pauseCampaignFeatured(0));
   });
+
+  /* -------------------------------------------------------------------------- */
+  /*                           unpauseCampaignFeatured                          */
+  /* -------------------------------------------------------------------------- */
   it('should unpause paused campaign feature', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
@@ -545,4 +588,46 @@ module.exports = function () {
       timeLeft: new BN('0'),
     });
   });
+  it('campaign unpause feature should fail if not campaign owner', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.featureCampaign(0, 0, this.testToken.address, {
+      value: 1000,
+    });
+    await this.factory.pauseCampaignFeatured(0);
+    await expectRevert.unspecified(
+      this.factory.unpauseCampaignFeatured(0, { from: this.addr1 })
+    );
+  });
+  it('campaign unpause feature should fail if campaign does not exist', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.featureCampaign(0, 0, this.testToken.address, {
+      value: 1000,
+    });
+    await this.factory.pauseCampaignFeatured(0);
+    await this.factory.destroyCampaign(0);
+
+    await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
+  });
+  it('campaign unpause feature should fail if user is not verified', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.featureCampaign(0, 0, this.testToken.address, {
+      value: 1000,
+    });
+    await this.factory.pauseCampaignFeatured(0);
+    await this.factory.toggleUserApproval(0, false);
+    await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
+  });
+  it('campaign unpause feature should fail if factory is paused', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.featureCampaign(0, 0, this.testToken.address, {
+      value: 1000,
+    });
+    await this.factory.pauseCampaignFeatured(0);
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /*                            modifyFeaturedPackage                           */
+  /* -------------------------------------------------------------------------- */
 };
