@@ -150,7 +150,6 @@ module.exports = function () {
   });
   it('campaign creation should work if factory is unpaused', async function () {
     await this.factory.pauseCampaign();
-    await expectRevert.unspecified(campaignSetup(this.factory, this.testToken));
     await this.factory.unpauseCampaign();
     await campaignSetup(this.factory, this.testToken);
     expect((await this.factory.deployedCampaigns(0)).exists).to.equal(true);
@@ -202,6 +201,25 @@ module.exports = function () {
       approval: false,
     });
   });
+  it('should not toggle campaign approval if factory is paused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(
+      this.factory.toggleCampaignApproval(0, true)
+    );
+    await expectRevert.unspecified(
+      this.factory.toggleCampaignApproval(0, false)
+    );
+  });
+  it('should toggle campaign approval if factory is unpaused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    await this.factory.toggleCampaignApproval(0, true);
+    expect((await this.factory.deployedCampaigns(0)).approved).to.be.equal(
+      true
+    );
+  });
 
   /* -------------------------------------------------------------------------- */
   /*                            toggleCampaignActive                            */
@@ -235,6 +253,18 @@ module.exports = function () {
     await expectRevert.unspecified(
       this.factory.toggleCampaignApproval(0, true, { from: this.addr2 })
     );
+  });
+  it('should not enable or disable campaign if factory is paused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(this.factory.toggleCampaignActive(0, true));
+  });
+  it('should enable or disable campaign if factory is unpaused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    await this.factory.toggleCampaignActive(0, true);
+    expect((await this.factory.deployedCampaigns(0)).active).to.be.equal(true);
   });
 
   /* -------------------------------------------------------------------------- */
@@ -305,6 +335,44 @@ module.exports = function () {
       )
     );
   });
+  it('should not modify a campaign with category that does not exist', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await expectRevert.unspecified(
+      this.factory.modifyCampaignSummary(
+        0,
+        1,
+        lorem.sentence(),
+        lorem.paragraph()
+      )
+    );
+  });
+  it('should not modify campaign if factory is paused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(
+      this.factory.modifyCampaignSummary(
+        0,
+        1,
+        lorem.sentence(),
+        lorem.paragraph()
+      )
+    );
+  });
+  it('should modify campaign if factory is unpaused', async function () {
+    const newTitle = lorem.sentence(),
+      newPitch = lorem.paragraph();
+
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    await this.factory.modifyCampaignSummary(0, 0, newTitle, newPitch);
+    expect((await this.factory.deployedCampaigns(0)).title).to.be.equal(
+      newTitle
+    );
+    expect((await this.factory.deployedCampaigns(0)).pitch).to.be.equal(
+      newPitch
+    );
+  });
 
   /* -------------------------------------------------------------------------- */
   /*                                campaignCount                               */
@@ -344,7 +412,7 @@ module.exports = function () {
       campaignId: new BN(campaignID),
     });
   });
-  it('cannot delete campaign without role', async function () {
+  it('should not delete campaign without role', async function () {
     const catID = 0,
       campaignID = 0,
       userId = await this.factory.userID(this.addr1);
@@ -363,6 +431,18 @@ module.exports = function () {
     );
     const campaign = await this.factory.deployedCampaigns(campaignID);
     expect(campaign.exists).to.equal(true);
+  });
+  it('should not delete campaign if factory is paused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await expectRevert.unspecified(this.factory.destroyCampaign(0));
+  });
+  it('should delete campaign if factory is unpaused', async function () {
+    await campaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    await this.factory.destroyCampaign(0);
+    expect((await this.factory.deployedCampaigns(0)).exists).to.be.equal(false);
   });
 
   /* -------------------------------------------------------------------------- */
@@ -470,6 +550,23 @@ module.exports = function () {
       })
     );
   });
+  it('campaign feature should work if factory is unpaused', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    const receipt = await this.factory.featureCampaign(
+      0,
+      0,
+      this.testToken.address,
+      {
+        value: 1000,
+      }
+    );
+    const block = await web3.eth.getBlock(receipt.receipt.blockNumber);
+    expect(
+      (await this.factory.deployedCampaigns(0)).featureFor
+    ).to.be.bignumber.equal(new BN(`${block.timestamp + 86400}`));
+  });
 
   /* -------------------------------------------------------------------------- */
   /*                            pauseCampaignFeatured                           */
@@ -554,6 +651,16 @@ module.exports = function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.pauseCampaignFeatured(0));
   });
+  it('campaign feature pause should work if factory is unpaused', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.featureCampaign(0, 0, this.testToken.address, {
+      value: 1000,
+    });
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    await this.factory.pauseCampaignFeatured(0);
+    expect(await this.factory.featuredCampaignIsPaused(0)).to.be.equal(true);
+  });
 
   /* -------------------------------------------------------------------------- */
   /*                           unpauseCampaignFeatured                          */
@@ -626,8 +733,16 @@ module.exports = function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
   });
-
-  /* -------------------------------------------------------------------------- */
-  /*                            modifyFeaturedPackage                           */
-  /* -------------------------------------------------------------------------- */
+  it('campaign unpause feature should work if factory is unpaused', async function () {
+    await featureCampaignSetup(this.factory, this.testToken);
+    await this.factory.featureCampaign(0, 0, this.testToken.address, {
+      value: 1000,
+      from: this.owner,
+    });
+    await this.factory.pauseCampaignFeatured(0);
+    await this.factory.pauseCampaign();
+    await this.factory.unpauseCampaign();
+    await this.factory.unpauseCampaignFeatured(0);
+    expect(await this.factory.featuredCampaignIsPaused(0)).to.be.equal(false);
+  });
 };

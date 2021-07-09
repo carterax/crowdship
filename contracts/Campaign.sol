@@ -653,7 +653,7 @@ contract Campaign is
         );
     }
 
-    function unPauseCampaign() external whenPaused onlyFactory nonReentrant {
+    function unpauseCampaign() external whenPaused onlyFactory nonReentrant {
         _unpause();
     }
 
