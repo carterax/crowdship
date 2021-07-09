@@ -12,6 +12,8 @@
     "compile": "npx truffle compile --all"
   },
   "dependencies": {
+    "@graphprotocol/graph-cli": "^0.21.0",
+    "@graphprotocol/graph-ts": "^0.20.1",
     "bnc-onboard": "^1.27.0",
     "next": "10.2.3",
     "react": "17.0.2",

@@ -173,7 +173,7 @@ contract CampaignFactory is
         uint256 cost;
         bool exists;
     }
-    Featured[] featurePackages;
+    Featured[] public featurePackages;
     uint256 public featurePackageCount;
 
     modifier campaignOwnerOrManager(uint256 _id) {
@@ -746,7 +746,7 @@ contract CampaignFactory is
         string memory _name,
         uint256 _cost,
         uint256 _time
-    ) external onlyAdmin nonReentrant {
+    ) external onlyAdmin whenNotPaused nonReentrant {
         featurePackages.push(
             Featured(_name, block.timestamp, 0, _time, _cost, true)
         );
@@ -765,7 +765,7 @@ contract CampaignFactory is
         string memory _name,
         uint256 _cost,
         uint256 _time
-    ) external onlyAdmin nonReentrant {
+    ) external onlyAdmin whenNotPaused nonReentrant {
         require(featurePackages[_packageId].exists);
         featurePackages[_packageId].cost = _cost;
         featurePackages[_packageId].time = _time;
@@ -778,6 +778,7 @@ contract CampaignFactory is
     function destroyFeaturedPackage(uint256 _packageId)
         external
         onlyAdmin
+        whenNotPaused
         nonReentrant
     {
         require(featurePackages[_packageId].exists);

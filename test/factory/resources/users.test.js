@@ -2,8 +2,8 @@ const { expect } = require('chai');
 const { internet } = require('faker');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
-module.exports = function () {
-  it('user can signup', async function () {
+module.exports = function() {
+  it('user can signup', async function() {
     const email = internet.email();
     const username = internet.userName();
     const receipt = await this.factory.signUp(email, username, {
@@ -27,18 +27,18 @@ module.exports = function () {
     });
   });
 
-  it('user cannot sign up with taken username and email', async function () {
+  it('user cannot sign up with taken username and email', async function() {
     await expectRevert.unspecified(
       this.factory.signUp(this.adminMail, this.adminUserName)
     );
   });
 
-  it('should return total amount of users', async function () {
+  it('should return total amount of users', async function() {
     const users = await this.factory.userCount();
     expect(users).to.be.bignumber.equal(new BN('3'));
   });
 
-  it('address with role can approve and unapprove user', async function () {
+  it('address with role can approve and disapprove user', async function() {
     const MANAGE_USERS = await this.factory.MANAGE_USERS();
     const userId = await this.factory.userID(this.addr2);
 
@@ -51,7 +51,7 @@ module.exports = function () {
     expect((await this.factory.users(userId)).verified).to.equal(false);
   });
 
-  it('address without role cannot approve user', async function () {
+  it('address without role cannot approve user', async function() {
     const userId = await this.factory.userID(this.addr2);
 
     await expectRevert.unspecified(
@@ -59,13 +59,13 @@ module.exports = function () {
     );
   });
 
-  it('cannot modify user if they do not exist', async function () {
+  it('cannot modify user if they do not exist', async function() {
     await expectRevert.unspecified(
       this.factory.modifyUser(6, internet.email(), internet.userName())
     );
   });
 
-  it('user or manager can modify user details', async function () {
+  it('user or manager can modify user details', async function() {
     const newUserName = internet.userName(),
       newEmail = internet.email();
 
@@ -84,7 +84,7 @@ module.exports = function () {
     );
   });
 
-  it("user cannot modify another user's profile", async function () {
+  it("user cannot modify another user's profile", async function() {
     await expectRevert.unspecified(
       this.factory.modifyUser(0, internet.email(), internet.userName(), {
         from: this.addr1,
@@ -92,7 +92,7 @@ module.exports = function () {
     );
   });
 
-  it('manager with role can delete user', async function () {
+  it('manager with role can delete user', async function() {
     const user = await this.factory.users(2),
       receipt = await this.factory.destroyUser(2);
 
@@ -104,7 +104,7 @@ module.exports = function () {
     expectEvent(receipt, 'UserRemoved', { id: new BN('2') });
   });
 
-  it('user without role cannot delete user', async function () {
+  it('user without role cannot delete user', async function() {
     await expectRevert.unspecified(
       this.factory.destroyUser(0, { from: this.addr3 })
     );
@@ -116,7 +116,7 @@ module.exports = function () {
     expect(await this.factory.emailIsTaken(this.adminMail)).to.equal(true);
   });
 
-  it('should get users count', async function () {
+  it('should get users count', async function() {
     expect(await this.factory.userCount()).to.be.bignumber.equal(new BN('3'));
   });
 };
