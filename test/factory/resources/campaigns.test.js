@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { expect } = require('chai');
 const { lorem } = require('faker');
 const {
@@ -6,7 +7,6 @@ const {
   expectRevert,
   constants,
 } = require('@openzeppelin/test-helpers');
-// const { web3 } = require('@openzeppelin/test-helpers/src/setup');
 
 async function campaignSetup(factory, testToken) {
   await factory.createCategory('Sports', true);
@@ -66,6 +66,7 @@ module.exports = function() {
     );
     const campaign = await this.factory.deployedCampaigns(0);
     const block = await web3.eth.getBlock(receipt.receipt.blockNumber);
+
     expect(
       (await this.factory.campaignCategories(0)).campaignCount
     ).to.be.bignumber.equal(new BN('1'));

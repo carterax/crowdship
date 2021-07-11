@@ -5,7 +5,7 @@ const CampaignFactory = artifacts.require('CampaignFactory');
 const Campaign = artifacts.require('Campaign');
 const TestToken = artifacts.require('TestToken');
 
-module.exports = async function (deployer) {
+module.exports = async function(deployer) {
   const factory = await deployProxy(
     CampaignFactory,
     [
@@ -29,6 +29,7 @@ module.exports = async function (deployer) {
       '0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e',
       token.address,
       300,
+      400000,
     ],
     { deployer, initializer: '__Campaign_init' }
   );

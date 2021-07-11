@@ -200,13 +200,15 @@ contract Campaign is
         address _campaignFactory,
         address _root,
         address _acceptedToken,
-        uint256 _minimum
+        uint256 _minimum,
+        uint256 _target
     ) public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _root);
 
         campaignFactoryContract = CampaignFactoryInterface(_campaignFactory);
 
         root = _root;
+        target = _target;
         minimumContribution = _minimum;
         goalType = GOALTYPE.FIXED;
         campaignState = CAMPAIGN_STATE.ONGOING;

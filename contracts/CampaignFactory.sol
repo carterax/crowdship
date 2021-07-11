@@ -367,6 +367,7 @@ contract CampaignFactory is
         whenNotPaused
         nonReentrant
     {
+        require(users[_userId].exists);
         users[_userId].verified = _approval;
         users[_userId].updatedAt = block.timestamp;
 
@@ -461,7 +462,8 @@ contract CampaignFactory is
             address(this),
             msg.sender,
             _token,
-            _minimum
+            _minimum,
+            0
         );
 
         CampaignInfo memory campaignInfo = CampaignInfo({
