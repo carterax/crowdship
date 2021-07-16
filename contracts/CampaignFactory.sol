@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -30,19 +31,14 @@ contract CampaignFactory is
         uint256 indexed campaignId,
         uint256 owner,
         uint256 minimum,
-        uint256 category,
-        string title,
-        string pitch,
-        address token
+        uint256 category
     );
     event CampaignDestroyed(uint256 indexed campaignId);
     event CampaignApproval(uint256 indexed campaignId, bool approval);
     event CampaignActiveToggle(uint256 indexed campaignId, bool active);
-    event CampaignModified(
+    event CampaignCategoryChange(
         uint256 indexed campaignId,
-        uint256 newCategory,
-        string newTitle,
-        string newPitch
+        uint256 newCategory
     );
     event CampaignFeatured(
         uint256 indexed campaignId,
@@ -53,8 +49,8 @@ contract CampaignFactory is
     event CampaignFeatureUnpaused(uint256 indexed campaignId, uint256 timeLeft);
 
     /// @dev `User Events`
-    event UserAdded(uint256 indexed userId, string email, string username);
-    event UserModified(uint256 indexed userId, string email, string username);
+    event UserAdded(uint256 indexed userId);
+    event UserModified(uint256 indexed userId);
     event UserApproval(uint256 indexed userId, bool approval);
     event UserJoinedCampaign(
         uint256 indexed historyId,
@@ -64,24 +60,18 @@ contract CampaignFactory is
     event UserRemoved(uint256 indexed userId);
 
     /// @dev `Category Events`
-    event CategoryAdded(uint256 indexed categoryId, string title, bool active);
-    event CategoryModified(
-        uint256 indexed categoryId,
-        string title,
-        bool active
-    );
+    event CategoryAdded(uint256 indexed categoryId, bool active);
+    event CategoryModified(uint256 indexed categoryId, bool active);
     event CategoryDestroyed(uint256 indexed categoryId);
 
     /// @dev `Feature Package Events`
     event FeaturePackageAdded(
         uint256 indexed packageId,
-        string name,
         uint256 cost,
         uint256 time
     );
     event FeaturePackageModified(
         uint256 indexed packageId,
-        string name,
         uint256 cost,
         uint256 time
     );
@@ -107,9 +97,6 @@ contract CampaignFactory is
     struct CampaignInfo {
         address campaign;
         address owner;
-        string title;
-        string pitch;
-        address acceptedToken;
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
@@ -129,7 +116,6 @@ contract CampaignFactory is
 
     /// @dev `Categories`
     struct CampaignCategory {
-        string title;
         uint256 campaignCount;
         uint256 createdAt;
         uint256 updatedAt;
@@ -138,13 +124,10 @@ contract CampaignFactory is
     }
     CampaignCategory[] public campaignCategories; // array of campaign categories
     uint256 public categoryCount;
-    mapping(string => bool) public categoryIsTaken; // maintain unique category names
 
     /// @dev `Users`
     struct User {
         address wallet;
-        string email;
-        string username;
         uint256 joined;
         uint256 updatedAt;
         bool verified;
@@ -153,8 +136,6 @@ contract CampaignFactory is
     User[] public users;
     uint256 public userCount;
     mapping(address => uint256) public userID;
-    mapping(string => bool) public usernameIsTaken;
-    mapping(string => bool) public emailIsTaken;
 
     /// @dev `UserCampaignHistory`
     struct UserCampaignHistory {
@@ -166,7 +147,6 @@ contract CampaignFactory is
 
     /// @dev `Featured`
     struct Featured {
-        string name;
         uint256 createdAt;
         uint256 updatedAt;
         uint256 time;
@@ -214,30 +194,28 @@ contract CampaignFactory is
     }
 
     /// @dev Add `root` to the admin role as a member.
-    function __CampaignFactory_init(
-        address _root,
-        string memory _email,
-        string memory _username,
-        address payable _wallet
-    ) public initializer {
-        root = _root;
+    function __CampaignFactory_init(address payable _wallet)
+        public
+        initializer
+    {
+        root = msg.sender;
         factoryWallet = _wallet;
         defaultCommission = 5;
         deadlineStrikesAllowed = 3;
         maxDeadline = 7 days;
         minDeadline = 1 days;
 
-        _setupRole(DEFAULT_ADMIN_ROLE, _root);
-        _setupRole(MANAGE_CATEGORIES, _root);
-        _setupRole(MANAGE_CAMPAIGNS, _root);
-        _setupRole(MANAGE_USERS, _root);
+        _setupRole(DEFAULT_ADMIN_ROLE, root);
+        _setupRole(MANAGE_CATEGORIES, root);
+        _setupRole(MANAGE_CAMPAIGNS, root);
+        _setupRole(MANAGE_USERS, root);
 
         _setRoleAdmin(MANAGE_CATEGORIES, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_CAMPAIGNS, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(MANAGE_USERS, DEFAULT_ADMIN_ROLE);
 
         // add root as user
-        signUp(_email, _username);
+        signUp();
     }
 
     function setFactoryWallet(address payable _wallet)
@@ -255,13 +233,9 @@ contract CampaignFactory is
         campaignExists(campaignToID[address(campaign)])
         nonReentrant
     {
-        IERC20Upgradeable(Campaign(campaign).acceptedToken()).transferFrom(
-            address(campaign),
-            factoryWallet,
-            _amount
-        );
-
-        campaignRevenueFromCommissions[campaignToID[address(campaign)]].add(
+        campaignRevenueFromCommissions[
+            campaignToID[address(campaign)]
+        ] = campaignRevenueFromCommissions[campaignToID[address(campaign)]].add(
             _amount
         );
         factoryRevenue = factoryRevenue.add(_amount);
@@ -336,29 +310,13 @@ contract CampaignFactory is
         return hasRole(MANAGE_CAMPAIGNS, _user);
     }
 
-    function signUp(string memory _email, string memory _username)
-        public
-        whenNotPaused
-        nonReentrant
-    {
-        require(!usernameIsTaken[_username] && !emailIsTaken[_email]);
-
-        User memory newUser = User(
-            msg.sender,
-            _email,
-            _username,
-            block.timestamp,
-            0,
-            false,
-            true
-        );
+    function signUp() public whenNotPaused nonReentrant {
+        User memory newUser = User(msg.sender, block.timestamp, 0, false, true);
         users.push(newUser);
         userID[msg.sender] = users.length.sub(1);
-        usernameIsTaken[_username] = true;
-        emailIsTaken[_email] = true;
         userCount = userCount.add(1);
 
-        emit UserAdded(users.length.sub(1), _email, _username);
+        emit UserAdded(users.length.sub(1));
     }
 
     function toggleUserApproval(uint256 _userId, bool _approval)
@@ -374,35 +332,6 @@ contract CampaignFactory is
         emit UserApproval(_userId, _approval);
     }
 
-    function modifyUser(
-        uint256 _id,
-        string memory _email,
-        string memory _username
-    ) external userOrManager(_id) whenNotPaused nonReentrant {
-        require(users[_id].exists);
-
-        if (!emailIsTaken[_email]) {
-            string storage oldMail = users[_id].email;
-            emailIsTaken[oldMail] = false;
-
-            users[_id].email = _email;
-            users[_id].verified = false;
-            emailIsTaken[_email] = true;
-        }
-
-        if (!usernameIsTaken[_username]) {
-            string storage oldUsername = users[_id].username;
-            usernameIsTaken[oldUsername] = false;
-
-            users[_id].username = _username;
-            usernameIsTaken[_username] = true;
-        }
-
-        users[_id].updatedAt = block.timestamp;
-
-        emit UserModified(_id, _email, _username);
-    }
-
     function destroyUser(uint256 _id)
         external
         onlyManager(MANAGE_USERS)
@@ -411,8 +340,6 @@ contract CampaignFactory is
     {
         User storage user = users[_id];
         require(user.exists);
-        usernameIsTaken[user.username] = false;
-        emailIsTaken[user.email] = false;
         delete users[_id];
 
         emit UserRemoved(_id);
@@ -443,35 +370,23 @@ contract CampaignFactory is
         );
     }
 
-    function createCampaign(
-        uint256 _minimum,
-        uint256 _category,
-        string memory _title,
-        string memory _pitch,
-        address _token
-    ) external userIsVerified(msg.sender) whenNotPaused nonReentrant {
+    function createCampaign(uint256 _minimum, uint256 _category)
+        external
+        userIsVerified(msg.sender)
+        whenNotPaused
+        nonReentrant
+    {
         // check `_category` exists and active
         require(
             campaignCategories[_category].exists &&
                 campaignCategories[_category].active
         );
-        require(tokensApproved[_token]);
 
         address campaign = ClonesUpgradeable.clone(campaignImplementation);
-        Campaign(campaign).__Campaign_init(
-            address(this),
-            msg.sender,
-            _token,
-            _minimum,
-            0
-        );
 
         CampaignInfo memory campaignInfo = CampaignInfo({
             campaign: address(campaign),
-            title: _title,
-            pitch: _pitch,
             category: _category,
-            acceptedToken: _token,
             owner: msg.sender,
             createdAt: block.timestamp,
             updatedAt: 0,
@@ -493,15 +408,14 @@ contract CampaignFactory is
         .add(1);
         campaignCount = campaignCount.add(1);
 
+        Campaign(campaign).__Campaign_init(address(this), msg.sender);
+
         // emit event
         emit CampaignDeployed(
             campaignId,
             userID[msg.sender],
             _minimum,
-            _category,
-            _title,
-            _pitch,
-            _token
+            _category
         );
     }
 
@@ -531,12 +445,7 @@ contract CampaignFactory is
         emit CampaignActiveToggle(_id, _active);
     }
 
-    function modifyCampaignSummary(
-        uint256 _id,
-        uint256 _newCategory,
-        string memory _newTitle,
-        string memory _newPitch
-    )
+    function modifyCampaignCategory(uint256 _id, uint256 _newCategory)
         external
         campaignOwnerOrManager(_id)
         campaignExists(_id)
@@ -559,13 +468,11 @@ contract CampaignFactory is
             ]
             .campaignCount
             .add(1);
+
+            deployedCampaigns[_id].updatedAt = block.timestamp;
+
+            emit CampaignCategoryChange(_id, _newCategory);
         }
-
-        deployedCampaigns[_id].title = _newTitle;
-        deployedCampaigns[_id].pitch = _newPitch;
-        deployedCampaigns[_id].updatedAt = block.timestamp;
-
-        emit CampaignModified(_id, _newCategory, _newTitle, _newPitch);
     }
 
     function featureCampaign(
@@ -584,14 +491,7 @@ contract CampaignFactory is
     {
         require(tokensApproved[_token]);
         require(featurePackages[_featurePackageId].exists);
-        require(featurePackages[_featurePackageId].cost == msg.value);
-
-        // transfer funds to factory wallet
-        IERC20Upgradeable(_token).transferFrom(
-            msg.sender,
-            factoryWallet,
-            msg.value
-        );
+        require(featurePackages[_featurePackageId].cost >= msg.value);
 
         // update campaign revenue to factory
         factoryRevenue = factoryRevenue.add(msg.value);
@@ -611,6 +511,14 @@ contract CampaignFactory is
         .add(block.timestamp);
 
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
+
+        // transfer funds to factory wallet
+        SafeERC20Upgradeable.safeTransferFrom(
+            IERC20Upgradeable(_token),
+            msg.sender,
+            factoryWallet,
+            msg.value
+        );
 
         emit CampaignFeatured(_campaignId, _featurePackageId, msg.value);
     }
@@ -680,18 +588,14 @@ contract CampaignFactory is
         emit CampaignDestroyed(_id);
     }
 
-    function createCategory(string memory _title, bool _active)
+    function createCategory(bool _active)
         external
         onlyManager(MANAGE_CATEGORIES)
         whenNotPaused
         nonReentrant
     {
-        // check if category exists
-        require(!categoryIsTaken[_title]);
-
         // create category with `campaignCount` default to 0
         CampaignCategory memory newCategory = CampaignCategory({
-            title: _title,
             campaignCount: 0,
             createdAt: block.timestamp,
             updatedAt: 0,
@@ -700,30 +604,23 @@ contract CampaignFactory is
         });
         campaignCategories.push(newCategory);
 
-        // set category name as taken
-        categoryIsTaken[_title] = true;
-
         categoryCount = categoryCount.add(1);
 
-        emit CategoryAdded(campaignCategories.length.sub(1), _title, _active);
+        emit CategoryAdded(campaignCategories.length.sub(1), _active);
     }
 
-    function modifyCategory(
-        uint256 _id,
-        string memory _title,
-        bool _active
-    ) external onlyManager(MANAGE_CATEGORIES) whenNotPaused nonReentrant {
+    function modifyCategory(uint256 _id, bool _active)
+        external
+        onlyManager(MANAGE_CATEGORIES)
+        whenNotPaused
+        nonReentrant
+    {
         require(campaignCategories[_id].exists);
 
-        if (!categoryIsTaken[_title]) {
-            categoryIsTaken[campaignCategories[_id].title] = false;
-            campaignCategories[_id].title = _title;
-            categoryIsTaken[_title] = true;
-        }
         campaignCategories[_id].active = _active;
         campaignCategories[_id].updatedAt = block.timestamp;
 
-        emit CategoryModified(_id, _title, _active);
+        emit CategoryModified(_id, _active);
     }
 
     function destroyCategory(uint256 _id)
@@ -738,43 +635,32 @@ contract CampaignFactory is
         // delete the category from `campaignCategories`
         delete campaignCategories[_id];
 
-        // set the category name as being available
-        categoryIsTaken[campaignCategories[_id].title] = false;
-
         emit CategoryDestroyed(_id);
     }
 
-    function createFeaturePackage(
-        string memory _name,
-        uint256 _cost,
-        uint256 _time
-    ) external onlyAdmin whenNotPaused nonReentrant {
-        featurePackages.push(
-            Featured(_name, block.timestamp, 0, _time, _cost, true)
-        );
+    function createFeaturePackage(uint256 _cost, uint256 _time)
+        external
+        onlyAdmin
+        whenNotPaused
+        nonReentrant
+    {
+        featurePackages.push(Featured(block.timestamp, 0, _time, _cost, true));
         featurePackageCount = featurePackageCount.add(1);
 
-        emit FeaturePackageAdded(
-            featurePackages.length.sub(1),
-            _name,
-            _cost,
-            _time
-        );
+        emit FeaturePackageAdded(featurePackages.length.sub(1), _cost, _time);
     }
 
     function modifyFeaturedPackage(
         uint256 _packageId,
-        string memory _name,
         uint256 _cost,
         uint256 _time
     ) external onlyAdmin whenNotPaused nonReentrant {
         require(featurePackages[_packageId].exists);
         featurePackages[_packageId].cost = _cost;
         featurePackages[_packageId].time = _time;
-        featurePackages[_packageId].name = _name;
         featurePackages[_packageId].updatedAt = block.timestamp;
 
-        emit FeaturePackageModified(_packageId, _name, _cost, _time);
+        emit FeaturePackageModified(_packageId, _cost, _time);
     }
 
     function destroyFeaturedPackage(uint256 _packageId)

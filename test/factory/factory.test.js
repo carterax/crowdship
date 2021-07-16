@@ -1,6 +1,5 @@
 // test/factory.test.js
 const { expect } = require('chai');
-const { internet } = require('faker');
 
 // Load compiled artifacts
 const Factory = artifacts.require('CampaignFactory');
@@ -28,8 +27,6 @@ contract('CampaignFactory', function([
     this.factory = await Factory.new();
     this.testToken = await TestToken.new();
     this.campaign = await Campaign.new();
-    this.adminMail = internet.email();
-    this.adminUserName = internet.userName();
     this.owner = owner;
     this.factoryWallet = factoryWallet;
     this.addr1 = addr1;
@@ -37,12 +34,9 @@ contract('CampaignFactory', function([
     this.addr3 = addr3;
     this.addr4 = addr4;
 
-    await this.factory.__CampaignFactory_init(
-      this.owner,
-      this.adminMail,
-      this.adminUserName,
-      this.factoryWallet
-    );
+    await this.factory.__CampaignFactory_init(this.factoryWallet, {
+      from: this.owner,
+    });
 
     await this.testToken.__TestToken_init('Test Token', 'TT', {
       from: this.owner,
@@ -52,11 +46,11 @@ contract('CampaignFactory', function([
     const adminId = await this.factory.userID(this.owner);
     await this.factory.toggleUserApproval(adminId, true);
 
-    await this.factory.signUp(internet.email(), internet.userName(), {
+    await this.factory.signUp({
       from: this.addr1,
     });
 
-    await this.factory.signUp(internet.email(), internet.userName(), {
+    await this.factory.signUp({
       from: this.addr2,
     });
 
@@ -70,7 +64,7 @@ contract('CampaignFactory', function([
   /* -------------------------------------------------------------------------- */
   /*                          general factory settings                          */
   /* -------------------------------------------------------------------------- */
-  it('should renounce oneself from admin', async function() {
+  it('should renounce oneself as admin', async function() {
     const DEFAULT_ADMIN_ROLE = await this.factory.DEFAULT_ADMIN_ROLE();
     await this.factory.renounceAdmin({ from: this.owner });
     expect(
@@ -122,8 +116,8 @@ contract('CampaignFactory', function([
     );
   });
   it('should set commission per category', async function() {
-    await this.factory.createCategory('Health', true);
-    await this.factory.createCategory('Charity', false);
+    await this.factory.createCategory(true);
+    await this.factory.createCategory(false);
     await this.factory.setCategoryCommission(0, 4);
     await this.factory.setCategoryCommission(1, 2);
     expect(await this.factory.categoryCommission(0)).to.be.bignumber.equal(
@@ -137,7 +131,7 @@ contract('CampaignFactory', function([
     await expectRevert.unspecified(this.factory.setCategoryCommission(0, 4));
   });
   it('should fail if non admin tries to set commission per category', async function() {
-    await this.factory.createCategory('Health', true);
+    await this.factory.createCategory(true);
     await expectRevert.unspecified(
       this.factory.setCategoryCommission(0, 4, { from: this.addr2 })
     );

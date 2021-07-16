@@ -1,7 +1,6 @@
 // 2021-04-01
 // test/campaign.test.js
 const { expect, assert } = require('chai');
-const { internet, lorem } = require('faker');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
 // Load compiled artifacts
@@ -24,10 +23,6 @@ contract('Campaign', function([
     this.addr1 = addr1;
     this.addr2 = addr2;
     this.addr3 = addr3;
-    this.adminMail = internet.email();
-    this.adminUserName = internet.userName();
-    this.campaignOwnerEmail = internet.email();
-    this.campaignOwnerUsername = internet.userName();
     this.campaignImplementation = await Campaign.new();
 
     // test token setup
@@ -38,43 +33,27 @@ contract('Campaign', function([
 
     // factory setup
     this.factory = await Factory.new();
-    await this.factory.__CampaignFactory_init(
-      this.root,
-      this.adminMail,
-      this.adminUserName,
-      this.factoryWallet
-    );
+    await this.factory.__CampaignFactory_init(this.factoryWallet, {
+      from: this.root,
+    });
     await this.factory.setCampaignImplementationAddress(
       this.campaignImplementation.address,
       { from: this.root }
     );
-    await this.factory.createCategory('Sports', true, { from: this.root });
+    await this.factory.createCategory(true, { from: this.root });
     await this.factory.addToken(this.testToken.address, { from: this.root });
     await this.factory.toggleAcceptedToken(this.testToken.address, true, {
       from: this.root,
     });
 
     // campaign setup
-    this.campaignTitle = lorem.sentence();
-    this.campaignPitch = lorem.paragraph();
-    await this.factory.signUp(
-      this.campaignOwnerEmail,
-      this.campaignOwnerUsername,
-      {
-        from: this.campaignOwner,
-      }
-    );
+    await this.factory.signUp({
+      from: this.campaignOwner,
+    });
     await this.factory.toggleUserApproval(1, true, { from: this.root });
-    await this.factory.createCampaign(
-      300,
-      0,
-      this.campaignTitle,
-      this.campaignPitch,
-      this.testToken.address,
-      {
-        from: this.campaignOwner,
-      }
-    );
+    await this.factory.createCampaign(300, 0, {
+      from: this.campaignOwner,
+    });
     const { campaign } = await this.factory.deployedCampaigns(0);
     this.campaignInstance = await Campaign.at(campaign);
   });
@@ -86,4 +65,6 @@ contract('Campaign', function([
   it('campaign is paused on initialization', async function() {
     assert.equal(await this.campaignInstance.paused(), true);
   });
+
+  it('admin or campaign owner can set campaign minimum contribution and goals', async function() {});
 });
