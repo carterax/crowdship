@@ -143,8 +143,9 @@ No description
 
 
 ### setCampaignDetails
-No description
->        Modifies campaign details while it's not approved
+    Modifies campaign details while it's not approved
+
+>        Testing around
 
 
 #### Declaration

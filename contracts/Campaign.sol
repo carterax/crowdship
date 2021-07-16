@@ -12,10 +12,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "./utils/AccessControl.sol";
 import "./utils/FactoryInterface.sol";
 
-/**
-@title Campaign Implementation
-@author Emmanuel Ojukwu
-*/
 contract Campaign is
     Initializable,
     AccessControl,
@@ -246,7 +242,8 @@ contract Campaign is
     }
 
     /**
-     * @dev        Modifies campaign details while it's not approved
+     * @notice     Modifies campaign details while it's not approved
+     * @dev        Testing around
      * @param      _target              Contribution target of the campaign
      * @param      _minimumContribution The minimum amout required to be an approver
      * @param      _time                How long until the campaign stops receiving contributions
