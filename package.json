@@ -9,7 +9,8 @@
     "test": "npx truffle test",
     "migrate": "npx truffle migrate",
     "coverage": "npx truffle run coverage",
-    "compile": "npx truffle compile --all"
+    "compile": "npx truffle compile --all",
+    "docs": "npx solidity-docgen --solc-module solc-0.8 --templates ./docs/template"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.21.0",

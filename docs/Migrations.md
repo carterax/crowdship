@@ -21,7 +21,6 @@
 ## Modifiers
 
 ### restricted
-No description
 
 
 #### Declaration
@@ -34,7 +33,6 @@ No description
 ## Functions
 
 ### setCompleted
-No description
 
 
 #### Declaration

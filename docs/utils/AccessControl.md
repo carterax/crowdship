@@ -13,7 +13,6 @@
 ## Modifiers
 
 ### onlyAdmin
-No description
 > Restricted to members of the admin role.
 
 #### Declaration
@@ -23,7 +22,6 @@ No description
 
 
 ### onlyManager
-No description
 > Restricted to members of the manager role.
 
 #### Declaration

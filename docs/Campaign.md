@@ -43,7 +43,6 @@
 ## Modifiers
 
 ### onlyFactory
-No description
 
 
 #### Declaration
@@ -53,7 +52,6 @@ No description
 
 
 ### adminOrFactory
-No description
 
 
 #### Declaration
@@ -63,7 +61,6 @@ No description
 
 
 ### campaignIsActive
-No description
 
 
 #### Declaration
@@ -73,7 +70,6 @@ No description
 
 
 ### campaignIsNotApproved
-No description
 
 
 #### Declaration
@@ -83,7 +79,6 @@ No description
 
 
 ### userIsVerified
-No description
 
 
 #### Declaration
@@ -93,7 +88,6 @@ No description
 
 
 ### canApproveRequest
-No description
 
 
 #### Declaration
@@ -103,7 +97,6 @@ No description
 
 
 ### deadlineIsUp
-No description
 
 
 #### Declaration
@@ -113,7 +106,6 @@ No description
 
 
 ### targetIsMet
-No description
 
 
 #### Declaration
@@ -126,7 +118,6 @@ No description
 ## Functions
 
 ### __Campaign_init
-No description
 > constructor
 
 #### Declaration
@@ -143,9 +134,7 @@ No description
 
 
 ### setCampaignDetails
-    Modifies campaign details while it's not approved
-
->        Testing around
+>     Modifies campaign details while it's not approved
 
 
 #### Declaration
@@ -174,7 +163,6 @@ No description
 |`_goalType` | uint256 |            Indicates if campaign is fixed or flexible with contributions
 
 ### setAcceptedToken
-No description
 >        Modifies campaign's accepted token provided factory approves it
 
 
@@ -198,7 +186,6 @@ No description
 |`_token` | address |   Address of token to be used for transactions
 
 ### setGoalType
-No description
 >        Modifies campaign's goal type provided deadline is expired
 
 
@@ -223,7 +210,6 @@ No description
 |`_type` | uint256 |    Indicates if campaign is fixed or flexible with contributions
 
 ### extendDeadline
-No description
 >        Extends campaign contribution deadline
 
 
@@ -248,7 +234,6 @@ No description
 |`_time` | uint256 |    How long until the campaign stops receiving contributions
 
 ### resetDeadlineSetTimes
-No description
 >        Resets the number of times campaign manager has extended deadlines
 
 #### Declaration
@@ -268,7 +253,6 @@ No description
 
 
 ### createReward
-No description
 >        Creates rewards contributors can attain
 
 
@@ -299,7 +283,6 @@ No description
 |`_active` | bool |       Indicates if contributors can attain the reward
 
 ### modifyReward
-No description
 >        Modifies a reward by id
 
 
@@ -332,7 +315,6 @@ No description
 |`_active` | bool |          Indicates if contributors can attain the reward
 
 ### destroyReward
-No description
 >        Deletes a reward by id
 
 
@@ -357,7 +339,6 @@ No description
 |`_rewardId` | uint256 |    Reward unique id
 
 ### campaignSentReward
-No description
 
 
 #### Declaration
@@ -378,7 +359,6 @@ No description
 
 
 ### userReceivedCampaignReward
-No description
 
 
 #### Declaration
@@ -398,7 +378,6 @@ No description
 
 
 ### contribute
-No description
 
 
 #### Declaration
@@ -419,7 +398,6 @@ No description
 
 
 ### withdrawOwnContribution
-No description
 
 
 #### Declaration
@@ -439,7 +417,6 @@ No description
 
 
 ### withdrawContributionForUser
-No description
 
 
 #### Declaration
@@ -458,7 +435,6 @@ No description
 
 
 ### createRequest
-No description
 
 
 #### Declaration
@@ -480,7 +456,6 @@ No description
 
 
 ### voteOnRequest
-No description
 
 
 #### Declaration
@@ -501,7 +476,6 @@ No description
 
 
 ### finalizeRequest
-No description
 
 
 #### Declaration
@@ -522,7 +496,6 @@ No description
 
 
 ### campaignApprovalRequest
-No description
 
 
 #### Declaration
@@ -542,7 +515,6 @@ No description
 
 
 ### reviewMode
-No description
 
 
 #### Declaration
@@ -563,7 +535,6 @@ No description
 
 
 ### reviewCampaignPerformance
-No description
 
 
 #### Declaration
@@ -583,7 +554,6 @@ No description
 
 
 ### markCampaignComplete
-No description
 
 
 #### Declaration
@@ -604,7 +574,6 @@ No description
 
 
 ### unpauseCampaign
-No description
 
 
 #### Declaration
@@ -623,7 +592,6 @@ No description
 
 
 ### pauseCampaign
-No description
 
 
 #### Declaration
@@ -646,91 +614,76 @@ No description
 ## Events
 
 ### CampaignDetailsModified
-No description
 > `Campaign`
   
 
 
 ### CampaignTokenChanged
-No description
 
   
 
 
 ### CampaignGoalTypeChange
-No description
 
   
 
 
 ### CampaignDeadlineExtended
-No description
 
   
 
 
 ### ContributionMade
-No description
 > `Contribution Events`
   
 
 
 ### ContributionWithdrawn
-No description
 
   
 
 
 ### RequestAdded
-No description
 > `Request Events`
   
 
 
 ### RequestComplete
-No description
 
   
 
 
 ### RewardCreated
-No description
 > `Reward Events`
   
 
 
 ### RewardModified
-No description
 
   
 
 
 ### RewardDestroyed
-No description
 
   
 
 
 ### CampaignApprovalRequest
-No description
 
   
 
 
 ### ContributionWithReward
-No description
 > `Rwardee Events`
   
 
 
 ### Voted
-No description
 > `Vote Events`
   
 
 
 ### CampaignStateChange
-No description
 > `Campaign State Events`
   
 

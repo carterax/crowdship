@@ -33,7 +33,6 @@
 ## Functions
 
 ### canManageCampaigns
-No description
 
 
 #### Declaration
@@ -48,7 +47,6 @@ No modifiers
 
 
 ### receiveCampaignCommission
-No description
 
 
 #### Declaration
@@ -63,7 +61,6 @@ No modifiers
 
 
 ### addCampaignToUserHistory
-No description
 
 
 #### Declaration

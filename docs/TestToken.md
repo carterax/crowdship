@@ -14,7 +14,6 @@
 ## Functions
 
 ### __TestToken_init
-No description
 > Constructor that gives _msgSender() all of existing tokens.
 
 #### Declaration

@@ -50,7 +50,6 @@
 ## Modifiers
 
 ### campaignOwnerOrManager
-No description
 
 
 #### Declaration
@@ -60,7 +59,6 @@ No description
 
 
 ### onlyCampaignOwner
-No description
 
 
 #### Declaration
@@ -70,7 +68,6 @@ No description
 
 
 ### campaignExists
-No description
 
 
 #### Declaration
@@ -80,7 +77,6 @@ No description
 
 
 ### campaignIsEnabled
-No description
 
 
 #### Declaration
@@ -90,7 +86,6 @@ No description
 
 
 ### userOrManager
-No description
 
 
 #### Declaration
@@ -100,7 +95,6 @@ No description
 
 
 ### userIsVerified
-No description
 
 
 #### Declaration
@@ -113,7 +107,6 @@ No description
 ## Functions
 
 ### __CampaignFactory_init
-No description
 > Add `root` to the admin role as a member.
 
 #### Declaration
@@ -130,7 +123,6 @@ No description
 
 
 ### setFactoryWallet
-No description
 
 
 #### Declaration
@@ -148,7 +140,6 @@ No description
 
 
 ### receiveCampaignCommission
-No description
 
 
 #### Declaration
@@ -168,7 +159,6 @@ No description
 
 
 ### setCampaignImplementationAddress
-No description
 
 
 #### Declaration
@@ -186,7 +176,6 @@ No description
 
 
 ### setDefaultCommission
-No description
 
 
 #### Declaration
@@ -204,7 +193,6 @@ No description
 
 
 ### setCategoryCommission
-No description
 
 
 #### Declaration
@@ -222,7 +210,6 @@ No description
 
 
 ### addToken
-No description
 
 
 #### Declaration
@@ -240,7 +227,6 @@ No description
 
 
 ### toggleAcceptedToken
-No description
 
 
 #### Declaration
@@ -258,7 +244,6 @@ No description
 
 
 ### addRole
-No description
 > Add an account to the manager role. Restricted to admins.
 
 #### Declaration
@@ -276,7 +261,6 @@ No description
 
 
 ### removeRole
-No description
 > Remove an account from the manager role. Restricted to admins.
 
 #### Declaration
@@ -294,7 +278,6 @@ No description
 
 
 ### renounceAdmin
-No description
 > Remove oneself from the admin role.
 
 #### Declaration
@@ -309,7 +292,6 @@ No modifiers
 
 
 ### canManageCampaigns
-No description
 
 
 #### Declaration
@@ -324,7 +306,6 @@ No modifiers
 
 
 ### signUp
-No description
 
 
 #### Declaration
@@ -342,7 +323,6 @@ No description
 
 
 ### toggleUserApproval
-No description
 
 
 #### Declaration
@@ -361,7 +341,6 @@ No description
 
 
 ### destroyUser
-No description
 
 
 #### Declaration
@@ -380,7 +359,6 @@ No description
 
 
 ### addCampaignToUserHistory
-No description
 
 
 #### Declaration
@@ -399,7 +377,6 @@ No description
 
 
 ### createCampaign
-No description
 
 
 #### Declaration
@@ -418,7 +395,6 @@ No description
 
 
 ### toggleCampaignApproval
-No description
 
 
 #### Declaration
@@ -438,7 +414,6 @@ No description
 
 
 ### toggleCampaignActive
-No description
 
 
 #### Declaration
@@ -458,7 +433,6 @@ No description
 
 
 ### modifyCampaignCategory
-No description
 
 
 #### Declaration
@@ -478,7 +452,6 @@ No description
 
 
 ### featureCampaign
-No description
 
 
 #### Declaration
@@ -500,7 +473,6 @@ No description
 
 
 ### pauseCampaignFeatured
-No description
 
 
 #### Declaration
@@ -521,7 +493,6 @@ No description
 
 
 ### unpauseCampaignFeatured
-No description
 
 
 #### Declaration
@@ -542,7 +513,6 @@ No description
 
 
 ### destroyCampaign
-No description
 
 
 #### Declaration
@@ -562,7 +532,6 @@ No description
 
 
 ### createCategory
-No description
 
 
 #### Declaration
@@ -581,7 +550,6 @@ No description
 
 
 ### modifyCategory
-No description
 
 
 #### Declaration
@@ -600,7 +568,6 @@ No description
 
 
 ### destroyCategory
-No description
 
 
 #### Declaration
@@ -619,7 +586,6 @@ No description
 
 
 ### createFeaturePackage
-No description
 
 
 #### Declaration
@@ -638,7 +604,6 @@ No description
 
 
 ### modifyFeaturedPackage
-No description
 
 
 #### Declaration
@@ -657,7 +622,6 @@ No description
 
 
 ### destroyFeaturedPackage
-No description
 
 
 #### Declaration
@@ -676,7 +640,6 @@ No description
 
 
 ### unpauseCampaign
-No description
 
 
 #### Declaration
@@ -695,7 +658,6 @@ No description
 
 
 ### pauseCampaign
-No description
 
 
 #### Declaration
@@ -718,115 +680,96 @@ No description
 ## Events
 
 ### CampaignDeployed
-No description
 > `Campaign Events`
   
 
 
 ### CampaignDestroyed
-No description
 
   
 
 
 ### CampaignApproval
-No description
 
   
 
 
 ### CampaignActiveToggle
-No description
 
   
 
 
 ### CampaignCategoryChange
-No description
 
   
 
 
 ### CampaignFeatured
-No description
 
   
 
 
 ### CampaignFeaturePaused
-No description
 
   
 
 
 ### CampaignFeatureUnpaused
-No description
 
   
 
 
 ### UserAdded
-No description
 > `User Events`
   
 
 
 ### UserModified
-No description
 
   
 
 
 ### UserApproval
-No description
 
   
 
 
 ### UserJoinedCampaign
-No description
 
   
 
 
 ### UserRemoved
-No description
 
   
 
 
 ### CategoryAdded
-No description
 > `Category Events`
   
 
 
 ### CategoryModified
-No description
 
   
 
 
 ### CategoryDestroyed
-No description
 
   
 
 
 ### FeaturePackageAdded
-No description
 > `Feature Package Events`
   
 
 
 ### FeaturePackageModified
-No description
 
   
 
 
 ### FeaturePackageDestroyed
-No description
 
   
 
