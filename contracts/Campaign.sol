@@ -242,8 +242,7 @@ contract Campaign is
     }
 
     /**
-     * @notice     Modifies campaign details while it's not approved
-     * @dev        Testing around
+     * @dev     Modifies campaign details while it's not approved
      * @param      _target              Contribution target of the campaign
      * @param      _minimumContribution The minimum amout required to be an approver
      * @param      _time                How long until the campaign stops receiving contributions
