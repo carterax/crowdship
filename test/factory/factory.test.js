@@ -82,39 +82,39 @@ contract('CampaignFactory', function([
   it('deployer owns contract', async function() {
     expect(await this.factory.root()).to.be.equal(this.owner);
   });
-  it('should change factory wallet', async function() {
-    await this.factory.setFactoryWallet(otherFactoryWallet);
-    expect(await this.factory.factoryWallet()).to.be.equal(otherFactoryWallet);
-  });
-  it('should fail if non admin tries to change factory wallet', async function() {
-    await expectRevert.unspecified(
-      this.factory.setFactoryWallet(otherFactoryWallet, { from: this.addr1 })
-    );
-  });
-  it('should set campaign implementation address', async function() {
-    await this.factory.setCampaignImplementationAddress(this.campaign.address);
-    expect(await this.factory.campaignImplementation()).to.be.equal(
-      this.campaign.address
-    );
-  });
-  it('should fail if non admin tries to set implementation address', async function() {
-    await expectRevert.unspecified(
-      this.factory.setCampaignImplementationAddress(this.campaign.address, {
-        from: this.addr4,
-      })
-    );
-  });
-  it('should set default commission', async function() {
-    await this.factory.setDefaultCommission(5);
-    expect(await this.factory.defaultCommission()).to.be.bignumber.equal(
-      new BN('5')
-    );
-  });
-  it('should fail if non admin tries to set default commission', async function() {
-    await expectRevert.unspecified(
-      this.factory.setDefaultCommission(5, { from: this.addr3 })
-    );
-  });
+  // it('should change factory settings', async function() {
+  //   await this.factory.setFactoryWallet(otherFactoryWallet);
+  //   expect(await this.factory.factoryWallet()).to.be.equal(otherFactoryWallet);
+  // });
+  // it('should fail if non admin tries to change factory wallet', async function() {
+  //   await expectRevert.unspecified(
+  //     this.factory.setFactoryWallet(otherFactoryWallet, { from: this.addr1 })
+  //   );
+  // });
+  // it('should set campaign implementation address', async function() {
+  //   await this.factory.setCampaignImplementationAddress(this.campaign.address);
+  //   expect(await this.factory.campaignImplementation()).to.be.equal(
+  //     this.campaign.address
+  //   );
+  // });
+  // it('should fail if non admin tries to set implementation address', async function() {
+  //   await expectRevert.unspecified(
+  //     this.factory.setCampaignImplementationAddress(this.campaign.address, {
+  //       from: this.addr4,
+  //     })
+  //   );
+  // });
+  // it('should set default commission', async function() {
+  //   await this.factory.setDefaultCommission(5);
+  //   expect(await this.factory.defaultCommission()).to.be.bignumber.equal(
+  //     new BN('5')
+  //   );
+  // });
+  // it('should fail if non admin tries to set default commission', async function() {
+  //   await expectRevert.unspecified(
+  //     this.factory.setDefaultCommission(5, { from: this.addr3 })
+  //   );
+  // });
   it('should set commission per category', async function() {
     await this.factory.createCategory(true);
     await this.factory.createCategory(false);

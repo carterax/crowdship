@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 
 import "./utils/AccessControl.sol";
 import "./utils/FactoryInterface.sol";
+import "./utils/CampaignCommission.sol";
 
 contract Campaign is
     Initializable,
@@ -510,7 +511,7 @@ contract Campaign is
 
         if (_withReward) {
             require(
-                rewards[_rewardId].value >= msg.value &&
+                msg.value >= rewards[_rewardId].value &&
                     rewards[_rewardId].stock > 0 &&
                     rewards[_rewardId].exists &&
                     rewards[_rewardId].active
@@ -656,7 +657,12 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
+        uint256 factoryPercentFee = CampaignCommission.factoryPercentFee(
+            campaignFactoryContract,
+            campaignID
+        );
         require(totalCampaignContribution >= target); // target is acheived
+        require(_value.mul(factoryPercentFee) >= 10000); // ensure request above minimum
 
         // before creating a new request all previous request should be complete
         require(!requestOngoing && address(_recipient) != address(0));
@@ -715,28 +721,14 @@ contract Campaign is
             request.approvalCount > (approversCount.div(2)) && !request.complete
         );
 
-        // get factory cut
-        uint256 campaignCategory;
-        uint256 percentCommission;
-
-        (, campaignCategory, , ) = campaignFactoryContract.deployedCampaigns(
+        uint256 factoryPercentFee = CampaignCommission.factoryPercentFee(
+            campaignFactoryContract,
             campaignID
         );
-        percentCommission = campaignFactoryContract.categoryCommission(
-            campaignCategory
-        );
 
-        if (percentCommission == 0) {
-            percentCommission = campaignFactoryContract.defaultCommission();
-        }
+        uint256 factoryFee = request.value.mul(factoryPercentFee).div(10000);
 
-        uint256 factoryCommission = request.value.sub(
-            percentCommission.mul(request.value).div(100)
-        );
-        uint256[2] memory payouts = [
-            request.value.sub(factoryCommission),
-            factoryCommission
-        ];
+        uint256[2] memory payouts = [request.value.sub(factoryFee), factoryFee];
         address payable[2] memory addresses = [
             request.recepient,
             campaignFactoryContract.factoryWallet()
@@ -746,7 +738,7 @@ contract Campaign is
         requestOngoing = false;
 
         campaignFactoryContract.receiveCampaignCommission(
-            factoryCommission,
+            factoryFee,
             address(this)
         );
 

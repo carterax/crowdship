@@ -3,7 +3,7 @@ const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
 async function campaignSetup(factory) {
   await factory.createCategory(true);
-  await factory.createCampaign(300, 0);
+  await factory.createCampaign(0);
 }
 
 async function featureCampaignSetup(
@@ -17,7 +17,7 @@ async function featureCampaignSetup(
   } = {}
 ) {
   await factory.createCategory(true);
-  await factory.createCampaign(300, 0);
+  await factory.createCampaign(0);
 
   if (activateCampaign) await factory.toggleCampaignActive(0, true);
   if (approveCampaign) await factory.toggleCampaignApproval(0, true);
@@ -31,10 +31,9 @@ module.exports = function() {
   /*                               createCampaign                               */
   /* -------------------------------------------------------------------------- */
   it('can create campaign', async function() {
-    const minimum = 300,
-      category = 0;
+    const category = 0;
     await this.factory.createCategory(true);
-    const receipt = await this.factory.createCampaign(minimum, category);
+    const receipt = await this.factory.createCampaign(category);
     const campaign = await this.factory.deployedCampaigns(0);
     const block = await web3.eth.getBlock(receipt.receipt.blockNumber);
 
@@ -59,21 +58,21 @@ module.exports = function() {
     ).to.be.bignumber.equal(new BN('0'));
     expectEvent(receipt, 'CampaignDeployed', {
       campaignId: new BN('0'),
-      minimum: new BN(minimum),
+      userId: new BN('0'),
       category: new BN(category),
     });
   });
   it("should not create campaign if category isn't active", async function() {
     await this.factory.createCategory(false);
-    await expectRevert.unspecified(this.factory.createCampaign(300, 0));
+    await expectRevert.unspecified(this.factory.createCampaign(0));
   });
   it('should not create campaign if category does not exist', async function() {
-    await expectRevert.unspecified(this.factory.createCampaign(300, 0));
+    await expectRevert.unspecified(this.factory.createCampaign(0));
   });
   it('cannot create campaign if user is not verified', async function() {
     await this.factory.createCategory(true);
     await expectRevert.unspecified(
-      this.factory.createCampaign(300, 0, {
+      this.factory.createCampaign(0, {
         from: this.addr1,
       })
     );
@@ -94,7 +93,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   it('address without role cannot approve campaigns', async function() {
     await this.factory.createCategory(true);
-    await this.factory.createCampaign(300, 0);
+    await this.factory.createCampaign(0);
     await expectRevert.unspecified(
       this.factory.toggleCampaignApproval(0, true, { from: this.addr1 })
     );
@@ -168,7 +167,7 @@ module.exports = function() {
     const userId = await this.factory.userID(this.addr1);
     await this.factory.toggleUserApproval(userId, true);
     await this.factory.createCategory(true);
-    await this.factory.createCampaign(300, 0, {
+    await this.factory.createCampaign(0, {
       from: this.addr1,
     });
     await expectRevert.unspecified(
@@ -196,7 +195,7 @@ module.exports = function() {
     await this.factory.toggleUserApproval(1, true);
     await this.factory.createCategory(true);
     await this.factory.createCategory(true);
-    await this.factory.createCampaign(300, 0, { from: this.addr1 });
+    await this.factory.createCampaign(0, { from: this.addr1 });
     const receipt = await this.factory.modifyCampaignCategory(0, 1, {
       from: this.addr1,
     });
@@ -250,8 +249,8 @@ module.exports = function() {
   it('should return total count of campaigns', async function() {
     await this.factory.createCategory(true);
     await this.factory.createCategory(true);
-    await this.factory.createCampaign(300, 0);
-    await this.factory.createCampaign(300, 1);
+    await this.factory.createCampaign(0);
+    await this.factory.createCampaign(1);
     expect(await this.factory.campaignCount()).to.be.bignumber.equal(
       new BN('2')
     );
@@ -276,7 +275,7 @@ module.exports = function() {
       userId = await this.factory.userID(this.addr1);
     await this.factory.createCategory(true);
     await this.factory.toggleUserApproval(userId, true);
-    await this.factory.createCampaign(300, catID, { from: this.addr1 });
+    await this.factory.createCampaign(catID, { from: this.addr1 });
     await expectRevert.unspecified(
       this.factory.destroyCampaign(campaignID, { from: this.addr2 })
     );

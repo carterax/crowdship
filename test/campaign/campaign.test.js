@@ -36,8 +36,15 @@ contract('Campaign', function([
     await this.factory.__CampaignFactory_init(this.factoryWallet, {
       from: this.root,
     });
-    await this.factory.setCampaignImplementationAddress(
+    await this.factory.setFactorySettings(
+      factoryWallet,
       this.campaignImplementation.address,
+      10,
+      3,
+      604800,
+      86400,
+      1000,
+      10000,
       { from: this.root }
     );
     await this.factory.createCategory(true, { from: this.root });
@@ -51,7 +58,7 @@ contract('Campaign', function([
       from: this.campaignOwner,
     });
     await this.factory.toggleUserApproval(1, true, { from: this.root });
-    await this.factory.createCampaign(300, 0, {
+    await this.factory.createCampaign(0, {
       from: this.campaignOwner,
     });
     const { campaign } = await this.factory.deployedCampaigns(0);

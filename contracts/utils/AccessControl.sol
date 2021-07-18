@@ -12,6 +12,7 @@ contract AccessControl is AccessControlUpgradeable {
     }
 
     /// @dev Restricted to members of the manager role.
+    /// @param  role Role to be checked
     modifier onlyManager(bytes32 role) {
         require(hasRole(role, msg.sender));
         _;

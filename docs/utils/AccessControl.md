@@ -24,12 +24,18 @@
 ### onlyManager
 > Restricted to members of the manager role.
 
+
 #### Declaration
 ```solidity
-  modifier onlyManager
+  modifier onlyManager(
+    bytes32 role
+  )
 ```
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`role` | bytes32 | Role to be checked
 
 
 

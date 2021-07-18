@@ -491,11 +491,14 @@ No modifiers
 |`_token` | uint256 |               Address of token to be used for transactions by default
 ---  
 ### modifyCampaignCategory
+>         Modifies a campaign's category.
 
 
 #### Declaration
 ```solidity
   function modifyCampaignCategory(
+    uint256 _campaignId,
+    uint256 _newCategoryId
   ) external campaignOwnerOrManager campaignExists whenNotPaused
 ```
 
@@ -506,7 +509,11 @@ No modifiers
 | campaignExists |
 | whenNotPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |      ID of the campaign
+|`_newCategoryId` | uint256 |   ID of the category being switched to
 ---  
 ### campaignApprovalRequest
 >        Called by a campaign owner seeking to be approved and ready to receive contributions
@@ -533,7 +540,7 @@ No modifiers
 |`_campaign` | address |    Address of campaign instance
 ---  
 ### featureCampaign
->        Called by a campaign owner seeking to be approved and ready to receive contributions
+>        Purchases time for which the specified campaign will be featured. Restricted to
 
 
 #### Declaration
@@ -557,15 +564,17 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignId` | uint256 |    Address of campaign instance
+|`_campaignId` | uint256 |    ID of the campaign
 |`_token` | uint256 |         Address of token used to purchase feature package
 ---  
 ### pauseCampaignFeatured
+>        Pauses campaign feature time storing what's left for later use. Restricted to campaign owner or manager
 
 
 #### Declaration
 ```solidity
   function pauseCampaignFeatured(
+    uint256 _campaignId
   ) external campaignOwnerOrManager campaignExists userIsVerified whenNotPaused
 ```
 
@@ -577,7 +586,10 @@ No modifiers
 | userIsVerified |
 | whenNotPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |   ID of the campaign
 ---  
 ### unpauseCampaignFeatured
 >        Resumes campaign feature time
@@ -601,7 +613,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignId` | uint256 |   ID of campaign
+|`_campaignId` | uint256 |   ID of the campaign
 ---  
 ### destroyCampaign
 >        Deletes a campaign

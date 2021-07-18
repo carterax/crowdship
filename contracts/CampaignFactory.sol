@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
@@ -29,7 +29,7 @@ contract CampaignFactory is
     /// @dev `Campaign Events`
     event CampaignDeployed(
         uint256 indexed campaignId,
-        uint256 owner,
+        uint256 userId,
         uint256 category
     );
     event CampaignDestroyed(uint256 indexed campaignId);
@@ -486,32 +486,35 @@ contract CampaignFactory is
         );
     }
 
-    function modifyCampaignCategory(uint256 _id, uint256 _newCategory)
+    /**
+     * @dev         Modifies a campaign's category.
+     * @param      _campaignId      ID of the campaign
+     * @param      _newCategoryId   ID of the category being switched to
+     */
+    function modifyCampaignCategory(uint256 _campaignId, uint256 _newCategoryId)
         external
-        campaignOwnerOrManager(_id)
-        campaignExists(_id)
+        campaignOwnerOrManager(_campaignId)
+        campaignExists(_campaignId)
         whenNotPaused
     {
-        uint256 _oldCategory = deployedCampaigns[_id].category;
+        uint256 _oldCategoryId = deployedCampaigns[_campaignId].category;
 
-        if (_oldCategory != _newCategory) {
-            require(campaignCategories[_newCategory].exists);
+        if (_oldCategoryId != _newCategoryId) {
+            require(campaignCategories[_newCategoryId].exists);
 
-            deployedCampaigns[_id].category = _newCategory;
-            campaignCategories[_oldCategory].campaignCount = campaignCategories[
-                _oldCategory
-            ]
+            deployedCampaigns[_campaignId].category = _newCategoryId;
+            campaignCategories[_oldCategoryId]
+            .campaignCount = campaignCategories[_oldCategoryId]
             .campaignCount
             .sub(1);
-            campaignCategories[_newCategory].campaignCount = campaignCategories[
-                _newCategory
-            ]
+            campaignCategories[_newCategoryId]
+            .campaignCount = campaignCategories[_newCategoryId]
             .campaignCount
             .add(1);
 
-            deployedCampaigns[_id].updatedAt = block.timestamp;
+            deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-            emit CampaignCategoryChange(_id, _newCategory);
+            emit CampaignCategoryChange(_campaignId, _newCategoryId);
         }
     }
 
@@ -535,8 +538,8 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Called by a campaign owner seeking to be approved and ready to receive contributions
-     * @param      _campaignId    Address of campaign instance
+     * @dev        Purchases time for which the specified campaign will be featured. Restricted to
+     * @param      _campaignId    ID of the campaign
      * @param      _token         Address of token used to purchase feature package
      */
     function featureCampaign(
@@ -555,7 +558,7 @@ contract CampaignFactory is
     {
         require(tokensApproved[_token]);
         require(featurePackages[_featurePackageId].exists);
-        require(featurePackages[_featurePackageId].cost >= msg.value);
+        require(msg.value >= featurePackages[_featurePackageId].cost);
 
         // update campaign revenue to factory
         factoryRevenue = factoryRevenue.add(msg.value);
@@ -587,6 +590,10 @@ contract CampaignFactory is
         emit CampaignFeatured(_campaignId, _featurePackageId, msg.value);
     }
 
+    /**
+     * @dev        Pauses campaign feature time storing what's left for later use. Restricted to campaign owner or manager
+     * @param      _campaignId   ID of the campaign
+     */
     function pauseCampaignFeatured(uint256 _campaignId)
         external
         campaignOwnerOrManager(_campaignId)
@@ -611,7 +618,7 @@ contract CampaignFactory is
 
     /**
      * @dev        Resumes campaign feature time
-     * @param      _campaignId   ID of campaign
+     * @param      _campaignId   ID of the campaign
      */
     function unpauseCampaignFeatured(uint256 _campaignId)
         external
