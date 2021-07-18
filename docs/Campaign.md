@@ -130,7 +130,7 @@
 | --- | --- | --- |
 |`_campaignFactory` | address |     Address of factory
 |`_root` | address |                Address of campaign owner
-
+---  
 ### setCampaignDetails
 >         Modifies campaign details while it's not approved
 
@@ -160,7 +160,7 @@
 |`_duration` | uint256 |            How long until the campaign stops receiving contributions
 |`_goalType` | uint256 |            Indicates if campaign is fixed or flexible with contributions
 |`_token` | address |               Address of token to be used for transactions by default
-
+---  
 ### setGoalType
 >        Modifies campaign's goal type provided deadline is expired
 
@@ -182,7 +182,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_type` | uint256 |    Indicates if campaign is fixed or flexible with contributions
-
+---  
 ### extendDeadline
 >        Extends campaign contribution deadline
 
@@ -205,7 +205,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_time` | uint256 |    How long until the campaign stops receiving contributions
-
+---  
 ### resetDeadlineSetTimes
 > Resets the number of times campaign manager has extended deadlines
 
@@ -223,7 +223,7 @@
 | whenNotPaused |
 
 
-
+---  
 ### createReward
 >        Creates rewards contributors can attain
 
@@ -252,7 +252,7 @@
 |`_deliveryDate` | uint256 | Time in which reward will be deliverd to contriutors
 |`_stock` | uint256 |        Quantity available for dispatch
 |`_active` | bool |       Indicates if contributors can attain the reward
-
+---  
 ### modifyReward
 >        Modifies a reward by id
 
@@ -283,7 +283,7 @@
 |`_deliveryDate` | uint256 |    Time in which reward will be deliverd to contriutors
 |`_stock` | uint256 |           Quantity available for dispatch
 |`_active` | bool |          Indicates if contributors can attain the reward
-
+---  
 ### destroyReward
 >        Deletes a reward by id
 
@@ -306,7 +306,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_rewardId` | uint256 |    Reward unique id
-
+---  
 ### campaignSentReward
 >        Used by the campaign owner to indicate they delivered the reward to the rewardee
 
@@ -332,7 +332,7 @@
 | --- | --- | --- |
 |`_rewardeeId` | uint256 |  ID to struct containing reward and user to be rewarded
 |`_status` | bool |      Indicates if the delivery was successful or not
-
+---  
 ### userReceivedCampaignReward
 >        Used by a user eligible for rewards to indicate they received their reward
 
@@ -357,7 +357,7 @@
 | --- | --- | --- |
 |`_rewardeeId` | uint256 |  ID to struct containing reward and user to be rewarded
 |`_status` | bool |      Indicates if the delivery was successful or not
-
+---  
 ### contribute
 >        Contribute method enables a user become an approver in the campaign
 
@@ -386,7 +386,7 @@
 |`_token` | address |       Address of token to be used for transactions by default
 |`_rewardId` | uint256 |    Reward unique id
 |`_withReward` | bool |  Indicates if the user wants a reward alongside their contribution
-
+---  
 ### withdrawOwnContribution
 >        Allows withdrawal of balance left after requests, called only by user
 
@@ -412,7 +412,7 @@
 | --- | --- | --- |
 |`_amount` | uint256 |    Amount requested to be withdrawn from contributions
 |`_wallet` | address payable |    Address where amount is delivered
-
+---  
 ### withdrawContributionForUser
 >        Allows withdrawal of balance by factory on behalf of a user. 
                    Cases where users wallet is compromised
@@ -440,7 +440,7 @@
 |`_user` | address |      User whose funds are being requested
 |`_amount` | uint256 |    Amount requested to be withdrawn from contributions
 |`_wallet` | address payable |    Address where amount is delivered
-
+---  
 ### createRequest
 >        Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory
                    Restricted unless target is met and deadline is expired
@@ -467,7 +467,7 @@
 | --- | --- | --- |
 |`_recipient` | address payable |   Address where requested funds are deposited
 |`_value` | uint256 |       Amount being requested by the campaign manager
-
+---  
 ### voteOnRequest
 >        Approvers only method which approves spending request issued by the campaign manager or factory
 
@@ -491,7 +491,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_requestId` | uint256 |   ID of request being voted on
-
+---  
 ### finalizeRequest
 >        Withdrawal method called only when a request receives the right amount votes
 
@@ -516,7 +516,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_requestId` | uint256 |      ID of request being withdrawn
-
+---  
 ### reviewMode
 > Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over
 
@@ -535,7 +535,7 @@
 | whenNotPaused |
 
 
-
+---  
 ### reviewCampaignPerformance
 > User acknowledgement of review state enabled by the campaign owner
 
@@ -553,7 +553,7 @@
 | whenPaused |
 
 
-
+---  
 ### markCampaignComplete
 > Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
 
@@ -572,7 +572,7 @@
 | whenPaused |
 
 
-
+---  
 ### setCampaignState
 > Changes campaign state
 
@@ -588,7 +588,7 @@
 | onlyFactory |
 
 
-
+---  
 ### unpauseCampaign
 > Unpauses the campaign, transactions in the campaign resume per usual
 
@@ -605,7 +605,7 @@
 | onlyFactory |
 
 
-
+---  
 ### pauseCampaign
 > Pauses the campaign, it halts all transactions in the campaign
 
@@ -622,9 +622,7 @@
 | onlyFactory |
 
 
-
-
-***    
+---  
 
 
 ## Events

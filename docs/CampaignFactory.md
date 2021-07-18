@@ -118,7 +118,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_wallet` | address payable |     Address where all revenue gets deposited
-
+---  
 ### setFactorySettings
 >        Factory controlled values dictating how campaigns should run
 
@@ -153,7 +153,7 @@
 |`_minDeadline` | uint256 |                 Minimum time allowed to extend the deadline by
 |`_minimumContributionAllowed` | uint256 |  Minimum allowed contribution in campaigns
 |`_maximumContributionAllowed` | uint256 |  Maximum allowed contribution in campaigns
-
+---  
 ### setCategoryCommission
 >        Adds commission per category basis
 
@@ -176,7 +176,7 @@
 | --- | --- | --- |
 |`_categoryId` | uint256 |  ID of category
 |`_commission` | uint256 |  Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`
-
+---  
 ### addToken
 >        Adds a token that needs approval before being accepted
 
@@ -197,7 +197,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_token` | address |  Address of the token
-
+---  
 ### toggleAcceptedToken
 >        Sets if a token is accepted or not provided it's in the list of token
 
@@ -220,7 +220,7 @@
 | --- | --- | --- |
 |`_token` | address |   Address of the token
 |`_state` | bool |   Indicates if the token is approved or not
-
+---  
 ### addRole
 >        Add an account to the role. Restricted to admins.
 
@@ -243,7 +243,7 @@
 | --- | --- | --- |
 |`_account` | address | Address of user being assigned role
 |`_role` | bytes32 |   Role being assigned
-
+---  
 ### removeRole
 >        Remove an account from the role. Restricted to admins.
 
@@ -266,7 +266,7 @@
 | --- | --- | --- |
 |`_account` | address | Address of user whose role is being removed
 |`_role` | bytes32 |   Role being removed
-
+---  
 ### renounceAdmin
 > Remove oneself from the admin role.
 
@@ -280,7 +280,7 @@
 No modifiers
 
 
-
+---  
 ### canManageCampaigns
 >        Checks if a user can manage a campaign. Called but not restricted to external campaign proxies
 
@@ -299,7 +299,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_user` | address |    Address of user
-
+---  
 ### receiveCampaignCommission
 >        Retrieves campaign commission fees. Restricted to campaign owner.
 
@@ -324,7 +324,7 @@ No modifiers
 | --- | --- | --- |
 |`_amount` | uint256 |      Amount transfered and collected by factory from campaign request finalization
 |`_campaign` | contract Campaign |    Address of campaign instance
-
+---  
 ### signUp
 > Keep track of user addresses. KYC purpose
 
@@ -340,7 +340,7 @@ No modifiers
 | whenNotPaused |
 
 
-
+---  
 ### toggleUserApproval
 >        Approves or disapproves a user
 
@@ -364,7 +364,7 @@ No modifiers
 | --- | --- | --- |
 |`_userId` | uint256 |      ID of the user
 |`_approval` | bool |    Indicates if the user will be approved or not
-
+---  
 ### destroyUser
 >        Deletes a user
 
@@ -386,7 +386,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_userId` | uint256 |  ID of the user
-
+---  
 ### createCampaign
 >        Deploys and tracks a new campagign
 
@@ -408,7 +408,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_categoryId` | uint256 |    ID of category campaign deployer specifies
-
+---  
 ### toggleCampaignApproval
 >        Approves or disapproves a campaign. Restricted to campaign managers
 
@@ -433,7 +433,7 @@ No modifiers
 | --- | --- | --- |
 |`_campaignId` | uint256 |    ID of the campaign
 |`_approval` | bool |      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
-
+---  
 ### toggleCampaignActive
 >        Approves or disapproves a campaign. Restricted to campaign managers
 
@@ -458,7 +458,7 @@ No modifiers
 | --- | --- | --- |
 |`_campaignId` | uint256 |    ID of the campaign
 |`_active` | bool |      Indicates if the campaign will be active or not.  Affects campaign listing and transactions
-
+---  
 ### modifyCampaignDetails
 >         External call to campaign instance modifying it's settings wether it's approved or not
                     Restricted to Campaign Managers
@@ -489,7 +489,7 @@ No modifiers
 |`_duration` | uint256 |            How long until the campaign stops receiving contributions
 |`_goalType` | uint256 |            Indicates if campaign is fixed or flexible with contributions
 |`_token` | uint256 |               Address of token to be used for transactions by default
-
+---  
 ### modifyCampaignCategory
 
 
@@ -507,7 +507,7 @@ No modifiers
 | whenNotPaused |
 
 
-
+---  
 ### campaignApprovalRequest
 >        Called by a campaign owner seeking to be approved and ready to receive contributions
 
@@ -531,7 +531,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaign` | address |    Address of campaign instance
-
+---  
 ### featureCampaign
 >        Called by a campaign owner seeking to be approved and ready to receive contributions
 
@@ -559,7 +559,7 @@ No modifiers
 | --- | --- | --- |
 |`_campaignId` | uint256 |    Address of campaign instance
 |`_token` | uint256 |         Address of token used to purchase feature package
-
+---  
 ### pauseCampaignFeatured
 
 
@@ -578,7 +578,7 @@ No modifiers
 | whenNotPaused |
 
 
-
+---  
 ### unpauseCampaignFeatured
 >        Resumes campaign feature time
 
@@ -602,7 +602,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaignId` | uint256 |   ID of campaign
-
+---  
 ### destroyCampaign
 >        Deletes a campaign
 
@@ -625,7 +625,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaignId` | uint256 |   ID of campaign
-
+---  
 ### createCategory
 >        Creates a category
 
@@ -647,7 +647,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_active` | bool |   Indicates if a category is active allowing for campaigns to be assigned to it
-
+---  
 ### modifyCategory
 >        Modifies details about a category
 
@@ -671,7 +671,7 @@ No modifiers
 | --- | --- | --- |
 |`_categoryId` | uint256 |   ID of the category
 |`_active` | bool |       Indicates if a category is active allowing for campaigns to be assigned to it
-
+---  
 ### destroyCategory
 >        Deletes a category
 
@@ -693,7 +693,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_categoryId` | uint256 |   ID of category
-
+---  
 ### createFeaturePackage
 >        Creates a feature package purchased by campaig owners to feature their campaigns
 
@@ -717,7 +717,7 @@ No modifiers
 | --- | --- | --- |
 |`_cost` | uint256 |        Cost of purchasing this feature package
 |`_time` | uint256 |        How long a campaign will be featured for
-
+---  
 ### modifyFeaturedPackage
 >        Modifies details about a feature package
 
@@ -743,7 +743,7 @@ No modifiers
 |`_packageId` | uint256 |   ID of feature package
 |`_cost` | uint256 |        Cost of purchasing this feature package
 |`_time` | uint256 |        How long a campaign will be featured for
-
+---  
 ### destroyFeaturedPackage
 >        Deletes a feature package
 
@@ -765,7 +765,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_packageId` | uint256 |   ID of feature package
-
+---  
 ### unpauseCampaign
 > Unpauses the factory, transactions in the factory resumes per usual
 
@@ -782,7 +782,7 @@ No modifiers
 | onlyAdmin |
 
 
-
+---  
 ### pauseCampaign
 > Pauses the factory, halts all transactions in the factory
 
@@ -799,9 +799,7 @@ No modifiers
 | onlyAdmin |
 
 
-
-
-***    
+---  
 
 
 ## Events

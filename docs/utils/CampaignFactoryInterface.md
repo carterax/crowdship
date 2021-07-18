@@ -47,7 +47,7 @@
 No modifiers
 
 
-
+---  
 ### receiveCampaignCommission
 
 
@@ -61,8 +61,6 @@ No modifiers
 No modifiers
 
 
-
-
-***    
+---  
 
 
