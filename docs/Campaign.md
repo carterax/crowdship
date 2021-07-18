@@ -29,6 +29,7 @@
 | campaignID | uint256 |
 | totalCampaignContribution | uint256 |
 | minimumContribution | uint256 |
+| maximumContribution | uint256 |
 | approversCount | uint256 |
 | target | uint256 |
 | deadline | uint256 |
@@ -37,13 +38,12 @@
 | requestOngoing | bool |
 | approvers | mapping(address => bool) |
 | userTotalContribution | mapping(address => uint256) |
-| userBalance | mapping(address => uint256) |
 
 
 ## Modifiers
 
 ### onlyFactory
-
+> Ensures caller is only factory
 
 #### Declaration
 ```solidity
@@ -52,7 +52,7 @@
 
 
 ### adminOrFactory
-
+> Ensures caller is factory or campaign owner
 
 #### Declaration
 ```solidity
@@ -61,7 +61,7 @@
 
 
 ### campaignIsActive
-
+> Ensures the campaign is set to active by campaign owner and approved by factory
 
 #### Declaration
 ```solidity
@@ -70,7 +70,7 @@
 
 
 ### campaignIsNotApproved
-
+> Ensures campaign isn't approved by factory. Applies unless campaign manager from factory
 
 #### Declaration
 ```solidity
@@ -79,7 +79,7 @@
 
 
 ### userIsVerified
-
+> Ensures a user is verified
 
 #### Declaration
 ```solidity
@@ -88,7 +88,7 @@
 
 
 ### canApproveRequest
-
+> Ensures a user is a contributor and hasn't voted before
 
 #### Declaration
 ```solidity
@@ -97,7 +97,7 @@
 
 
 ### deadlineIsUp
-
+> Ensures the campaign is within it's deadline, applies only if goal type is fixed
 
 #### Declaration
 ```solidity
@@ -105,24 +105,18 @@
 ```
 
 
-### targetIsMet
-
-
-#### Declaration
-```solidity
-  modifier targetIsMet
-```
-
-
 
 ## Functions
 
 ### __Campaign_init
-> constructor
+>        Constructor
+
 
 #### Declaration
 ```solidity
   function __Campaign_init(
+    address _campaignFactory,
+    address _root
   ) public initializer
 ```
 
@@ -131,10 +125,14 @@
 | --- |
 | initializer |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignFactory` | address |     Address of factory
+|`_root` | address |                Address of campaign owner
 
 ### setCampaignDetails
->     Modifies campaign details while it's not approved
+>         Modifies campaign details while it's not approved
 
 
 #### Declaration
@@ -142,9 +140,10 @@
   function setCampaignDetails(
     uint256 _target,
     uint256 _minimumContribution,
-    uint256 _time,
-    uint256 _goalType
-  ) external adminOrFactory campaignIsNotApproved nonReentrant
+    uint256 _duration,
+    uint256 _goalType,
+    address _token
+  ) external adminOrFactory campaignIsNotApproved
 ```
 
 #### Modifiers:
@@ -152,38 +151,15 @@
 | --- |
 | adminOrFactory |
 | campaignIsNotApproved |
-| nonReentrant |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_target` | uint256 |              Contribution target of the campaign
 |`_minimumContribution` | uint256 | The minimum amout required to be an approver
-|`_time` | uint256 |                How long until the campaign stops receiving contributions
+|`_duration` | uint256 |            How long until the campaign stops receiving contributions
 |`_goalType` | uint256 |            Indicates if campaign is fixed or flexible with contributions
-
-### setAcceptedToken
->        Modifies campaign's accepted token provided factory approves it
-
-
-#### Declaration
-```solidity
-  function setAcceptedToken(
-    address _token
-  ) external adminOrFactory campaignIsNotApproved nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| adminOrFactory |
-| campaignIsNotApproved |
-| nonReentrant |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_token` | address |   Address of token to be used for transactions
+|`_token` | address |               Address of token to be used for transactions by default
 
 ### setGoalType
 >        Modifies campaign's goal type provided deadline is expired
@@ -193,7 +169,7 @@
 ```solidity
   function setGoalType(
     uint256 _type
-  ) external adminOrFactory campaignIsActive whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive
 ```
 
 #### Modifiers:
@@ -201,8 +177,6 @@
 | --- |
 | adminOrFactory |
 | campaignIsActive |
-| whenNotPaused |
-| nonReentrant |
 
 #### Args:
 | Arg | Type | Description |
@@ -217,7 +191,7 @@
 ```solidity
   function extendDeadline(
     uint256 _time
-  ) external adminOrFactory campaignIsActive whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive whenNotPaused
 ```
 
 #### Modifiers:
@@ -226,7 +200,6 @@
 | adminOrFactory |
 | campaignIsActive |
 | whenNotPaused |
-| nonReentrant |
 
 #### Args:
 | Arg | Type | Description |
@@ -234,12 +207,12 @@
 |`_time` | uint256 |    How long until the campaign stops receiving contributions
 
 ### resetDeadlineSetTimes
->        Resets the number of times campaign manager has extended deadlines
+> Resets the number of times campaign manager has extended deadlines
 
 #### Declaration
 ```solidity
   function resetDeadlineSetTimes(
-  ) external adminOrFactory campaignIsActive whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive whenNotPaused
 ```
 
 #### Modifiers:
@@ -248,7 +221,6 @@
 | adminOrFactory |
 | campaignIsActive |
 | whenNotPaused |
-| nonReentrant |
 
 
 
@@ -263,7 +235,7 @@
     uint256 _deliveryDate,
     uint256 _stock,
     bool _active
-  ) external adminOrFactory campaignIsActive whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive whenNotPaused
 ```
 
 #### Modifiers:
@@ -272,7 +244,6 @@
 | adminOrFactory |
 | campaignIsActive |
 | whenNotPaused |
-| nonReentrant |
 
 #### Args:
 | Arg | Type | Description |
@@ -294,7 +265,7 @@
     uint256 _deliveryDate,
     uint256 _stock,
     bool _active
-  ) external adminOrFactory campaignIsActive whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive whenNotPaused
 ```
 
 #### Modifiers:
@@ -303,7 +274,6 @@
 | adminOrFactory |
 | campaignIsActive |
 | whenNotPaused |
-| nonReentrant |
 
 #### Args:
 | Arg | Type | Description |
@@ -322,7 +292,7 @@
 ```solidity
   function destroyReward(
     uint256 _rewardId
-  ) external adminOrFactory campaignIsActive whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive whenNotPaused
 ```
 
 #### Modifiers:
@@ -331,7 +301,6 @@
 | adminOrFactory |
 | campaignIsActive |
 | whenNotPaused |
-| nonReentrant |
 
 #### Args:
 | Arg | Type | Description |
@@ -339,12 +308,15 @@
 |`_rewardId` | uint256 |    Reward unique id
 
 ### campaignSentReward
+>        Used by the campaign owner to indicate they delivered the reward to the rewardee
 
 
 #### Declaration
 ```solidity
   function campaignSentReward(
-  ) external campaignIsActive userIsVerified adminOrFactory whenNotPaused nonReentrant
+    uint256 _rewardeeId,
+    bool _status
+  ) external campaignIsActive userIsVerified adminOrFactory whenNotPaused
 ```
 
 #### Modifiers:
@@ -354,17 +326,23 @@
 | userIsVerified |
 | adminOrFactory |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_rewardeeId` | uint256 |  ID to struct containing reward and user to be rewarded
+|`_status` | bool |      Indicates if the delivery was successful or not
 
 ### userReceivedCampaignReward
+>        Used by a user eligible for rewards to indicate they received their reward
 
 
 #### Declaration
 ```solidity
   function userReceivedCampaignReward(
-  ) external campaignIsActive userIsVerified whenNotPaused nonReentrant
+    uint256 _rewardeeId,
+    bool _status
+  ) external campaignIsActive userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
@@ -373,17 +351,24 @@
 | campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_rewardeeId` | uint256 |  ID to struct containing reward and user to be rewarded
+|`_status` | bool |      Indicates if the delivery was successful or not
 
 ### contribute
+>        Contribute method enables a user become an approver in the campaign
 
 
 #### Declaration
 ```solidity
   function contribute(
-  ) external campaignIsActive userIsVerified deadlineIsUp whenNotPaused nonReentrant
+    address _token,
+    uint256 _rewardId,
+    bool _withReward
+  ) external campaignIsActive userIsVerified deadlineIsUp whenNotPaused nonReentrant returns (uint256 targetCompletionValue)
 ```
 
 #### Modifiers:
@@ -395,14 +380,22 @@
 | whenNotPaused |
 | nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_token` | address |       Address of token to be used for transactions by default
+|`_rewardId` | uint256 |    Reward unique id
+|`_withReward` | bool |  Indicates if the user wants a reward alongside their contribution
 
 ### withdrawOwnContribution
+>        Allows withdrawal of balance left after requests, called only by user
 
 
 #### Declaration
 ```solidity
   function withdrawOwnContribution(
+    uint256 _amount,
+    address payable _wallet
   ) external campaignIsActive userIsVerified whenNotPaused nonReentrant
 ```
 
@@ -414,14 +407,22 @@
 | whenNotPaused |
 | nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_amount` | uint256 |    Amount requested to be withdrawn from contributions
+|`_wallet` | address payable |    Address where amount is delivered
 
 ### withdrawContributionForUser
+>        Allows withdrawal of balance left after requests, called only by factory
 
 
 #### Declaration
 ```solidity
   function withdrawContributionForUser(
+    address _user,
+    uint256 _amount,
+    address payable _wallet
   ) external onlyFactory nonReentrant whenNotPaused
 ```
 
@@ -432,15 +433,24 @@
 | nonReentrant |
 | whenNotPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_user` | address |      User whose funds are being requested
+|`_amount` | uint256 |    Amount requested to be withdrawn from contributions
+|`_wallet` | address payable |    Address where amount is delivered
 
 ### createRequest
+>        Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory
+                   Restricted unless target is met and deadline is expired
 
 
 #### Declaration
 ```solidity
   function createRequest(
-  ) external adminOrFactory campaignIsActive targetIsMet whenNotPaused userIsVerified nonReentrant
+    address payable _recipient,
+    uint256 _value
+  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
@@ -448,20 +458,24 @@
 | --- |
 | adminOrFactory |
 | campaignIsActive |
-| targetIsMet |
-| whenNotPaused |
 | userIsVerified |
-| nonReentrant |
+| whenNotPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_recipient` | address payable |   Address where requested funds are deposited
+|`_value` | uint256 |       Amount being requested by the campaign manager
 
 ### voteOnRequest
+>        Approvers only method which approves spending request issued by the campaign manager or factory
 
 
 #### Declaration
 ```solidity
   function voteOnRequest(
-  ) external campaignIsActive canApproveRequest userIsVerified whenNotPaused nonReentrant
+    uint256 _requestId
+  ) external campaignIsActive canApproveRequest userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
@@ -471,16 +485,20 @@
 | canApproveRequest |
 | userIsVerified |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_requestId` | uint256 |   ID of request being voted on
 
 ### finalizeRequest
+>        Withdrawal method called only when a request receives the right amount votes
 
 
 #### Declaration
 ```solidity
   function finalizeRequest(
+    uint256 _requestId
   ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused nonReentrant
 ```
 
@@ -493,34 +511,18 @@
 | whenNotPaused |
 | nonReentrant |
 
-
-
-### campaignApprovalRequest
-
-
-#### Declaration
-```solidity
-  function campaignApprovalRequest(
-  ) external onlyAdmin userIsVerified whenPaused nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyAdmin |
-| userIsVerified |
-| whenPaused |
-| nonReentrant |
-
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_requestId` | uint256 |      ID of request being withdrawn
 
 ### reviewMode
-
+> Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over
 
 #### Declaration
 ```solidity
   function reviewMode(
-  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused nonReentrant
+  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
@@ -530,17 +532,16 @@
 | campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
-| nonReentrant |
 
 
 
 ### reviewCampaignPerformance
-
+> User acknowledgement of review state enabled by the campaign owner
 
 #### Declaration
 ```solidity
   function reviewCampaignPerformance(
-  ) external userIsVerified campaignIsActive nonReentrant whenPaused
+  ) external userIsVerified campaignIsActive whenPaused
 ```
 
 #### Modifiers:
@@ -548,18 +549,17 @@
 | --- |
 | userIsVerified |
 | campaignIsActive |
-| nonReentrant |
 | whenPaused |
 
 
 
 ### markCampaignComplete
-
+> Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
 
 #### Declaration
 ```solidity
   function markCampaignComplete(
-  ) external userIsVerified adminOrFactory campaignIsActive whenPaused nonReentrant
+  ) external userIsVerified adminOrFactory campaignIsActive whenPaused
 ```
 
 #### Modifiers:
@@ -569,17 +569,32 @@
 | adminOrFactory |
 | campaignIsActive |
 | whenPaused |
-| nonReentrant |
+
+
+
+### setCampaignState
+> Changes campaign state
+
+#### Declaration
+```solidity
+  function setCampaignState(
+  ) external onlyFactory
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyFactory |
 
 
 
 ### unpauseCampaign
-
+> Unpauses the campaign, transactions in the campaign resume per usual
 
 #### Declaration
 ```solidity
   function unpauseCampaign(
-  ) external whenPaused onlyFactory nonReentrant
+  ) external whenPaused onlyFactory
 ```
 
 #### Modifiers:
@@ -587,17 +602,16 @@
 | --- |
 | whenPaused |
 | onlyFactory |
-| nonReentrant |
 
 
 
 ### pauseCampaign
-
+> Pauses the campaign, it halts all transactions in the campaign
 
 #### Declaration
 ```solidity
   function pauseCampaign(
-  ) external whenNotPaused onlyFactory nonReentrant
+  ) external whenNotPaused onlyFactory
 ```
 
 #### Modifiers:
@@ -605,7 +619,6 @@
 | --- |
 | whenNotPaused |
 | onlyFactory |
-| nonReentrant |
 
 
 
@@ -613,12 +626,12 @@
 
 ## Events
 
-### CampaignDetailsModified
+### CampaignIDset
 > `Campaign`
   
 
 
-### CampaignTokenChanged
+### CampaignDetailsModified
 
   
 
@@ -639,6 +652,11 @@
 
 
 ### ContributionWithdrawn
+
+  
+
+
+### TargetMet
 
   
 
@@ -668,13 +686,13 @@
   
 
 
-### CampaignApprovalRequest
-
+### RewardeedAdded
+> `Rwardee Events`
   
 
 
-### ContributionWithReward
-> `Rwardee Events`
+### RewardeeApproval
+
   
 
 

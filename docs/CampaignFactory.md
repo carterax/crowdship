@@ -22,6 +22,8 @@
 | campaignImplementation | address |
 | defaultCommission | uint256 |
 | deadlineStrikesAllowed | uint256 |
+| minimumContributionAllowed | uint256 |
+| maximumContributionAllowed | uint256 |
 | maxDeadline | uint256 |
 | minDeadline | uint256 |
 | factoryRevenue | uint256 |
@@ -42,7 +44,6 @@
 | users | struct CampaignFactory.User[] |
 | userCount | uint256 |
 | userID | mapping(address => uint256) |
-| userCampaignHistory | struct CampaignFactory.UserCampaignHistory[] |
 | featurePackages | struct CampaignFactory.Featured[] |
 | featurePackageCount | uint256 |
 
@@ -50,7 +51,7 @@
 ## Modifiers
 
 ### campaignOwnerOrManager
-
+> Ensures caller is campaign owner or campaign manager
 
 #### Declaration
 ```solidity
@@ -59,7 +60,7 @@
 
 
 ### onlyCampaignOwner
-
+> Ensures caller is campaign owner
 
 #### Declaration
 ```solidity
@@ -68,7 +69,7 @@
 
 
 ### campaignExists
-
+> Ensures campaign exists
 
 #### Declaration
 ```solidity
@@ -77,7 +78,7 @@
 
 
 ### campaignIsEnabled
-
+> Ensures campaign is active and approved
 
 #### Declaration
 ```solidity
@@ -85,17 +86,8 @@
 ```
 
 
-### userOrManager
-
-
-#### Declaration
-```solidity
-  modifier userOrManager
-```
-
-
 ### userIsVerified
-
+> Ensures user is verifed
 
 #### Declaration
 ```solidity
@@ -107,11 +99,13 @@
 ## Functions
 
 ### __CampaignFactory_init
-> Add `root` to the admin role as a member.
+>        Contructor
+
 
 #### Declaration
 ```solidity
   function __CampaignFactory_init(
+    address payable _wallet
   ) public initializer
 ```
 
@@ -120,162 +114,158 @@
 | --- |
 | initializer |
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_wallet` | address payable |     Address where all revenue gets deposited
 
-
-### setFactoryWallet
+### setFactorySettings
+>        Factory controlled values dictating how campaigns should run
 
 
 #### Declaration
 ```solidity
-  function setFactoryWallet(
-  ) external onlyAdmin nonReentrant
+  function setFactorySettings(
+    address payable _wallet,
+    contract Campaign _implementation,
+    uint256 _commission,
+    uint256 _deadlineStrikesAllowed,
+    uint256 _maxDeadline,
+    uint256 _minDeadline,
+    uint256 _minimumContributionAllowed,
+    uint256 _maximumContributionAllowed
+  ) external onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
-| nonReentrant |
 
-
-
-### receiveCampaignCommission
-
-
-#### Declaration
-```solidity
-  function receiveCampaignCommission(
-  ) external onlyCampaignOwner campaignIsEnabled campaignExists nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyCampaignOwner |
-| campaignIsEnabled |
-| campaignExists |
-| nonReentrant |
-
-
-
-### setCampaignImplementationAddress
-
-
-#### Declaration
-```solidity
-  function setCampaignImplementationAddress(
-  ) external onlyAdmin nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyAdmin |
-| nonReentrant |
-
-
-
-### setDefaultCommission
-
-
-#### Declaration
-```solidity
-  function setDefaultCommission(
-  ) external onlyAdmin nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyAdmin |
-| nonReentrant |
-
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_wallet` | address payable |                      Address where all revenue gets deposited
+|`_implementation` | contract Campaign |              Address of base contract to deploy minimal proxies to campaigns
+|`_commission` | uint256 |                  Default fee percentage on request finalization in campaign
+|`_deadlineStrikesAllowed` | uint256 |      Number of times campaign owner is allowed to extend deadline
+|`_maxDeadline` | uint256 |                 Maximum time allowed to extend the deadline by
+|`_minDeadline` | uint256 |                 Minimum time allowed to extend the deadline by
+|`_minimumContributionAllowed` | uint256 |  Minimum allowed contribution in campaigns
+|`_maximumContributionAllowed` | uint256 |  Maximum allowed contribution in campaigns
 
 ### setCategoryCommission
+>        Adds commission per category basis
 
 
 #### Declaration
 ```solidity
   function setCategoryCommission(
-  ) external onlyAdmin nonReentrant
+    uint256 _categoryId,
+    uint256 _commission
+  ) external onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_categoryId` | uint256 |  ID of category
+|`_commission` | uint256 |  Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`
 
 ### addToken
+>        Adds a token that needs approval before being accepted
 
 
 #### Declaration
 ```solidity
   function addToken(
-  ) external onlyAdmin nonReentrant
+    address _token
+  ) external onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_token` | address |  Address of the token
 
 ### toggleAcceptedToken
+>        Sets if a token is accepted or not provided it's in the list of token
 
 
 #### Declaration
 ```solidity
   function toggleAcceptedToken(
-  ) external onlyAdmin nonReentrant
+    address _token,
+    bool _state
+  ) external onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_token` | address |   Address of the token
+|`_state` | bool |   Indicates if the token is approved or not
 
 ### addRole
-> Add an account to the manager role. Restricted to admins.
+>        Add an account to the role. Restricted to admins.
+
 
 #### Declaration
 ```solidity
   function addRole(
-  ) public onlyAdmin nonReentrant
+    address _account,
+    bytes32 _role
+  ) public onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_account` | address | Address of user being assigned role
+|`_role` | bytes32 |   Role being assigned
 
 ### removeRole
-> Remove an account from the manager role. Restricted to admins.
+>        Remove an account from the role. Restricted to admins.
+
 
 #### Declaration
 ```solidity
   function removeRole(
-  ) public onlyAdmin nonReentrant
+    address _account,
+    bytes32 _role
+  ) public onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_account` | address | Address of user whose role is being removed
+|`_role` | bytes32 |   Role being removed
 
 ### renounceAdmin
 > Remove oneself from the admin role.
@@ -292,43 +282,75 @@ No modifiers
 
 
 ### canManageCampaigns
+>        Checks if a user can manage a campaign. Called but not restricted to external campaign proxies
 
 
 #### Declaration
 ```solidity
   function canManageCampaigns(
+    address _user
   ) public returns (bool)
 ```
 
 #### Modifiers:
 No modifiers
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_user` | address |    Address of user
 
-
-### signUp
+### receiveCampaignCommission
+>        Retrieves campaign commission fees. Restricted to campaign owner.
 
 
 #### Declaration
 ```solidity
+  function receiveCampaignCommission(
+    uint256 _amount,
+    contract Campaign _campaign
+  ) external onlyCampaignOwner campaignIsEnabled campaignExists
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyCampaignOwner |
+| campaignIsEnabled |
+| campaignExists |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_amount` | uint256 |      Amount transfered and collected by factory from campaign request finalization
+|`_campaign` | contract Campaign |    Address of campaign instance
+
+### signUp
+> Keep track of user addresses. KYC purpose
+
+#### Declaration
+```solidity
   function signUp(
-  ) public whenNotPaused nonReentrant
+  ) public whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | whenNotPaused |
-| nonReentrant |
 
 
 
 ### toggleUserApproval
+>        Approves or disapproves a user
 
 
 #### Declaration
 ```solidity
   function toggleUserApproval(
-  ) external onlyManager whenNotPaused nonReentrant
+    uint256 _userId,
+    bool _approval
+  ) external onlyManager whenNotPaused
 ```
 
 #### Modifiers:
@@ -336,17 +358,22 @@ No modifiers
 | --- |
 | onlyManager |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_userId` | uint256 |      ID of the user
+|`_approval` | bool |    Indicates if the user will be approved or not
 
 ### destroyUser
+>        Deletes a user
 
 
 #### Declaration
 ```solidity
   function destroyUser(
-  ) external onlyManager whenNotPaused nonReentrant
+    uint256 _userId
+  ) external onlyManager whenNotPaused
 ```
 
 #### Modifiers:
@@ -354,35 +381,21 @@ No modifiers
 | --- |
 | onlyManager |
 | whenNotPaused |
-| nonReentrant |
 
-
-
-### addCampaignToUserHistory
-
-
-#### Declaration
-```solidity
-  function addCampaignToUserHistory(
-  ) external campaignExists whenNotPaused nonReentrant
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| campaignExists |
-| whenNotPaused |
-| nonReentrant |
-
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_userId` | uint256 |  ID of the user
 
 ### createCampaign
+>        Deploys and tracks a new campagign
 
 
 #### Declaration
 ```solidity
   function createCampaign(
-  ) external userIsVerified whenNotPaused nonReentrant
+    uint256 _categoryId
+  ) external userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
@@ -390,17 +403,22 @@ No modifiers
 | --- |
 | userIsVerified |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_categoryId` | uint256 |    ID of category campaign deployer specifies
 
 ### toggleCampaignApproval
+>        Approves or disapproves a campaign. Restricted to campaign managers
 
 
 #### Declaration
 ```solidity
   function toggleCampaignApproval(
-  ) external onlyManager campaignExists whenNotPaused nonReentrant
+    uint256 _campaignId,
+    bool _approval
+  ) external onlyManager campaignExists whenNotPaused
 ```
 
 #### Modifiers:
@@ -409,17 +427,23 @@ No modifiers
 | onlyManager |
 | campaignExists |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |    ID of the campaign
+|`_approval` | bool |      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
 
 ### toggleCampaignActive
+>        Approves or disapproves a campaign. Restricted to campaign managers
 
 
 #### Declaration
 ```solidity
   function toggleCampaignActive(
-  ) external campaignOwnerOrManager campaignExists whenNotPaused nonReentrant
+    uint256 _campaignId,
+    bool _active
+  ) external campaignOwnerOrManager campaignExists whenNotPaused
 ```
 
 #### Modifiers:
@@ -428,9 +452,43 @@ No modifiers
 | campaignOwnerOrManager |
 | campaignExists |
 | whenNotPaused |
-| nonReentrant |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |    ID of the campaign
+|`_active` | bool |      Indicates if the campaign will be active or not.  Affects campaign listing and transactions
+
+### modifyCampaignDetails
+>         External call to campaign instance modifying it's settings wether it's approved or not
+                    Restricted to Campaign Managers
 
 
+#### Declaration
+```solidity
+  function modifyCampaignDetails(
+    contract Campaign _target,
+    uint256 _minimumContribution,
+    uint256 _duration,
+    uint256 _goalType,
+    uint256 _token
+  ) external onlyManager whenNotPaused
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyManager |
+| whenNotPaused |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_target` | contract Campaign |              Contribution target of the campaign
+|`_minimumContribution` | uint256 | The minimum amout required to be an approver
+|`_duration` | uint256 |            How long until the campaign stops receiving contributions
+|`_goalType` | uint256 |            Indicates if campaign is fixed or flexible with contributions
+|`_token` | uint256 |               Address of token to be used for transactions by default
 
 ### modifyCampaignCategory
 
@@ -438,7 +496,7 @@ No modifiers
 #### Declaration
 ```solidity
   function modifyCampaignCategory(
-  ) external campaignOwnerOrManager campaignExists whenNotPaused nonReentrant
+  ) external campaignOwnerOrManager campaignExists whenNotPaused
 ```
 
 #### Modifiers:
@@ -447,17 +505,18 @@ No modifiers
 | campaignOwnerOrManager |
 | campaignExists |
 | whenNotPaused |
-| nonReentrant |
 
 
 
-### featureCampaign
+### campaignApprovalRequest
+>        Called by a campaign owner seeking to be approved and ready to receive contributions
 
 
 #### Declaration
 ```solidity
-  function featureCampaign(
-  ) external onlyCampaignOwner campaignExists campaignIsEnabled userIsVerified whenNotPaused nonReentrant
+  function campaignApprovalRequest(
+    address _campaign
+  ) external onlyCampaignOwner campaignExists userIsVerified whenPaused
 ```
 
 #### Modifiers:
@@ -465,12 +524,41 @@ No modifiers
 | --- |
 | onlyCampaignOwner |
 | campaignExists |
+| userIsVerified |
+| whenPaused |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaign` | address |    Address of campaign instance
+
+### featureCampaign
+>        Called by a campaign owner seeking to be approved and ready to receive contributions
+
+
+#### Declaration
+```solidity
+  function featureCampaign(
+    uint256 _campaignId,
+    uint256 _token
+  ) external campaignOwnerOrManager campaignExists campaignIsEnabled userIsVerified whenNotPaused nonReentrant
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| campaignOwnerOrManager |
+| campaignExists |
 | campaignIsEnabled |
 | userIsVerified |
 | whenNotPaused |
 | nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |    Address of campaign instance
+|`_token` | uint256 |         Address of token used to purchase feature package
 
 ### pauseCampaignFeatured
 
@@ -478,47 +566,52 @@ No modifiers
 #### Declaration
 ```solidity
   function pauseCampaignFeatured(
-  ) external onlyCampaignOwner campaignExists userIsVerified whenNotPaused nonReentrant
+  ) external campaignOwnerOrManager campaignExists userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyCampaignOwner |
+| campaignOwnerOrManager |
 | campaignExists |
 | userIsVerified |
 | whenNotPaused |
-| nonReentrant |
 
 
 
 ### unpauseCampaignFeatured
+>        Resumes campaign feature time
 
 
 #### Declaration
 ```solidity
   function unpauseCampaignFeatured(
-  ) external onlyCampaignOwner campaignExists userIsVerified whenNotPaused nonReentrant
+    uint256 _campaignId
+  ) external campaignOwnerOrManager campaignExists userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyCampaignOwner |
+| campaignOwnerOrManager |
 | campaignExists |
 | userIsVerified |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |   ID of campaign
 
 ### destroyCampaign
+>        Deletes a campaign
 
 
 #### Declaration
 ```solidity
   function destroyCampaign(
-  ) external onlyManager campaignExists whenNotPaused nonReentrant
+    uint256 _campaignId
+  ) external onlyManager campaignExists whenNotPaused
 ```
 
 #### Modifiers:
@@ -527,17 +620,21 @@ No modifiers
 | onlyManager |
 | campaignExists |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignId` | uint256 |   ID of campaign
 
 ### createCategory
+>        Creates a category
 
 
 #### Declaration
 ```solidity
   function createCategory(
-  ) external onlyManager whenNotPaused nonReentrant
+    bool _active
+  ) external onlyManager whenNotPaused
 ```
 
 #### Modifiers:
@@ -545,17 +642,22 @@ No modifiers
 | --- |
 | onlyManager |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_active` | bool |   Indicates if a category is active allowing for campaigns to be assigned to it
 
 ### modifyCategory
+>        Modifies details about a category
 
 
 #### Declaration
 ```solidity
   function modifyCategory(
-  ) external onlyManager whenNotPaused nonReentrant
+    uint256 _categoryId,
+    bool _active
+  ) external onlyManager whenNotPaused
 ```
 
 #### Modifiers:
@@ -563,17 +665,22 @@ No modifiers
 | --- |
 | onlyManager |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_categoryId` | uint256 |   ID of the category
+|`_active` | bool |       Indicates if a category is active allowing for campaigns to be assigned to it
 
 ### destroyCategory
+>        Deletes a category
 
 
 #### Declaration
 ```solidity
   function destroyCategory(
-  ) external onlyManager whenNotPaused nonReentrant
+    uint256 _categoryId
+  ) external onlyManager whenNotPaused
 ```
 
 #### Modifiers:
@@ -581,17 +688,22 @@ No modifiers
 | --- |
 | onlyManager |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_categoryId` | uint256 |   ID of category
 
 ### createFeaturePackage
+>        Creates a feature package purchased by campaig owners to feature their campaigns
 
 
 #### Declaration
 ```solidity
   function createFeaturePackage(
-  ) external onlyAdmin whenNotPaused nonReentrant
+    uint256 _cost,
+    uint256 _time
+  ) external onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
@@ -599,17 +711,24 @@ No modifiers
 | --- |
 | onlyAdmin |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_cost` | uint256 |        Cost of purchasing this feature package
+|`_time` | uint256 |        How long a campaign will be featured for
 
 ### modifyFeaturedPackage
+>        Modifies details about a feature package
 
 
 #### Declaration
 ```solidity
   function modifyFeaturedPackage(
-  ) external onlyAdmin whenNotPaused nonReentrant
+    uint256 _packageId,
+    uint256 _cost,
+    uint256 _time
+  ) external onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
@@ -617,17 +736,23 @@ No modifiers
 | --- |
 | onlyAdmin |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_packageId` | uint256 |   ID of feature package
+|`_cost` | uint256 |        Cost of purchasing this feature package
+|`_time` | uint256 |        How long a campaign will be featured for
 
 ### destroyFeaturedPackage
+>        Deletes a feature package
 
 
 #### Declaration
 ```solidity
   function destroyFeaturedPackage(
-  ) external onlyAdmin whenNotPaused nonReentrant
+    uint256 _packageId
+  ) external onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
@@ -635,17 +760,19 @@ No modifiers
 | --- |
 | onlyAdmin |
 | whenNotPaused |
-| nonReentrant |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_packageId` | uint256 |   ID of feature package
 
 ### unpauseCampaign
-
+> Unpauses the factory, transactions in the factory resume per usual
 
 #### Declaration
 ```solidity
   function unpauseCampaign(
-  ) external whenPaused onlyAdmin nonReentrant
+  ) external whenPaused onlyAdmin
 ```
 
 #### Modifiers:
@@ -653,17 +780,16 @@ No modifiers
 | --- |
 | whenPaused |
 | onlyAdmin |
-| nonReentrant |
 
 
 
 ### pauseCampaign
-
+> Pauses the factory, it halts all transactions in the factory
 
 #### Declaration
 ```solidity
   function pauseCampaign(
-  ) external whenNotPaused onlyAdmin nonReentrant
+  ) external whenNotPaused onlyAdmin
 ```
 
 #### Modifiers:
@@ -671,7 +797,6 @@ No modifiers
 | --- |
 | whenNotPaused |
 | onlyAdmin |
-| nonReentrant |
 
 
 
@@ -719,6 +844,11 @@ No modifiers
   
 
 
+### CampaignApprovalRequest
+
+  
+
+
 ### UserAdded
 > `User Events`
   
@@ -730,11 +860,6 @@ No modifiers
 
 
 ### UserApproval
-
-  
-
-
-### UserJoinedCampaign
 
   
 

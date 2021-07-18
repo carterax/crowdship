@@ -9,6 +9,8 @@ abstract contract CampaignFactoryInterface {
     uint256 public deadlineStrikesAllowed;
     uint256 public maxDeadline;
     uint256 public minDeadline;
+    uint256 public minimumContributionAllowed;
+    uint256 public maximumContributionAllowed;
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokensApproved;
 
@@ -52,6 +54,4 @@ abstract contract CampaignFactoryInterface {
     function receiveCampaignCommission(uint256 _amount, address campaign)
         external
         virtual;
-
-    function addCampaignToUserHistory(address _campaign) external virtual;
 }

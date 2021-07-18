@@ -30,7 +30,6 @@ contract CampaignFactory is
     event CampaignDeployed(
         uint256 indexed campaignId,
         uint256 owner,
-        uint256 minimum,
         uint256 category
     );
     event CampaignDestroyed(uint256 indexed campaignId);
@@ -47,16 +46,17 @@ contract CampaignFactory is
     );
     event CampaignFeaturePaused(uint256 indexed campaignId);
     event CampaignFeatureUnpaused(uint256 indexed campaignId, uint256 timeLeft);
+    event CampaignApprovalRequest(uint256 campaignId);
 
     /// @dev `User Events`
     event UserAdded(uint256 indexed userId);
     event UserModified(uint256 indexed userId);
     event UserApproval(uint256 indexed userId, bool approval);
-    event UserJoinedCampaign(
-        uint256 indexed historyId,
-        uint256 userId,
-        uint256 campaignId
-    );
+    // event UserJoinedCampaign(
+    //     uint256 indexed historyId,
+    //     uint256 userId,
+    //     uint256 campaignId
+    // );
     event UserRemoved(uint256 indexed userId);
 
     /// @dev `Category Events`
@@ -83,8 +83,11 @@ contract CampaignFactory is
     address public campaignImplementation;
     uint256 public defaultCommission;
     uint256 public deadlineStrikesAllowed;
+    uint256 public minimumContributionAllowed;
+    uint256 public maximumContributionAllowed;
     uint256 public maxDeadline;
     uint256 public minDeadline;
+
     uint256 public factoryRevenue; // total from all activities
     address[] public tokenList;
     mapping(uint256 => uint256) public categoryCommission;
@@ -107,10 +110,8 @@ contract CampaignFactory is
     }
     CampaignInfo[] public deployedCampaigns;
     uint256 public campaignCount;
-    // uint256[] public featuredCampaigns;
     mapping(address => address) public campaignToOwner;
     mapping(address => uint256) public campaignToID;
-    // mapping(uint256 => bool) public campaignHasBeenFeatured;
     mapping(uint256 => bool) public featuredCampaignIsPaused;
     mapping(uint256 => uint256) public pausedFeaturedCampaignTimeLeft;
 
@@ -137,13 +138,13 @@ contract CampaignFactory is
     uint256 public userCount;
     mapping(address => uint256) public userID;
 
-    /// @dev `UserCampaignHistory`
-    struct UserCampaignHistory {
-        uint256 userId;
-        uint256 campaignId;
-        uint256 joined;
-    }
-    UserCampaignHistory[] public userCampaignHistory;
+    // /// @dev `UserContributionHistory`
+    // struct UserContributionHistory {
+    //     uint256 userId;
+    //     uint256 campaignId;
+    //     uint256 joined;
+    // }
+    // UserContributionHistory[] public userCampaignHistory;
 
     /// @dev `Featured`
     struct Featured {
@@ -156,24 +157,32 @@ contract CampaignFactory is
     Featured[] public featurePackages;
     uint256 public featurePackageCount;
 
-    modifier campaignOwnerOrManager(uint256 _id) {
+    /// @dev Ensures caller is campaign owner or campaign manager
+    modifier campaignOwnerOrManager(uint256 _campaignId) {
         require(
-            campaignToOwner[deployedCampaigns[_id].campaign] == msg.sender ||
+            campaignToOwner[deployedCampaigns[_campaignId].campaign] ==
+                msg.sender ||
                 hasRole(MANAGE_CAMPAIGNS, msg.sender)
         );
         _;
     }
 
-    modifier onlyCampaignOwner(uint256 _id) {
-        require(campaignToOwner[deployedCampaigns[_id].campaign] == msg.sender);
+    /// @dev Ensures caller is campaign owner
+    modifier onlyCampaignOwner(uint256 _campaignId) {
+        require(
+            campaignToOwner[deployedCampaigns[_campaignId].campaign] ==
+                msg.sender
+        );
         _;
     }
 
-    modifier campaignExists(uint256 _id) {
-        require(deployedCampaigns[_id].exists);
+    /// @dev Ensures campaign exists
+    modifier campaignExists(uint256 _campaignId) {
+        require(deployedCampaigns[_campaignId].exists);
         _;
     }
 
+    /// @dev Ensures campaign is active and approved
     modifier campaignIsEnabled(uint256 _id) {
         require(
             deployedCampaigns[_id].approved && deployedCampaigns[_id].active
@@ -181,29 +190,29 @@ contract CampaignFactory is
         _;
     }
 
-    modifier userOrManager(uint256 _id) {
-        require(
-            users[_id].wallet == msg.sender || hasRole(MANAGE_USERS, msg.sender)
-        );
-        _;
-    }
-
+    /// @dev Ensures user is verifed
     modifier userIsVerified(address _user) {
         require(users[userID[_user]].verified);
         _;
     }
 
-    /// @dev Add `root` to the admin role as a member.
+    /**
+     * @dev        Contructor
+     * @param      _wallet     Address where all revenue gets deposited
+     */
     function __CampaignFactory_init(address payable _wallet)
         public
         initializer
     {
+        require(address(_wallet) != address(0));
         root = msg.sender;
         factoryWallet = _wallet;
         defaultCommission = 5;
         deadlineStrikesAllowed = 3;
         maxDeadline = 7 days;
         minDeadline = 1 days;
+        minimumContributionAllowed = 4000;
+        maximumContributionAllowed = 4000000000000;
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
         _setupRole(MANAGE_CATEGORIES, root);
@@ -218,87 +227,97 @@ contract CampaignFactory is
         signUp();
     }
 
-    function setFactoryWallet(address payable _wallet)
-        external
-        onlyAdmin
-        nonReentrant
-    {
-        factoryWallet = _wallet;
-    }
-
-    function receiveCampaignCommission(uint256 _amount, Campaign campaign)
-        external
-        onlyCampaignOwner(campaignToID[address(campaign)])
-        campaignIsEnabled(campaignToID[address(campaign)])
-        campaignExists(campaignToID[address(campaign)])
-        nonReentrant
-    {
-        campaignRevenueFromCommissions[
-            campaignToID[address(campaign)]
-        ] = campaignRevenueFromCommissions[campaignToID[address(campaign)]].add(
-            _amount
+    /**
+     * @dev        Factory controlled values dictating how campaigns should run
+     * @param      _wallet                      Address where all revenue gets deposited
+     * @param      _implementation              Address of base contract to deploy minimal proxies to campaigns
+     * @param      _commission                  Default fee percentage on request finalization in campaign
+     * @param      _deadlineStrikesAllowed      Number of times campaign owner is allowed to extend deadline
+     * @param      _maxDeadline                 Maximum time allowed to extend the deadline by
+     * @param      _minDeadline                 Minimum time allowed to extend the deadline by
+     * @param      _minimumContributionAllowed  Minimum allowed contribution in campaigns
+     * @param      _maximumContributionAllowed  Maximum allowed contribution in campaigns
+     */
+    function setFactorySettings(
+        address payable _wallet,
+        Campaign _implementation,
+        uint256 _commission,
+        uint256 _deadlineStrikesAllowed,
+        uint256 _maxDeadline,
+        uint256 _minDeadline,
+        uint256 _minimumContributionAllowed,
+        uint256 _maximumContributionAllowed
+    ) external onlyAdmin {
+        require(
+            address(_wallet) != address(0) &&
+                address(_implementation) != address(0)
         );
-        factoryRevenue = factoryRevenue.add(_amount);
-    }
-
-    function setCampaignImplementationAddress(Campaign _implementation)
-        external
-        onlyAdmin
-        nonReentrant
-    {
+        factoryWallet = _wallet;
         campaignImplementation = address(_implementation);
-    }
-
-    function setDefaultCommission(uint256 _commission)
-        external
-        onlyAdmin
-        nonReentrant
-    {
         defaultCommission = _commission;
+        deadlineStrikesAllowed = _deadlineStrikesAllowed;
+        maxDeadline = _maxDeadline;
+        minDeadline = _minDeadline;
+        minimumContributionAllowed = _minimumContributionAllowed;
+        maximumContributionAllowed = _maximumContributionAllowed;
     }
 
-    function setCategoryCommission(uint256 _category, uint256 _commission)
+    /**
+     * @dev        Adds commission per category basis
+     * @param      _categoryId  ID of category
+     * @param      _commission  Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`
+     */
+    function setCategoryCommission(uint256 _categoryId, uint256 _commission)
         external
         onlyAdmin
-        nonReentrant
     {
-        require(campaignCategories[_category].exists);
-        categoryCommission[_category] = _commission;
+        require(campaignCategories[_categoryId].exists);
+        categoryCommission[_categoryId] = _commission;
     }
 
-    function addToken(address _token) external onlyAdmin nonReentrant {
+    /**
+     * @dev        Adds a token that needs approval before being accepted
+     * @param      _token  Address of the token
+     */
+    function addToken(address _token) external onlyAdmin {
         require(!tokenInList[_token]);
         tokenList.push(_token);
         tokenInList[_token] = true;
     }
 
+    /**
+     * @dev        Sets if a token is accepted or not provided it's in the list of token
+     * @param      _token   Address of the token
+     * @param      _state   Indicates if the token is approved or not
+     */
     function toggleAcceptedToken(address _token, bool _state)
         external
         onlyAdmin
-        nonReentrant
     {
         require(tokenInList[_token]);
         tokensApproved[_token] = _state;
     }
 
-    /// @dev Add an account to the manager role. Restricted to admins.
-    function addRole(address account, bytes32 role)
-        public
-        virtual
-        onlyAdmin
-        nonReentrant
-    {
-        grantRole(role, account);
+    /**
+     * @dev        Add an account to the role. Restricted to admins.
+     * @param      _account Address of user being assigned role
+     * @param      _role   Role being assigned
+     */
+    function addRole(address _account, bytes32 _role) public virtual onlyAdmin {
+        grantRole(_role, _account);
     }
 
-    /// @dev Remove an account from the manager role. Restricted to admins.
-    function removeRole(address account, bytes32 role)
+    /**
+     * @dev        Remove an account from the role. Restricted to admins.
+     * @param      _account Address of user whose role is being removed
+     * @param      _role   Role being removed
+     */
+    function removeRole(address _account, bytes32 _role)
         public
         virtual
         onlyAdmin
-        nonReentrant
     {
-        revokeRole(role, account);
+        revokeRole(_role, _account);
     }
 
     /// @dev Remove oneself from the admin role.
@@ -306,24 +325,50 @@ contract CampaignFactory is
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /**
+     * @dev        Checks if a user can manage a campaign. Called but not restricted to external campaign proxies
+     * @param      _user    Address of user
+     */
     function canManageCampaigns(address _user) public view returns (bool) {
         return hasRole(MANAGE_CAMPAIGNS, _user);
     }
 
-    function signUp() public whenNotPaused nonReentrant {
-        User memory newUser = User(msg.sender, block.timestamp, 0, false, true);
-        users.push(newUser);
+    /**
+     * @dev        Retrieves campaign commission fees. Restricted to campaign owner.
+     * @param      _amount      Amount transfered and collected by factory from campaign request finalization
+     * @param      _campaign    Address of campaign instance
+     */
+    function receiveCampaignCommission(uint256 _amount, Campaign _campaign)
+        external
+        onlyCampaignOwner(campaignToID[address(_campaign)])
+        campaignIsEnabled(campaignToID[address(_campaign)])
+        campaignExists(campaignToID[address(_campaign)])
+    {
+        campaignRevenueFromCommissions[
+            campaignToID[address(_campaign)]
+        ] = campaignRevenueFromCommissions[campaignToID[address(_campaign)]]
+        .add(_amount);
+        factoryRevenue = factoryRevenue.add(_amount);
+    }
+
+    /// @dev Keep track of user addresses. KYC purpose
+    function signUp() public whenNotPaused {
+        users.push(User(msg.sender, block.timestamp, 0, false, true));
         userID[msg.sender] = users.length.sub(1);
         userCount = userCount.add(1);
 
         emit UserAdded(users.length.sub(1));
     }
 
+    /**
+     * @dev        Approves or disapproves a user
+     * @param      _userId      ID of the user
+     * @param      _approval    Indicates if the user will be approved or not
+     */
     function toggleUserApproval(uint256 _userId, bool _approval)
         external
         onlyManager(MANAGE_USERS)
         whenNotPaused
-        nonReentrant
     {
         require(users[_userId].exists);
         users[_userId].verified = _approval;
@@ -332,61 +377,42 @@ contract CampaignFactory is
         emit UserApproval(_userId, _approval);
     }
 
-    function destroyUser(uint256 _id)
+    /**
+     * @dev        Deletes a user
+     * @param      _userId  ID of the user
+     */
+    function destroyUser(uint256 _userId)
         external
         onlyManager(MANAGE_USERS)
         whenNotPaused
-        nonReentrant
     {
-        User storage user = users[_id];
+        User storage user = users[_userId];
         require(user.exists);
-        delete users[_id];
+        delete users[_userId];
 
-        emit UserRemoved(_id);
+        emit UserRemoved(_userId);
     }
 
-    function addCampaignToUserHistory(address _campaign)
-        external
-        campaignExists(campaignToID[_campaign])
-        whenNotPaused
-        nonReentrant
-    {
-        CampaignInfo storage campaign = deployedCampaigns[
-            campaignToID[_campaign]
-        ];
-        require(Campaign(campaign.campaign).approvers(msg.sender));
-        userCampaignHistory.push(
-            UserCampaignHistory(
-                userID[msg.sender],
-                campaignToID[_campaign],
-                block.timestamp
-            )
-        );
-
-        emit UserJoinedCampaign(
-            userCampaignHistory.length.sub(1),
-            userID[msg.sender],
-            campaignToID[_campaign]
-        );
-    }
-
-    function createCampaign(uint256 _minimum, uint256 _category)
+    /**
+     * @dev        Deploys and tracks a new campagign
+     * @param      _categoryId    ID of category campaign deployer specifies
+     */
+    function createCampaign(uint256 _categoryId)
         external
         userIsVerified(msg.sender)
         whenNotPaused
-        nonReentrant
     {
-        // check `_category` exists and active
+        // check `_categoryId` exists and active
         require(
-            campaignCategories[_category].exists &&
-                campaignCategories[_category].active
+            campaignCategories[_categoryId].exists &&
+                campaignCategories[_categoryId].active
         );
 
         address campaign = ClonesUpgradeable.clone(campaignImplementation);
 
         CampaignInfo memory campaignInfo = CampaignInfo({
             campaign: address(campaign),
-            category: _category,
+            category: _categoryId,
             owner: msg.sender,
             createdAt: block.timestamp,
             updatedAt: 0,
@@ -401,8 +427,8 @@ contract CampaignFactory is
         uint256 campaignId = deployedCampaigns.length.sub(1);
         campaignToID[address(campaign)] = campaignId;
 
-        campaignCategories[_category].campaignCount = campaignCategories[
-            _category
+        campaignCategories[_categoryId].campaignCount = campaignCategories[
+            _categoryId
         ]
         .campaignCount
         .add(1);
@@ -410,39 +436,67 @@ contract CampaignFactory is
 
         Campaign(campaign).__Campaign_init(address(this), msg.sender);
 
-        // emit event
-        emit CampaignDeployed(
-            campaignId,
-            userID[msg.sender],
-            _minimum,
-            _category
-        );
+        emit CampaignDeployed(campaignId, userID[msg.sender], _categoryId);
     }
 
-    function toggleCampaignApproval(uint256 _id, bool _approval)
+    /**
+     * @dev        Approves or disapproves a campaign. Restricted to campaign managers
+     * @param      _campaignId    ID of the campaign
+     * @param      _approval      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
+     */
+    function toggleCampaignApproval(uint256 _campaignId, bool _approval)
         external
         onlyManager(MANAGE_CAMPAIGNS)
-        campaignExists(_id)
+        campaignExists(_campaignId)
         whenNotPaused
-        nonReentrant
     {
-        deployedCampaigns[_id].approved = _approval;
-        deployedCampaigns[_id].updatedAt = block.timestamp;
+        deployedCampaigns[_campaignId].approved = _approval;
+        deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignApproval(_id, _approval);
+        emit CampaignApproval(_campaignId, _approval);
     }
 
-    function toggleCampaignActive(uint256 _id, bool _active)
+    /**
+     * @dev        Approves or disapproves a campaign. Restricted to campaign managers
+     * @param      _campaignId    ID of the campaign
+     * @param      _active      Indicates if the campaign will be active or not.  Affects campaign listing and transactions
+     */
+    function toggleCampaignActive(uint256 _campaignId, bool _active)
         external
-        campaignOwnerOrManager(_id)
-        campaignExists(_id)
+        campaignOwnerOrManager(_campaignId)
+        campaignExists(_campaignId)
         whenNotPaused
-        nonReentrant
     {
-        deployedCampaigns[_id].active = _active;
-        deployedCampaigns[_id].updatedAt = block.timestamp;
+        deployedCampaigns[_campaignId].active = _active;
+        deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignActiveToggle(_id, _active);
+        emit CampaignActiveToggle(_campaignId, _active);
+    }
+
+    /**
+     * @dev         External call to campaign instance modifying it's settings wether it's approved or not
+                    Restricted to Campaign Managers
+     * @param      _target              Contribution target of the campaign
+     * @param      _minimumContribution The minimum amout required to be an approver
+     * @param      _duration            How long until the campaign stops receiving contributions
+     * @param      _goalType            Indicates if campaign is fixed or flexible with contributions
+     * @param      _token               Address of token to be used for transactions by default
+     */
+    function modifyCampaignDetails(
+        Campaign _campaign,
+        uint256 _target,
+        uint256 _minimumContribution,
+        uint256 _duration,
+        uint256 _goalType,
+        address _token
+    ) external onlyManager(MANAGE_CAMPAIGNS) whenNotPaused {
+        Campaign(_campaign).setCampaignDetails(
+            _target,
+            _minimumContribution,
+            _duration,
+            _goalType,
+            _token
+        );
     }
 
     function modifyCampaignCategory(uint256 _id, uint256 _newCategory)
@@ -450,7 +504,6 @@ contract CampaignFactory is
         campaignOwnerOrManager(_id)
         campaignExists(_id)
         whenNotPaused
-        nonReentrant
     {
         uint256 _oldCategory = deployedCampaigns[_id].category;
 
@@ -475,6 +528,30 @@ contract CampaignFactory is
         }
     }
 
+    /**
+     * @dev        Called by a campaign owner seeking to be approved and ready to receive contributions
+     * @param      _campaign    Address of campaign instance
+     */
+    function campaignApprovalRequest(address _campaign)
+        external
+        onlyCampaignOwner(campaignToID[address(_campaign)])
+        campaignExists(campaignToID[address(_campaign)])
+        userIsVerified(msg.sender)
+        whenPaused
+    {
+        uint256 _campaignId = campaignToID[address(_campaign)];
+        require(
+            !deployedCampaigns[_campaignId].approved &&
+                !deployedCampaigns[_campaignId].active
+        );
+        emit CampaignApprovalRequest(_campaignId);
+    }
+
+    /**
+     * @dev        Called by a campaign owner seeking to be approved and ready to receive contributions
+     * @param      _campaignId    Address of campaign instance
+     * @param      _token         Address of token used to purchase feature package
+     */
     function featureCampaign(
         uint256 _campaignId,
         uint256 _featurePackageId,
@@ -482,7 +559,7 @@ contract CampaignFactory is
     )
         external
         payable
-        onlyCampaignOwner(_campaignId)
+        campaignOwnerOrManager(_campaignId)
         campaignExists(_campaignId)
         campaignIsEnabled(_campaignId)
         userIsVerified(msg.sender)
@@ -525,11 +602,10 @@ contract CampaignFactory is
 
     function pauseCampaignFeatured(uint256 _campaignId)
         external
-        onlyCampaignOwner(_campaignId)
+        campaignOwnerOrManager(_campaignId)
         campaignExists(_campaignId)
         userIsVerified(msg.sender)
         whenNotPaused
-        nonReentrant
     {
         require(deployedCampaigns[_campaignId].featureFor >= block.timestamp); // check time in campaign feature hasn't expired
         require(!featuredCampaignIsPaused[_campaignId]); // make sure campaign feature isn't paused
@@ -546,15 +622,17 @@ contract CampaignFactory is
         emit CampaignFeaturePaused(_campaignId);
     }
 
+    /**
+     * @dev        Resumes campaign feature time
+     * @param      _campaignId   ID of campaign
+     */
     function unpauseCampaignFeatured(uint256 _campaignId)
         external
-        onlyCampaignOwner(_campaignId)
+        campaignOwnerOrManager(_campaignId)
         campaignExists(_campaignId)
         userIsVerified(msg.sender)
         whenNotPaused
-        nonReentrant
     {
-        //require(deployedCampaigns[_campaignId].featureFor > block.timestamp, "feature is");
         require(featuredCampaignIsPaused[_campaignId]); // make sure campaign feature is paused
 
         featuredCampaignIsPaused[_campaignId] = false;
@@ -563,7 +641,7 @@ contract CampaignFactory is
             _campaignId
         ]
         .featureFor
-        .add(pausedFeaturedCampaignTimeLeft[_campaignId]);
+        .add(pausedFeaturedCampaignTimeLeft[_campaignId]); // add time left after pause
 
         // we don't owe you no more
         pausedFeaturedCampaignTimeLeft[_campaignId] = 0;
@@ -574,25 +652,31 @@ contract CampaignFactory is
         );
     }
 
-    function destroyCampaign(uint256 _id)
+    /**
+     * @dev        Deletes a campaign
+     * @param      _campaignId   ID of campaign
+     */
+    function destroyCampaign(uint256 _campaignId)
         external
         onlyManager(MANAGE_CAMPAIGNS)
-        campaignExists(_id)
+        campaignExists(_campaignId)
         whenNotPaused
-        nonReentrant
     {
         // delete the campaign from array
-        delete deployedCampaigns[_id];
+        delete deployedCampaigns[_campaignId];
 
         // emit event
-        emit CampaignDestroyed(_id);
+        emit CampaignDestroyed(_campaignId);
     }
 
+    /**
+     * @dev        Creates a category
+     * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
+     */
     function createCategory(bool _active)
         external
         onlyManager(MANAGE_CATEGORIES)
         whenNotPaused
-        nonReentrant
     {
         // create category with `campaignCount` default to 0
         CampaignCategory memory newCategory = CampaignCategory({
@@ -609,40 +693,51 @@ contract CampaignFactory is
         emit CategoryAdded(campaignCategories.length.sub(1), _active);
     }
 
-    function modifyCategory(uint256 _id, bool _active)
+    /**
+     * @dev        Modifies details about a category
+     * @param      _categoryId   ID of the category
+     * @param      _active       Indicates if a category is active allowing for campaigns to be assigned to it
+     */
+    function modifyCategory(uint256 _categoryId, bool _active)
         external
         onlyManager(MANAGE_CATEGORIES)
         whenNotPaused
-        nonReentrant
     {
-        require(campaignCategories[_id].exists);
+        require(campaignCategories[_categoryId].exists);
 
-        campaignCategories[_id].active = _active;
-        campaignCategories[_id].updatedAt = block.timestamp;
+        campaignCategories[_categoryId].active = _active;
+        campaignCategories[_categoryId].updatedAt = block.timestamp;
 
-        emit CategoryModified(_id, _active);
+        emit CategoryModified(_categoryId, _active);
     }
 
-    function destroyCategory(uint256 _id)
+    /**
+     * @dev        Deletes a category
+     * @param      _categoryId   ID of category
+     */
+    function destroyCategory(uint256 _categoryId)
         external
         onlyManager(MANAGE_CATEGORIES)
         whenNotPaused
-        nonReentrant
     {
         // check if category exists
-        require(campaignCategories[_id].exists);
+        require(campaignCategories[_categoryId].exists);
 
         // delete the category from `campaignCategories`
-        delete campaignCategories[_id];
+        delete campaignCategories[_categoryId];
 
-        emit CategoryDestroyed(_id);
+        emit CategoryDestroyed(_categoryId);
     }
 
+    /**
+     * @dev        Creates a feature package purchased by campaig owners to feature their campaigns
+     * @param      _cost        Cost of purchasing this feature package
+     * @param      _time        How long a campaign will be featured for
+     */
     function createFeaturePackage(uint256 _cost, uint256 _time)
         external
         onlyAdmin
         whenNotPaused
-        nonReentrant
     {
         featurePackages.push(Featured(block.timestamp, 0, _time, _cost, true));
         featurePackageCount = featurePackageCount.add(1);
@@ -650,11 +745,17 @@ contract CampaignFactory is
         emit FeaturePackageAdded(featurePackages.length.sub(1), _cost, _time);
     }
 
+    /**
+     * @dev        Modifies details about a feature package
+     * @param      _packageId   ID of feature package
+     * @param      _cost        Cost of purchasing this feature package
+     * @param      _time        How long a campaign will be featured for
+     */
     function modifyFeaturedPackage(
         uint256 _packageId,
         uint256 _cost,
         uint256 _time
-    ) external onlyAdmin whenNotPaused nonReentrant {
+    ) external onlyAdmin whenNotPaused {
         require(featurePackages[_packageId].exists);
         featurePackages[_packageId].cost = _cost;
         featurePackages[_packageId].time = _time;
@@ -663,11 +764,14 @@ contract CampaignFactory is
         emit FeaturePackageModified(_packageId, _cost, _time);
     }
 
+    /**
+     * @dev        Deletes a feature package
+     * @param      _packageId   ID of feature package
+     */
     function destroyFeaturedPackage(uint256 _packageId)
         external
         onlyAdmin
         whenNotPaused
-        nonReentrant
     {
         require(featurePackages[_packageId].exists);
 
@@ -676,11 +780,13 @@ contract CampaignFactory is
         emit FeaturePackageDestroyed(_packageId);
     }
 
-    function unpauseCampaign() external whenPaused onlyAdmin nonReentrant {
+    /// @dev Unpauses the factory, transactions in the factory resume per usual
+    function unpauseCampaign() external whenPaused onlyAdmin {
         _unpause();
     }
 
-    function pauseCampaign() external whenNotPaused onlyAdmin nonReentrant {
+    /// @dev Pauses the factory, it halts all transactions in the factory
+    function pauseCampaign() external whenNotPaused onlyAdmin {
         _pause();
     }
 }
