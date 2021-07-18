@@ -576,7 +576,8 @@ contract Campaign is
     }
 
     /**
-     * @dev        Allows withdrawal of balance left after requests, called only by factory
+     * @dev        Allows withdrawal of balance by factory on behalf of a user. 
+                   Cases where users wallet is compromised
      * @param      _user      User whose funds are being requested
      * @param      _amount    Amount requested to be withdrawn from contributions
      * @param      _wallet    Address where amount is delivered

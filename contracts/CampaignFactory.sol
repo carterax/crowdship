@@ -52,11 +52,6 @@ contract CampaignFactory is
     event UserAdded(uint256 indexed userId);
     event UserModified(uint256 indexed userId);
     event UserApproval(uint256 indexed userId, bool approval);
-    // event UserJoinedCampaign(
-    //     uint256 indexed historyId,
-    //     uint256 userId,
-    //     uint256 campaignId
-    // );
     event UserRemoved(uint256 indexed userId);
 
     /// @dev `Category Events`
@@ -137,14 +132,6 @@ contract CampaignFactory is
     User[] public users;
     uint256 public userCount;
     mapping(address => uint256) public userID;
-
-    // /// @dev `UserContributionHistory`
-    // struct UserContributionHistory {
-    //     uint256 userId;
-    //     uint256 campaignId;
-    //     uint256 joined;
-    // }
-    // UserContributionHistory[] public userCampaignHistory;
 
     /// @dev `Featured`
     struct Featured {
@@ -780,12 +767,12 @@ contract CampaignFactory is
         emit FeaturePackageDestroyed(_packageId);
     }
 
-    /// @dev Unpauses the factory, transactions in the factory resume per usual
+    /// @dev Unpauses the factory, transactions in the factory resumes per usual
     function unpauseCampaign() external whenPaused onlyAdmin {
         _unpause();
     }
 
-    /// @dev Pauses the factory, it halts all transactions in the factory
+    /// @dev Pauses the factory, halts all transactions in the factory
     function pauseCampaign() external whenNotPaused onlyAdmin {
         _pause();
     }

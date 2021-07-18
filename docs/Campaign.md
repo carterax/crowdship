@@ -414,7 +414,8 @@
 |`_wallet` | address payable |    Address where amount is delivered
 
 ### withdrawContributionForUser
->        Allows withdrawal of balance left after requests, called only by factory
+>        Allows withdrawal of balance by factory on behalf of a user. 
+                   Cases where users wallet is compromised
 
 
 #### Declaration
@@ -622,6 +623,8 @@
 
 
 
+
+***    
 
 
 ## Events

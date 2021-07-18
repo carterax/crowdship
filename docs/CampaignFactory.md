@@ -767,7 +767,7 @@ No modifiers
 |`_packageId` | uint256 |   ID of feature package
 
 ### unpauseCampaign
-> Unpauses the factory, transactions in the factory resume per usual
+> Unpauses the factory, transactions in the factory resumes per usual
 
 #### Declaration
 ```solidity
@@ -784,7 +784,7 @@ No modifiers
 
 
 ### pauseCampaign
-> Pauses the factory, it halts all transactions in the factory
+> Pauses the factory, halts all transactions in the factory
 
 #### Declaration
 ```solidity
@@ -800,6 +800,8 @@ No modifiers
 
 
 
+
+***    
 
 
 ## Events
