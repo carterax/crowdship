@@ -207,22 +207,27 @@
 |`_time` | uint256 |    How long until the campaign stops receiving contributions
 ---  
 ### resetDeadlineSetTimes
-> Resets the number of times campaign manager has extended deadlines
+>        Sets the number of times the campaign owner can extended deadlines. Restricted to factory
+
 
 #### Declaration
 ```solidity
   function resetDeadlineSetTimes(
-  ) external adminOrFactory campaignIsActive whenNotPaused
+    uint256 _count
+  ) external onlyFactory campaignIsActive whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| adminOrFactory |
+| onlyFactory |
 | campaignIsActive |
 | whenNotPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_count` | uint256 |   Number of times a campaign owner can extend the deadline
 ---  
 ### createReward
 >        Creates rewards contributors can attain
@@ -388,7 +393,7 @@
 |`_withReward` | bool |  Indicates if the user wants a reward alongside their contribution
 ---  
 ### withdrawOwnContribution
->        Allows withdrawal of balance left after requests, called only by user
+>        Allows withdrawal of contribution for a user, works if campaign target isn't met
 
 
 #### Declaration

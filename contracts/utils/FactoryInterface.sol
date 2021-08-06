@@ -7,24 +7,33 @@ abstract contract CampaignFactoryInterface {
     address payable public factoryWallet;
     uint256 public defaultCommission;
     uint256 public deadlineStrikesAllowed;
-    uint256 public maxDeadline;
-    uint256 public minDeadline;
+    uint256 public maxDeadlineExtension;
+    uint256 public minDeadlineExtension;
     uint256 public minimumContributionAllowed;
     uint256 public maximumContributionAllowed;
+    uint256 public minimumRequestAllowed;
+    uint256 public maximumRequestAllowed;
+    uint256 public minRequestDuration;
+    uint256 public maxRequestDuration;
+    uint256 public reviewThresholdMark;
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokensApproved;
 
     struct CampaignInfo {
         address campaign;
+        address owner;
+        uint256 createdAt;
+        uint256 updatedAt;
         uint256 category;
+        uint256 featureFor;
         bool active;
         bool approved;
+        bool exists;
     }
     CampaignInfo[] public deployedCampaigns;
     mapping(address => uint256) public campaignToID;
 
     struct CampaignCategory {
-        string title;
         uint256 campaignCount;
         uint256 createdAt;
         uint256 updatedAt;
@@ -34,9 +43,7 @@ abstract contract CampaignFactoryInterface {
     CampaignCategory[] public campaignCategories;
 
     struct User {
-        address wallet;
-        string email;
-        string username;
+        address userAddress;
         uint256 joined;
         uint256 updatedAt;
         bool verified;
@@ -52,6 +59,10 @@ abstract contract CampaignFactoryInterface {
         returns (bool);
 
     function receiveCampaignCommission(uint256 _amount, address campaign)
+        external
+        virtual;
+
+    function transferCampaignOwnership(address _newOwner, address _campaign)
         external
         virtual;
 }

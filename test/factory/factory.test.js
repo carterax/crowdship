@@ -82,58 +82,79 @@ contract('CampaignFactory', function([
   it('deployer owns contract', async function() {
     expect(await this.factory.root()).to.be.equal(this.owner);
   });
-  // it('should change factory settings', async function() {
-  //   await this.factory.setFactoryWallet(otherFactoryWallet);
-  //   expect(await this.factory.factoryWallet()).to.be.equal(otherFactoryWallet);
-  // });
-  // it('should fail if non admin tries to change factory wallet', async function() {
-  //   await expectRevert.unspecified(
-  //     this.factory.setFactoryWallet(otherFactoryWallet, { from: this.addr1 })
-  //   );
-  // });
-  // it('should set campaign implementation address', async function() {
-  //   await this.factory.setCampaignImplementationAddress(this.campaign.address);
-  //   expect(await this.factory.campaignImplementation()).to.be.equal(
-  //     this.campaign.address
-  //   );
-  // });
-  // it('should fail if non admin tries to set implementation address', async function() {
-  //   await expectRevert.unspecified(
-  //     this.factory.setCampaignImplementationAddress(this.campaign.address, {
-  //       from: this.addr4,
-  //     })
-  //   );
-  // });
-  // it('should set default commission', async function() {
-  //   await this.factory.setDefaultCommission(5);
-  //   expect(await this.factory.defaultCommission()).to.be.bignumber.equal(
-  //     new BN('5')
-  //   );
-  // });
-  // it('should fail if non admin tries to set default commission', async function() {
-  //   await expectRevert.unspecified(
-  //     this.factory.setDefaultCommission(5, { from: this.addr3 })
-  //   );
-  // });
+  it('should change factory settings', async function() {
+    const campaignImplementation = await Campaign.new();
+    await this.factory.setFactorySettings(
+      otherFactoryWallet,
+      campaignImplementation.address,
+      3,
+      604800,
+      86400,
+      1,
+      10000,
+      86400,
+      604800
+    );
+
+    expect(await this.factory.factoryWallet()).to.be.equal(otherFactoryWallet);
+    expect(await this.factory.campaignImplementation()).to.be.equal(
+      campaignImplementation.address
+    );
+    expect(await this.factory.defaultCommission()).to.be.bignumber.equal(
+      new BN('3000000000000000000000000000')
+    );
+    expect(await this.factory.deadlineStrikesAllowed()).to.be.bignumber.equal(
+      new BN('3')
+    );
+    expect(await this.factory.maxDeadlineExtension()).to.be.bignumber.equal(
+      new BN('604800')
+    );
+    expect(await this.factory.minDeadlineExtension()).to.be.bignumber.equal(
+      new BN('86400')
+    );
+    expect(
+      await this.factory.minimumContributionAllowed()
+    ).to.be.bignumber.equal(new BN('1'));
+    expect(
+      await this.factory.maximumContributionAllowed()
+    ).to.be.bignumber.equal(new BN('10000'));
+  });
+  it('should fail if non admin tries to change factory settings', async function() {
+    const campaignImplementation = await Campaign.new();
+    await expectRevert.unspecified(
+      this.factory.setFactorySettings(
+        otherFactoryWallet,
+        campaignImplementation.address,
+        1000,
+        2,
+        604800,
+        86400,
+        1000,
+        10000,
+        604800,
+        { from: this.addr1 }
+      )
+    );
+  });
   it('should set commission per category', async function() {
     await this.factory.createCategory(true);
     await this.factory.createCategory(false);
-    await this.factory.setCategoryCommission(0, 4);
-    await this.factory.setCategoryCommission(1, 2);
+    await this.factory.setCategoryCommission(0, 3, 1);
+    await this.factory.setCategoryCommission(1, 25, 10);
     expect(await this.factory.categoryCommission(0)).to.be.bignumber.equal(
-      new BN('4')
+      new BN('3000000000000000000000000000')
     );
     expect(await this.factory.categoryCommission(1)).to.be.bignumber.equal(
-      new BN('2')
+      new BN('2500000000000000000000000000')
     );
   });
   it('set commission per category should fail if category does not exist', async function() {
-    await expectRevert.unspecified(this.factory.setCategoryCommission(0, 4));
+    await expectRevert.unspecified(this.factory.setCategoryCommission(0, 4, 1));
   });
   it('should fail if non admin tries to set commission per category', async function() {
     await this.factory.createCategory(true);
     await expectRevert.unspecified(
-      this.factory.setCategoryCommission(0, 4, { from: this.addr2 })
+      this.factory.setCategoryCommission(0, 55, 10, { from: this.addr2 })
     );
   });
 

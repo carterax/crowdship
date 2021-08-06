@@ -12,6 +12,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./utils/AccessControl.sol";
 import "./Campaign.sol";
+import "./utils/math/DecimalMath.sol";
 
 contract CampaignFactory is
     Initializable,
@@ -32,6 +33,7 @@ contract CampaignFactory is
         uint256 userId,
         uint256 category
     );
+    event CampaignOwnershipTransferred(address indexed newOwner);
     event CampaignDestroyed(uint256 indexed campaignId);
     event CampaignApproval(uint256 indexed campaignId, bool approval);
     event CampaignActiveToggle(uint256 indexed campaignId, bool active);
@@ -47,6 +49,11 @@ contract CampaignFactory is
     event CampaignFeaturePaused(uint256 indexed campaignId);
     event CampaignFeatureUnpaused(uint256 indexed campaignId, uint256 timeLeft);
     event CampaignApprovalRequest(uint256 campaignId);
+
+    /// @dev `Token Events`
+    event TokenAdded(address indexed token);
+    event TokenApproval(address indexed token, bool state);
+    event TokenRemoved(uint256 indexed tokenId, address token);
 
     /// @dev `User Events`
     event UserAdded(uint256 indexed userId);
@@ -80,8 +87,13 @@ contract CampaignFactory is
     uint256 public deadlineStrikesAllowed;
     uint256 public minimumContributionAllowed;
     uint256 public maximumContributionAllowed;
-    uint256 public maxDeadline;
-    uint256 public minDeadline;
+    uint256 public minimumRequestAllowed;
+    uint256 public maximumRequestAllowed;
+    uint256 public maxDeadlineExtension;
+    uint256 public minDeadlineExtension;
+    uint256 public minRequestDuration;
+    uint256 public maxRequestDuration;
+    uint256 public reviewThresholdMark;
 
     uint256 public factoryRevenue; // total from all activities
     address[] public tokenList;
@@ -123,7 +135,7 @@ contract CampaignFactory is
 
     /// @dev `Users`
     struct User {
-        address wallet;
+        address userAddress;
         uint256 joined;
         uint256 updatedAt;
         bool verified;
@@ -194,12 +206,12 @@ contract CampaignFactory is
         require(address(_wallet) != address(0));
         root = msg.sender;
         factoryWallet = _wallet;
-        defaultCommission = 5;
-        deadlineStrikesAllowed = 3;
-        maxDeadline = 7 days;
-        minDeadline = 1 days;
-        minimumContributionAllowed = 4000;
-        maximumContributionAllowed = 4000000000000;
+        // defaultCommission = DecimalMath.divd(3, 1).value;
+        // deadlineStrikesAllowed = 3;
+        // maxDeadlineExtension = 7 days;
+        // minDeadlineExtension = 1 days;
+        // minimumContributionAllowed = 1;
+        // maximumContributionAllowed = 4000000000000;
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
         _setupRole(MANAGE_CATEGORIES, root);
@@ -218,22 +230,30 @@ contract CampaignFactory is
      * @dev        Factory controlled values dictating how campaigns should run
      * @param      _wallet                      Address where all revenue gets deposited
      * @param      _implementation              Address of base contract to deploy minimal proxies to campaigns
-     * @param      _commission                  Default fee percentage on request finalization in campaign
      * @param      _deadlineStrikesAllowed      Number of times campaign owner is allowed to extend deadline
-     * @param      _maxDeadline                 Maximum time allowed to extend the deadline by
-     * @param      _minDeadline                 Minimum time allowed to extend the deadline by
-     * @param      _minimumContributionAllowed  Minimum allowed contribution in campaigns
-     * @param      _maximumContributionAllowed  Maximum allowed contribution in campaigns
+     * @param      _maxDeadlineExtension        Maximum time allowed to extend the deadline by
+     * @param      _minDeadlineExtension        Minimum time allowed to extend the deadline by
+     * @param      _minimumContributionAllowed  Minimum contribution allowed in campaigns
+     * @param      _maximumContributionAllowed  Maximum contribution allowed in campaigns
+     * @param      _minRequestDuration          Minimum request duration allowed in campaigns
+     * @param      _maxRequestDuration          Maximum request duration allowed in campaigns
+     * @param      _minimumRequestAllowed       Minimum request amount allowed in campaigns
+     * @param      _maximumRequestAllowed       Maximum request amount allowed in campaigns
+     * @param      _reviewThresholdMark         Review threshold which determines if a campaing is approved for completion
      */
     function setFactorySettings(
         address payable _wallet,
         Campaign _implementation,
-        uint256 _commission,
         uint256 _deadlineStrikesAllowed,
-        uint256 _maxDeadline,
-        uint256 _minDeadline,
+        uint256 _maxDeadlineExtension,
+        uint256 _minDeadlineExtension,
         uint256 _minimumContributionAllowed,
-        uint256 _maximumContributionAllowed
+        uint256 _maximumContributionAllowed,
+        uint256 _minRequestDuration,
+        uint256 _maxRequestDuration,
+        uint256 _minimumRequestAllowed,
+        uint256 _maximumRequestAllowed,
+        uint256 _reviewThresholdMark
     ) external onlyAdmin {
         require(
             address(_wallet) != address(0) &&
@@ -241,25 +261,52 @@ contract CampaignFactory is
         );
         factoryWallet = _wallet;
         campaignImplementation = address(_implementation);
-        defaultCommission = _commission;
         deadlineStrikesAllowed = _deadlineStrikesAllowed;
-        maxDeadline = _maxDeadline;
-        minDeadline = _minDeadline;
+        maxDeadlineExtension = _maxDeadlineExtension;
+        minDeadlineExtension = _minDeadlineExtension;
         minimumContributionAllowed = _minimumContributionAllowed;
         maximumContributionAllowed = _maximumContributionAllowed;
+        minRequestDuration = _minRequestDuration;
+        maxRequestDuration = _maxRequestDuration;
+        minimumRequestAllowed = _minimumRequestAllowed;
+        maximumRequestAllowed = _maximumRequestAllowed;
+        reviewThresholdMark = _reviewThresholdMark;
     }
 
     /**
-     * @dev        Adds commission per category basis
-     * @param      _categoryId  ID of category
-     * @param      _commission  Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`
+     * @dev        Sets default commission on all request finalization
+     * @param      _numerator    Fraction Fee percentage on request finalization
+     * @param      _denominator  Fraction Fee percentage on request finalization
      */
-    function setCategoryCommission(uint256 _categoryId, uint256 _commission)
+    function setDefaultCommission(uint256 _numerator, uint256 _denominator)
         external
         onlyAdmin
     {
+        DecimalMath.UFixed memory _commission = DecimalMath.divd(
+            DecimalMath.toUFixed(_numerator),
+            DecimalMath.toUFixed(_denominator)
+        );
+        defaultCommission = _commission.value;
+    }
+
+    /**
+     * @dev        Sets commission per category basis
+     * @param      _categoryId   ID of category
+     * @param      _numerator    Fraction Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`
+     * @param      _denominator  Fraction Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`
+     */
+    function setCategoryCommission(
+        uint256 _categoryId,
+        uint256 _numerator,
+        uint256 _denominator
+    ) external onlyAdmin {
         require(campaignCategories[_categoryId].exists);
-        categoryCommission[_categoryId] = _commission;
+
+        DecimalMath.UFixed memory _commission = DecimalMath.divd(
+            DecimalMath.toUFixed(_numerator),
+            DecimalMath.toUFixed(_denominator)
+        );
+        categoryCommission[_categoryId] = _commission.value;
     }
 
     /**
@@ -268,8 +315,26 @@ contract CampaignFactory is
      */
     function addToken(address _token) external onlyAdmin {
         require(!tokenInList[_token]);
+
         tokenList.push(_token);
         tokenInList[_token] = true;
+
+        emit TokenAdded(_token);
+    }
+
+    /**
+     * @dev        Removes a token from the list of accepted tokens and tokens in list
+     * @param      _tokenId      ID of the token
+     * @param      _token   Address of the token
+     */
+    function removeToken(uint256 _tokenId, address _token) external onlyAdmin {
+        require(tokenInList[_token]);
+
+        tokenInList[_token] = false;
+        tokensApproved[_token] = false;
+        delete tokenList[_tokenId];
+
+        emit TokenRemoved(_tokenId, _token);
     }
 
     /**
@@ -283,6 +348,8 @@ contract CampaignFactory is
     {
         require(tokenInList[_token]);
         tokensApproved[_token] = _state;
+
+        emit TokenApproval(_token, _state);
     }
 
     /**
@@ -334,7 +401,7 @@ contract CampaignFactory is
         campaignRevenueFromCommissions[
             campaignToID[address(_campaign)]
         ] = campaignRevenueFromCommissions[campaignToID[address(_campaign)]]
-        .add(_amount);
+            .add(_amount);
         factoryRevenue = factoryRevenue.add(_amount);
     }
 
@@ -416,9 +483,7 @@ contract CampaignFactory is
 
         campaignCategories[_categoryId].campaignCount = campaignCategories[
             _categoryId
-        ]
-        .campaignCount
-        .add(1);
+        ].campaignCount.add(1);
         campaignCount = campaignCount.add(1);
 
         Campaign(campaign).__Campaign_init(address(this), msg.sender);
@@ -427,7 +492,31 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Approves or disapproves a campaign. Restricted to campaign managers
+     * @dev        Transfers campaign ownership from one user to another.
+                   Called only after ownership transfer occurs in the minimal campaign proxy
+     * @param      _newOwner    Address of the user campaign ownership is being transfered to
+     * @param      _campaign    Address of the campaign instance
+     */
+    function transferCampaignOwnership(address _newOwner, Campaign _campaign)
+        external
+        onlyManager(MANAGE_CAMPAIGNS)
+        whenNotPaused
+    {
+        // Ensure the new owner has been enstated in the campaign first
+        require(Campaign(_campaign).root() == _newOwner);
+
+        CampaignInfo storage campaignInfo = deployedCampaigns[
+            campaignToID[address(_campaign)]
+        ];
+        campaignInfo.owner = _newOwner;
+        campaignInfo.updatedAt = block.timestamp;
+        campaignToOwner[address(_campaign)] = _newOwner;
+
+        emit CampaignOwnershipTransferred(_newOwner);
+    }
+
+    /**
+     * @dev        Approves or disapproves a campaign. Restricted to campaign managers from factory
      * @param      _campaignId    ID of the campaign
      * @param      _approval      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
      */
@@ -444,7 +533,7 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Approves or disapproves a campaign. Restricted to campaign managers
+     * @dev        Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory
      * @param      _campaignId    ID of the campaign
      * @param      _active      Indicates if the campaign will be active or not.  Affects campaign listing and transactions
      */
@@ -458,32 +547,6 @@ contract CampaignFactory is
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
         emit CampaignActiveToggle(_campaignId, _active);
-    }
-
-    /**
-     * @dev         External call to campaign instance modifying it's settings wether it's approved or not
-                    Restricted to Campaign Managers
-     * @param      _target              Contribution target of the campaign
-     * @param      _minimumContribution The minimum amout required to be an approver
-     * @param      _duration            How long until the campaign stops receiving contributions
-     * @param      _goalType            Indicates if campaign is fixed or flexible with contributions
-     * @param      _token               Address of token to be used for transactions by default
-     */
-    function modifyCampaignDetails(
-        Campaign _campaign,
-        uint256 _target,
-        uint256 _minimumContribution,
-        uint256 _duration,
-        uint256 _goalType,
-        address _token
-    ) external onlyManager(MANAGE_CAMPAIGNS) whenNotPaused {
-        Campaign(_campaign).setCampaignDetails(
-            _target,
-            _minimumContribution,
-            _duration,
-            _goalType,
-            _token
-        );
     }
 
     /**
@@ -504,13 +567,13 @@ contract CampaignFactory is
 
             deployedCampaigns[_campaignId].category = _newCategoryId;
             campaignCategories[_oldCategoryId]
-            .campaignCount = campaignCategories[_oldCategoryId]
-            .campaignCount
-            .sub(1);
+                .campaignCount = campaignCategories[_oldCategoryId]
+                .campaignCount
+                .sub(1);
             campaignCategories[_newCategoryId]
-            .campaignCount = campaignCategories[_newCategoryId]
-            .campaignCount
-            .add(1);
+                .campaignCount = campaignCategories[_newCategoryId]
+                .campaignCount
+                .add(1);
 
             deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
@@ -566,16 +629,14 @@ contract CampaignFactory is
         // update campaign revenue from ads
         campaignRevenueFromFeatures[_campaignId] = campaignRevenueFromFeatures[
             _campaignId
-        ]
-        .add(msg.value);
+        ].add(msg.value);
 
         // update featuredFor for time specified in the selected feature package
         deployedCampaigns[_campaignId].featureFor = deployedCampaigns[
             _campaignId
-        ]
-        .featureFor
-        .add(featurePackages[_featurePackageId].time)
-        .add(block.timestamp);
+        ].featureFor.add(featurePackages[_featurePackageId].time).add(
+                block.timestamp
+            );
 
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
@@ -607,9 +668,7 @@ contract CampaignFactory is
         // time in campaign currently - current time
         pausedFeaturedCampaignTimeLeft[_campaignId] = deployedCampaigns[
             _campaignId
-        ]
-        .featureFor
-        .sub(block.timestamp);
+        ].featureFor.sub(block.timestamp);
 
         featuredCampaignIsPaused[_campaignId] = true;
 
@@ -633,9 +692,7 @@ contract CampaignFactory is
 
         deployedCampaigns[_campaignId].featureFor = deployedCampaigns[
             _campaignId
-        ]
-        .featureFor
-        .add(pausedFeaturedCampaignTimeLeft[_campaignId]); // add time left after pause
+        ].featureFor.add(pausedFeaturedCampaignTimeLeft[_campaignId]); // add time left after pause
 
         // we don't owe you no more
         pausedFeaturedCampaignTimeLeft[_campaignId] = 0;
