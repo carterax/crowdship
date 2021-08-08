@@ -35,18 +35,36 @@ contract('Campaign', function([
     await this.factory.__CampaignFactory_init(this.factoryWallet, {
       from: this.root,
     });
-    await this.factory.setFactorySettings(
+
+    this.factorySettings = {
+      deadlineStrikesAllowed: 3,
+      maxDeadlineExtension: 604800,
+      minDeadlineExtension: 86400,
+      minimumContributionAllowed: 1,
+      maximumContributionAllowed: 10000,
+      minRequestDuration: 86400,
+      maxRequestDuration: 604800,
+      minimumRequestAmountAllowed: 1000,
+      maximumRequestAmountAllowed: 10000,
+      reviewThresholdMark: 80,
+      minimumCampaignTarget: 5000,
+      maximumCampaignTarget: 10000000,
+    };
+    await this.factory.setFactoryConfig(
       factoryWallet,
       this.campaignImplementation.address,
-      3,
-      604800,
-      86400,
-      1,
-      10000,
-      86400,
-      604800,
       { from: this.root }
     );
+    await Promise.all(
+      Object.keys(this.factorySettings).map(async (setting) => {
+        await this.factory.setCampaignTransactionConfig(
+          setting,
+          this.factorySettings[setting],
+          { from: this.root }
+        );
+      })
+    );
+
     await this.factory.createCategory(true, { from: this.root });
     await this.factory.addToken(this.testToken.address, { from: this.root });
     await this.factory.toggleAcceptedToken(this.testToken.address, true, {
@@ -160,7 +178,7 @@ contract('Campaign', function([
   /*                                destroyReward                               */
   /* -------------------------------------------------------------------------- */
   it('should delete a reward', async function() {});
-  it("reward removal should fail if the reward doen't exist", async function() {});
+  it("reward removal should fail if the reward doesn't exist", async function() {});
 
   /* -------------------------------------------------------------------------- */
   /*                             campaignSentReward                             */

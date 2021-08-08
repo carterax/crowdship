@@ -8,6 +8,18 @@ library CampaignFactoryLib {
     /**
      * @dev        Returns information on a campaign from the factory
      * @param      _factory     Campaign factory interface
+     * @param      _prop        Transaction setting key
+     */
+    function getCampaignFactoryConfig(
+        CampaignFactoryInterface _factory,
+        string memory _prop
+    ) internal returns (uint256) {
+        return _factory.getCampaignTransactionConfig(_prop);
+    }
+
+    /**
+     * @dev        Returns information on a campaign from the factory
+     * @param      _factory     Campaign factory interface
      * @param      _campaignId  ID of the campaign
      */
     function campaignInfo(
@@ -78,7 +90,7 @@ library CampaignFactoryLib {
     function factoryPercentFee(
         CampaignFactoryInterface _factory,
         uint256 _campaignId
-    ) internal view returns (uint256) {
+    ) internal returns (uint256) {
         uint256 campaignCategory;
         uint256 percentCommission;
 
@@ -88,7 +100,9 @@ library CampaignFactoryLib {
         percentCommission = _factory.categoryCommission(campaignCategory);
 
         if (percentCommission == 0) {
-            percentCommission = _factory.defaultCommission();
+            percentCommission = _factory.getCampaignTransactionConfig(
+                "defaultCommission"
+            );
         }
 
         return percentCommission;

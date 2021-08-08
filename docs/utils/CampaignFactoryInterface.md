@@ -16,12 +16,6 @@
 | --- | --- |
 | root | address |
 | factoryWallet | address payable |
-| defaultCommission | uint256 |
-| deadlineStrikesAllowed | uint256 |
-| maxDeadline | uint256 |
-| minDeadline | uint256 |
-| minimumContributionAllowed | uint256 |
-| maximumContributionAllowed | uint256 |
 | categoryCommission | mapping(uint256 => uint256) |
 | tokensApproved | mapping(address => bool) |
 | deployedCampaigns | struct CampaignFactoryInterface.CampaignInfo[] |
@@ -34,6 +28,20 @@
 
 ## Functions
 
+### getCampaignTransactionConfig
+
+
+#### Declaration
+```solidity
+  function getCampaignTransactionConfig(
+  ) public returns (uint256)
+```
+
+#### Modifiers:
+No modifiers
+
+
+---  
 ### canManageCampaigns
 
 
@@ -54,6 +62,20 @@ No modifiers
 #### Declaration
 ```solidity
   function receiveCampaignCommission(
+  ) external
+```
+
+#### Modifiers:
+No modifiers
+
+
+---  
+### transferCampaignOwnership
+
+
+#### Declaration
+```solidity
+  function transferCampaignOwnership(
   ) external
 ```
 

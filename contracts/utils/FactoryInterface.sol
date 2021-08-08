@@ -5,17 +5,7 @@ pragma solidity >=0.4.22 <0.9.0;
 abstract contract CampaignFactoryInterface {
     address public root;
     address payable public factoryWallet;
-    uint256 public defaultCommission;
-    uint256 public deadlineStrikesAllowed;
-    uint256 public maxDeadlineExtension;
-    uint256 public minDeadlineExtension;
-    uint256 public minimumContributionAllowed;
-    uint256 public maximumContributionAllowed;
-    uint256 public minimumRequestAllowed;
-    uint256 public maximumRequestAllowed;
-    uint256 public minRequestDuration;
-    uint256 public maxRequestDuration;
-    uint256 public reviewThresholdMark;
+
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokensApproved;
 
@@ -51,6 +41,11 @@ abstract contract CampaignFactoryInterface {
     }
     User[] public users;
     mapping(address => uint256) public userID;
+
+    function getCampaignTransactionConfig(string memory _prop)
+        public
+        virtual
+        returns (uint256);
 
     function canManageCampaigns(address _user)
         public

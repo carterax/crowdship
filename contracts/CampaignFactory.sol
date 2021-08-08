@@ -83,23 +83,15 @@ contract CampaignFactory is
     address public root;
     address payable public factoryWallet;
     address public campaignImplementation;
-    uint256 public defaultCommission;
-    uint256 public deadlineStrikesAllowed;
-    uint256 public minimumContributionAllowed;
-    uint256 public maximumContributionAllowed;
-    uint256 public minimumRequestAllowed;
-    uint256 public maximumRequestAllowed;
-    uint256 public maxDeadlineExtension;
-    uint256 public minDeadlineExtension;
-    uint256 public minRequestDuration;
-    uint256 public maxRequestDuration;
-    uint256 public reviewThresholdMark;
-
-    uint256 public factoryRevenue; // total from all activities
     address[] public tokenList;
+    mapping(string => bool) public approvedcampaignTransactionConfig;
+    mapping(string => uint256) private campaignTransactionConfig;
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokenInList;
     mapping(address => bool) public tokensApproved;
+
+    /// @dev Revenue
+    uint256 public factoryRevenue; // total from all activities (campaignRevenueFromCommissions + campaignRevenueFromFeatures)
     mapping(uint256 => uint256) public campaignRevenueFromCommissions; // revenue from cuts
     mapping(uint256 => uint256) public campaignRevenueFromFeatures; // revenue from ads
 
@@ -206,12 +198,26 @@ contract CampaignFactory is
         require(address(_wallet) != address(0));
         root = msg.sender;
         factoryWallet = _wallet;
-        // defaultCommission = DecimalMath.divd(3, 1).value;
-        // deadlineStrikesAllowed = 3;
-        // maxDeadlineExtension = 7 days;
-        // minDeadlineExtension = 1 days;
-        // minimumContributionAllowed = 1;
-        // maximumContributionAllowed = 4000000000000;
+
+        string[13] memory transactionConfigs = [
+            "defaultCommission",
+            "deadlineStrikesAllowed",
+            "minimumContributionAllowed",
+            "maximumContributionAllowed",
+            "minimumRequestAmountAllowed",
+            "maximumRequestAmountAllowed",
+            "minimumCampaignTarget",
+            "maximumCampaignTarget",
+            "maxDeadlineExtension",
+            "minDeadlineExtension",
+            "minRequestDuration",
+            "maxRequestDuration",
+            "reviewThresholdMark"
+        ];
+
+        for (uint256 index = 0; index < transactionConfigs.length; index++) {
+            approvedcampaignTransactionConfig[transactionConfigs[index]] = true;
+        }
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
         _setupRole(MANAGE_CATEGORIES, root);
@@ -227,50 +233,47 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Factory controlled values dictating how campaigns should run
+     * @dev        Set Factory controlled values dictating how campaigns should run
      * @param      _wallet                      Address where all revenue gets deposited
      * @param      _implementation              Address of base contract to deploy minimal proxies to campaigns
-     * @param      _deadlineStrikesAllowed      Number of times campaign owner is allowed to extend deadline
-     * @param      _maxDeadlineExtension        Maximum time allowed to extend the deadline by
-     * @param      _minDeadlineExtension        Minimum time allowed to extend the deadline by
-     * @param      _minimumContributionAllowed  Minimum contribution allowed in campaigns
-     * @param      _maximumContributionAllowed  Maximum contribution allowed in campaigns
-     * @param      _minRequestDuration          Minimum request duration allowed in campaigns
-     * @param      _maxRequestDuration          Maximum request duration allowed in campaigns
-     * @param      _minimumRequestAllowed       Minimum request amount allowed in campaigns
-     * @param      _maximumRequestAllowed       Maximum request amount allowed in campaigns
-     * @param      _reviewThresholdMark         Review threshold which determines if a campaing is approved for completion
      */
-    function setFactorySettings(
-        address payable _wallet,
-        Campaign _implementation,
-        uint256 _deadlineStrikesAllowed,
-        uint256 _maxDeadlineExtension,
-        uint256 _minDeadlineExtension,
-        uint256 _minimumContributionAllowed,
-        uint256 _maximumContributionAllowed,
-        uint256 _minRequestDuration,
-        uint256 _maxRequestDuration,
-        uint256 _minimumRequestAllowed,
-        uint256 _maximumRequestAllowed,
-        uint256 _reviewThresholdMark
-    ) external onlyAdmin {
+    function setFactoryConfig(address payable _wallet, Campaign _implementation)
+        external
+        onlyAdmin
+    {
         require(
             address(_wallet) != address(0) &&
                 address(_implementation) != address(0)
         );
+
         factoryWallet = _wallet;
         campaignImplementation = address(_implementation);
-        deadlineStrikesAllowed = _deadlineStrikesAllowed;
-        maxDeadlineExtension = _maxDeadlineExtension;
-        minDeadlineExtension = _minDeadlineExtension;
-        minimumContributionAllowed = _minimumContributionAllowed;
-        maximumContributionAllowed = _maximumContributionAllowed;
-        minRequestDuration = _minRequestDuration;
-        maxRequestDuration = _maxRequestDuration;
-        minimumRequestAllowed = _minimumRequestAllowed;
-        maximumRequestAllowed = _maximumRequestAllowed;
-        reviewThresholdMark = _reviewThresholdMark;
+    }
+
+    /**
+     * @dev        Set Factory controlled values dictating how campaign deployments should run
+     * @param      _prop    Setting Key
+     * @param      _value   Setting Value
+     */
+    function setCampaignTransactionConfig(string memory _prop, uint256 _value)
+        external
+        onlyAdmin
+    {
+        require(approvedcampaignTransactionConfig[_prop]);
+        campaignTransactionConfig[_prop] = _value;
+    }
+
+    /**
+     * @dev        Get Factory controlled values dictating how campaign deployments should run
+     * @param      _prop    Setting Key
+     */
+    function getCampaignTransactionConfig(string memory _prop)
+        public
+        view
+        returns (uint256)
+    {
+        require(approvedcampaignTransactionConfig[_prop]);
+        return campaignTransactionConfig[_prop];
     }
 
     /**
@@ -286,7 +289,7 @@ contract CampaignFactory is
             DecimalMath.toUFixed(_numerator),
             DecimalMath.toUFixed(_denominator)
         );
-        defaultCommission = _commission.value;
+        campaignTransactionConfig["defaultCommission"] = _commission.value;
     }
 
     /**

@@ -74,6 +74,7 @@ contract Campaign is
         address recipient,
         uint256 value
     );
+    event RequestVoided(uint256 indexed requestId);
     event RequestComplete(uint256 indexed requestId, uint256 campaignId);
 
     /// @dev `Reward Events`
@@ -125,6 +126,7 @@ contract Campaign is
         uint256 approvalCount;
         uint256 disapprovalCount;
         uint256 duration;
+        bool void;
         mapping(address => bool) approvals;
     }
     Request[] public requests;
@@ -311,11 +313,29 @@ contract Campaign is
     ) external adminOrFactory campaignIsNotApproved userIsVerified(msg.sender) {
         require(
             _minimumContribution >=
-                campaignFactoryContract.minimumContributionAllowed() &&
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minimumContributionAllowed"
+                ) &&
                 _minimumContribution <=
-                campaignFactoryContract.maximumContributionAllowed()
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "maximumContributionAllowed"
+                )
         );
         require(campaignFactoryContract.tokensApproved(_token));
+        require(
+            _target >=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minimumCampaignTarget"
+                ) &&
+                _target <=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "maximumCampaignTarget"
+                )
+        );
 
         target = _target;
         minimumContribution = _minimumContribution;
@@ -324,7 +344,6 @@ contract Campaign is
         allowContributionAfterTargetIsMet = _allowContributionAfterTargetIsMet;
 
         goalType = GOALTYPE(_goalType);
-        if (goalType == GOALTYPE.FLEXIBLE) campaignState = CAMPAIGN_STATE.LIVE;
 
         emit CampaignSettingsUpdated(
             campaignID,
@@ -362,14 +381,26 @@ contract Campaign is
         adminOrFactory
         userIsVerified(msg.sender)
         campaignIsActive
+        nonReentrant
         whenNotPaused
     {
         require(
-            (block.timestamp > deadline &&
+            block.timestamp > deadline &&
                 deadlineSetTimes <=
-                campaignFactoryContract.deadlineStrikesAllowed()) &&
-                _time <= campaignFactoryContract.maxDeadlineExtension() &&
-                _time >= campaignFactoryContract.minDeadlineExtension()
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "deadlineStrikesAllowed"
+                ) &&
+                _time <=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "maxDeadlineExtension"
+                ) &&
+                _time >=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minDeadlineExtension"
+                )
         ); // ensure time exceeds 7 days and less than a day
 
         deadline = _time;
@@ -413,8 +444,16 @@ contract Campaign is
         whenNotPaused
     {
         require(
-            _value > campaignFactoryContract.minimumContributionAllowed() &&
-                _value < campaignFactoryContract.maximumContributionAllowed()
+            _value >
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minimumContributionAllowed"
+                ) &&
+                _value <
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "maximumContributionAllowed"
+                )
         );
         rewards.push(Reward(_value, _deliveryDate, _stock, true, _active));
 
@@ -545,7 +584,10 @@ contract Campaign is
             _token == acceptedToken &&
                 msg.value >= minimumContribution &&
                 msg.value <=
-                campaignFactoryContract.maximumContributionAllowed()
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "maximumContributionAllowed"
+                )
         );
 
         if (!allowContributionAfterTargetIsMet) {
@@ -735,19 +777,35 @@ contract Campaign is
         whenNotPaused
         deadlineIsUp
     {
-        if (goalType == GOALTYPE.FIXED)
+        if (goalType == GOALTYPE.FIXED) {
             require(totalCampaignContribution >= target);
+            require(campaignState == CAMPAIGN_STATE.LIVE); // target is acheived
+        }
 
         require(address(_recipient) != address(0));
-        require(campaignState == CAMPAIGN_STATE.LIVE); // target is acheived
-
         require(
-            _value >= campaignFactoryContract.minimumRequestAllowed() &&
-                _value <= campaignFactoryContract.maximumRequestAllowed()
+            _value >=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minimumRequestAmountAllowed"
+                ) &&
+                _value <=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minimumRequestAmountAllowed"
+                )
         ); // ensure request above minimum
         require(
-            _duration >= campaignFactoryContract.minRequestDuration() &&
-                _duration <= campaignFactoryContract.maxRequestDuration()
+            _duration >=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "minRequestDuration"
+                ) &&
+                _duration <=
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "maxRequestDuration"
+                )
         ); // request duration should be within factory's specs
 
         // before creating a new request last request should have expired
@@ -763,6 +821,7 @@ contract Campaign is
         request.value = _value;
         request.duration = _duration;
         request.approvalCount = 0;
+        request.void = false;
 
         requestCount = requestCount.add(1);
         currentRunningRequest = requests.length.add(1);
@@ -777,6 +836,32 @@ contract Campaign is
     }
 
     /**
+     * @dev        Renders a request void and useless
+     * @param      _requestId   ID of request being voided
+     */
+    function voidRequest(uint256 _requestId)
+        external
+        adminOrFactory
+        campaignIsActive
+        userIsVerified(msg.sender)
+        whenNotPaused
+    {
+        require(
+            !requests[_requestId].void &&
+                requests.length == _requestId.add(1) &&
+                requests[_requestId].approvalCount < 1 &&
+                !requests[_requestId].complete
+        ); // request must not be void and must be last made request
+        // request must have no votes
+        // request should not have been finalized
+
+        requests[_requestId].void = true;
+        requests[currentRunningRequest].duration = 0;
+
+        emit RequestVoided(_requestId);
+    }
+
+    /**
      * @dev        Approvers only method which approves spending request issued by the campaign manager or factory
      * @param      _requestId   ID of request being voted on
      */
@@ -787,6 +872,8 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
+        require(!requests[_requestId].void);
+
         requests[_requestId].approvals[msg.sender] = true;
 
         requests[_requestId].approvalCount = requests[_requestId]
@@ -830,7 +917,9 @@ contract Campaign is
     {
         Request storage request = requests[_requestId];
         require(
-            request.approvalCount > (approversCount.div(2)) && !request.complete
+            request.approvalCount > (approversCount.div(2)) &&
+                !request.complete &&
+                !request.void
         );
 
         uint256 factoryPercentFee = CampaignFactoryLib.factoryPercentFee(
@@ -886,7 +975,7 @@ contract Campaign is
         // check requests is more than 1
         // check no pending request
         // check campaign state is running
-        require(campaignState == CAMPAIGN_STATE.LIVE);
+        //require(campaignState == CAMPAIGN_STATE.LIVE);
         require(
             requests.length > 1 &&
                 requests[currentRunningRequest].duration <= block.timestamp
@@ -932,8 +1021,11 @@ contract Campaign is
         whenPaused
     {
         // check if reviewers count > 80% of approvers set campaign state to complete
-        uint256 denominatorPercent = campaignFactoryContract
-            .reviewThresholdMark();
+        uint256 denominatorPercent = CampaignFactoryLib
+            .getCampaignFactoryConfig(
+                campaignFactoryContract,
+                "reviewThresholdMark"
+            );
         DecimalMath.UFixed memory percentOfApproversCount = DecimalMath.muld(
             DecimalMath.divd(denominatorPercent.mul(DecimalMath.UNIT), percent),
             approversCount
@@ -955,9 +1047,7 @@ contract Campaign is
         whenNotPaused
     {
         require(
-            approvers[msg.sender] &&
-                (campaignState == CAMPAIGN_STATE.COLLECTION ||
-                    campaignState == CAMPAIGN_STATE.LIVE)
+            approvers[msg.sender] && campaignState == CAMPAIGN_STATE.COLLECTION
         );
         emit CampaignReported(campaignID, msg.sender);
     }
