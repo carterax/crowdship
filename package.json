@@ -20,7 +20,8 @@
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "solidity-docgen": "^0.5.13",
-    "truffle": "^5.3.9"
+    "truffle": "^5.3.9",
+    "truffle-contract-size": "^2.0.1"
   },
   "devDependencies": {
     "@openzeppelin/contracts-upgradeable": "^4.1.0",

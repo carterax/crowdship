@@ -6,6 +6,7 @@ abstract contract CampaignFactoryInterface {
     address public root;
     address payable public factoryWallet;
 
+    mapping(string => uint256) public campaignTransactionConfig;
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokensApproved;
 
@@ -54,10 +55,6 @@ abstract contract CampaignFactoryInterface {
         returns (bool);
 
     function receiveCampaignCommission(uint256 _amount, address campaign)
-        external
-        virtual;
-
-    function transferCampaignOwnership(address _newOwner, address _campaign)
         external
         virtual;
 }

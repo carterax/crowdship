@@ -41,7 +41,11 @@ contract Campaign is
     CAMPAIGN_STATE public campaignState;
 
     /// @dev `Campaign`
-    event CampaignIDset(uint256 indexed campaignId);
+    event CampaignOwnerSet(uint256 indexed campaignId, address user);
+    event CampaignOwnershipTransferred(
+        uint256 indexed campaignId,
+        address newUser
+    );
     event CampaignSettingsUpdated(
         uint256 indexed campaignId,
         uint256 minimumContribution,
@@ -49,9 +53,15 @@ contract Campaign is
         uint256 goalType,
         address token
     );
-    event CampaignGoalTypeChange(uint256 indexed campaignId, uint256 goalType);
     event CampaignDeadlineExtended(uint256 indexed campaignId, uint256 time);
     event CampaignReported(uint256 indexed campaignId, address user);
+
+    /// @dev `Approval Transfer`
+    event UserApprovalsTransferred(
+        uint256 indexed campaignId,
+        address oldAddress,
+        address newAddress
+    );
 
     /// @dev `Contribution Events`
     event ContributionMade(
@@ -74,7 +84,7 @@ contract Campaign is
         address recipient,
         uint256 value
     );
-    event RequestVoided(uint256 indexed requestId);
+    event RequestVoided(uint256 indexed requestId, uint256 campaignId);
     event RequestComplete(uint256 indexed requestId, uint256 campaignId);
 
     /// @dev `Reward Events`
@@ -87,14 +97,19 @@ contract Campaign is
         bool active
     );
     event RewardModified(
-        uint256 rewardId,
+        uint256 indexed rewardId,
         uint256 campaignId,
         uint256 value,
         uint256 deliveryDate,
         uint256 stock,
         bool active
     );
-    event RewardDestroyed(uint256 rewardId);
+    event RewardStockIncreased(
+        uint256 indexed rewardId,
+        uint256 campaignID,
+        uint256 count
+    );
+    event RewardDestroyed(uint256 indexed rewardId);
 
     /// @dev `Rwardee Events`
     event RewardeeAdded(
@@ -103,15 +118,19 @@ contract Campaign is
         uint256 user,
         uint256 amount
     );
-    event RewardeeApproval(
+    event RewarderApproval(
         uint256 indexed rewardeeId,
-        uint256 campaignId,
+        uint256 campaignID,
         bool status
     );
+    event RewardeeApproval(uint256 indexed rewardeeId, uint256 campaignId);
 
     /// @dev `Vote Events`
-    event Voted(uint256 requestId);
-    event VoteCancelled(uint256 requestId);
+    event Voted(uint256 requestId, uint256 campaignId);
+    event VoteCancelled(uint256 requestId, uint256 campaignId);
+
+    /// @dev `Review Events`
+    event CampaignReviewed(bool approvalStatus, uint256 campaignId);
 
     /// @dev `Campaign State Events`
     event CampaignStateChange(uint256 campaignId, CAMPAIGN_STATE state);
@@ -141,6 +160,7 @@ contract Campaign is
         bool active;
     }
     Reward[] public rewards;
+    mapping(uint256 => uint256) public rewardToRewardeesCount; // number of users eligible per reward
 
     /// @dev `Rewardee`
     struct Rewardee {
@@ -150,15 +170,11 @@ contract Campaign is
         bool deliveryConfirmedByUser;
     }
     Rewardee[] public rewardees;
-    mapping(address => bool) public userHasReward;
+    mapping(address => uint256) public userRewardCount; // number of rewards owned by a user
 
     /// @dev `Review`
-    struct Review {
-        address user;
-        uint256 rating;
-        uint256 createdAt;
-    }
-    Review[] public reviews;
+    uint256 public positiveReviewCount;
+    uint256 public reviewCount;
     mapping(address => bool) public reviewed;
 
     address public root;
@@ -172,10 +188,9 @@ contract Campaign is
     uint256 public target;
     uint256 public deadline;
     uint256 public deadlineSetTimes;
-    uint256 public positiveReviewCount;
-    uint256 public reviewCount;
     uint256 public finalizedRequestCount;
     uint256 public currentRunningRequest;
+    bool public pauseWithdrawals;
     mapping(address => bool) public approvers;
     mapping(address => uint256) public userTotalContribution;
 
@@ -184,15 +199,22 @@ contract Campaign is
 
     /// @dev Ensures caller is only factory
     modifier onlyFactory() {
-        require(campaignFactoryContract.canManageCampaigns(msg.sender));
+        require(
+            CampaignFactoryLib.canManageCampaigns(
+                campaignFactoryContract,
+                msg.sender
+            )
+        );
         _;
     }
 
     /// @dev Ensures caller is factory or campaign owner
     modifier adminOrFactory() {
         require(
-            campaignFactoryContract.canManageCampaigns(msg.sender) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+            CampaignFactoryLib.canManageCampaigns(
+                campaignFactoryContract,
+                msg.sender
+            ) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
         );
         _;
     }
@@ -216,8 +238,12 @@ contract Campaign is
             campaignID
         );
 
-        if (!campaignFactoryContract.canManageCampaigns(msg.sender))
-            require(!campaignIsApproved);
+        if (
+            !CampaignFactoryLib.canManageCampaigns(
+                campaignFactoryContract,
+                msg.sender
+            )
+        ) require(!campaignIsApproved);
 
         _;
     }
@@ -230,16 +256,6 @@ contract Campaign is
             _user
         );
         require(verified);
-        _;
-    }
-
-    /// @dev Ensures a user is eligible to vote on a request
-    modifier canApproveRequest(uint256 _requestId) {
-        require(
-            approvers[msg.sender] &&
-                !requests[_requestId].approvals[msg.sender] &&
-                block.timestamp <= requests[_requestId].duration
-        );
         _;
     }
 
@@ -262,36 +278,71 @@ contract Campaign is
         _setupRole(DEFAULT_ADMIN_ROLE, _root);
 
         campaignFactoryContract = CampaignFactoryInterface(_campaignFactory);
-
         root = _root;
-
         campaignState = CAMPAIGN_STATE.GENESIS;
         campaignID = campaignFactoryContract.campaignToID(address(this));
         percentBase = 100;
         percent = percentBase.mul(DecimalMath.UNIT);
 
-        emit CampaignIDset(campaignID);
-
         _pause();
+
+        emit CampaignOwnerSet(campaignID, root);
     }
 
     /**
      * @dev        Transfers campaign ownership from one user to another.
-     * @param      _newOwner    Address of the user campaign ownership is being transfered to
+     * @param      _newRoot    Address of the user campaign ownership is being transfered to
      */
-    function transferCampaignOwnership(address _newOwner)
+    function transferCampaignOwnership(address _newRoot)
         external
-        userIsVerified(_newOwner)
-        onlyFactory
+        onlyAdmin
+        whenNotPaused
+        userIsVerified(_newRoot)
     {
-        revokeRole(DEFAULT_ADMIN_ROLE, root);
-        _setupRole(DEFAULT_ADMIN_ROLE, _newOwner);
+        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, _newRoot);
 
-        root = _newOwner;
-        campaignFactoryContract.transferCampaignOwnership(
-            _newOwner,
-            address(this)
+        root = _newRoot;
+
+        emit CampaignOwnershipTransferred(campaignID, _newRoot);
+    }
+
+    function transferApprovals(address _oldAddress, address _newAddress)
+        external
+        onlyFactory
+        nonReentrant
+        whenNotPaused
+        userIsVerified(_newAddress)
+    {
+        require(
+            campaignState == CAMPAIGN_STATE.COLLECTION ||
+                campaignState == CAMPAIGN_STATE.LIVE
         );
+
+        if (approvers[_oldAddress]) {
+            // transfer balance
+            userTotalContribution[_newAddress] = userTotalContribution[
+                _oldAddress
+            ];
+            userTotalContribution[_oldAddress] = 0;
+
+            // transfer approver account
+            approvers[_oldAddress] = false;
+            approvers[_newAddress] = true;
+
+            if (userRewardCount[_oldAddress] >= 1) {
+                userRewardCount[_newAddress] = userRewardCount[_oldAddress];
+                userRewardCount[_oldAddress] = 0;
+
+                for (uint256 index = 0; index < rewardees.length; index++) {
+                    if (rewardees[index].user == _oldAddress) {
+                        rewardees[index].user = _newAddress;
+                    }
+                }
+            }
+        }
+
+        emit UserApprovalsTransferred(campaignID, _oldAddress, _newAddress);
     }
 
     /**
@@ -299,7 +350,7 @@ contract Campaign is
      * @param      _target                              Contribution target of the campaign
      * @param      _minimumContribution                 The minimum amout required to be an approver
      * @param      _duration                            How long until the campaign stops receiving contributions
-     * @param      _goalType                            Indicates if campaign is fixed or flexible with contributions
+     * @param      _goalType                            If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
      * @param      _token                               Address of token to be used for transactions by default
      * @param      _allowContributionAfterTargetIsMet   Indicates if the campaign can receive contributions after duration expires
      */
@@ -342,7 +393,6 @@ contract Campaign is
         deadline = _duration;
         acceptedToken = _token;
         allowContributionAfterTargetIsMet = _allowContributionAfterTargetIsMet;
-
         goalType = GOALTYPE(_goalType);
 
         emit CampaignSettingsUpdated(
@@ -353,24 +403,6 @@ contract Campaign is
             _token
         );
     }
-
-    // /**
-    //  * @dev        Changes campaign's goal type between `FLEXIBLE` or `FIXED`
-    //  * @param      _type    Indicates if campaign is fixed or flexible, fixed: target has to be met before requests can be issued, flexible: vice versa
-    //  */
-    // function setGoalType(uint256 _type)
-    //     external
-    //     adminOrFactory
-    //     userIsVerified(msg.sender)
-    //     campaignIsActive
-    // {
-    //     // check that deadline is expired
-    //     // require(block.timestamp > deadline);
-
-    //     goalType = GOALTYPE(_type);
-
-    //     emit CampaignGoalTypeChange(campaignID, _type);
-    // }
 
     /**
      * @dev        Extends campaign contribution deadline
@@ -469,14 +501,14 @@ contract Campaign is
 
     /**
      * @dev        Modifies a reward by id
-     * @param      _id              Reward unique id
+     * @param      _rewardId              Reward unique id
      * @param      _value           Reward cost
      * @param      _deliveryDate    Time in which reward will be deliverd to contriutors
      * @param      _stock           Quantity available for dispatch
      * @param      _active          Indicates if contributors can attain the reward
      */
     function modifyReward(
-        uint256 _id,
+        uint256 _rewardId,
         uint256 _value,
         uint256 _deliveryDate,
         uint256 _stock,
@@ -488,21 +520,41 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(rewards[_id].exists);
+        /**
+         * To modify a reward:
+         * check reward has no backers
+         * check reward exists
+         */
+        require(
+            rewardToRewardeesCount[_rewardId] < 1 && rewards[_rewardId].exists
+        );
 
-        rewards[_id].value = _value;
-        rewards[_id].deliveryDate = _deliveryDate;
-        rewards[_id].stock = _stock;
-        rewards[_id].active = _active;
+        rewards[_rewardId].value = _value;
+        rewards[_rewardId].deliveryDate = _deliveryDate;
+        rewards[_rewardId].stock = rewards[_rewardId].stock.add(_stock);
+        rewards[_rewardId].active = _active;
 
         emit RewardModified(
-            _id,
+            _rewardId,
             campaignID,
             _value,
             _deliveryDate,
             _stock,
             _active
         );
+    }
+
+    function increaseRewardStock(uint256 _rewardId, uint256 _count)
+        external
+        adminOrFactory
+        campaignIsActive
+        userIsVerified(msg.sender)
+        whenNotPaused
+    {
+        require(rewards[_rewardId].exists);
+        rewards[_rewardId].stock = rewards[_rewardId].stock.add(_count);
+
+        emit RewardStockIncreased(_rewardId, campaignID, _count);
     }
 
     /**
@@ -516,7 +568,10 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(rewards[_rewardId].exists);
+        // check reward has no backers
+        require(
+            rewardToRewardeesCount[_rewardId] < 1 && rewards[_rewardId].exists
+        );
 
         delete rewards[_rewardId];
 
@@ -535,29 +590,33 @@ contract Campaign is
         adminOrFactory
         whenNotPaused
     {
+        require(rewardToRewardeesCount[rewardees[_rewardeeId].rewardId] >= 1);
+
         rewardees[_rewardeeId].deliveryConfirmedByCampaign = _status;
-        emit RewardeeApproval(_rewardeeId, campaignID, _status);
+        emit RewarderApproval(_rewardeeId, campaignID, _status);
     }
 
     /**
      * @dev        Used by a user eligible for rewards to indicate they received their reward
      * @param      _rewardeeId  ID to struct containing reward and user to be rewarded
-     * @param      _status      Indicates if the delivery was successful or not
      */
-    function userReceivedCampaignReward(uint256 _rewardeeId, bool _status)
+    function userReceivedCampaignReward(uint256 _rewardeeId)
         external
         campaignIsActive
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(rewardees[_rewardeeId].deliveryConfirmedByCampaign); // ensure campaign owner tried to confirm delivery
+        require(
+            rewardees[_rewardeeId].deliveryConfirmedByCampaign &&
+                !rewardees[_rewardeeId].deliveryConfirmedByUser
+        ); // ensure campaign owner tried to confirm delivery
         require(
             rewardees[_rewardeeId].user == msg.sender &&
-                userHasReward[msg.sender] &&
+                userRewardCount[msg.sender] >= 1 &&
                 approvers[msg.sender]
         );
-        rewardees[_rewardeeId].deliveryConfirmedByCampaign = _status;
-        emit RewardeeApproval(_rewardeeId, campaignID, _status);
+        rewardees[_rewardeeId].deliveryConfirmedByUser = true;
+        emit RewardeeApproval(_rewardeeId, campaignID);
     }
 
     /**
@@ -580,8 +639,12 @@ contract Campaign is
         nonReentrant
         returns (uint256 targetCompletionValue)
     {
+        // campaign owner cannot contribute to own campaign
+        // token must be accepted
+        // contrubution amount must be less than or equal to allowed value from factory
         require(
-            _token == acceptedToken &&
+            msg.sender != root &&
+                _token == acceptedToken &&
                 msg.value >= minimumContribution &&
                 msg.value <=
                 CampaignFactoryLib.getCampaignFactoryConfig(
@@ -613,7 +676,11 @@ contract Campaign is
             );
 
             rewardees.push(Rewardee(_rewardId, msg.sender, false, false));
-            userHasReward[msg.sender] = true;
+            userRewardCount[msg.sender] = userRewardCount[msg.sender].add(1);
+            rewardToRewardeesCount[_rewardId] = rewardToRewardeesCount[
+                _rewardId
+            ].add(1);
+
             emit RewardeeAdded(
                 _rewardId,
                 campaignID,
@@ -664,9 +731,9 @@ contract Campaign is
         external
         campaignIsActive
         userIsVerified(msg.sender)
-        whenNotPaused
         nonReentrant
     {
+        require(!pauseWithdrawals);
         _withdrawContribution(msg.sender, _wallet, _amount);
     }
 
@@ -681,7 +748,8 @@ contract Campaign is
         address _user,
         uint256 _amount,
         address payable _wallet
-    ) external onlyFactory nonReentrant whenNotPaused {
+    ) external onlyFactory nonReentrant {
+        require(!pauseWithdrawals);
         _withdrawContribution(_user, _wallet, _amount);
     }
 
@@ -696,7 +764,12 @@ contract Campaign is
         address _wallet,
         uint256 _amount
     ) private {
-        if (campaignState != CAMPAIGN_STATE.UNSUCCESSFUL) {
+        // if the campaign state is neither unsuccessful or in review and there are reviews
+        // allow withdrawls
+        if (
+            campaignState != CAMPAIGN_STATE.UNSUCCESSFUL ||
+            (campaignState != CAMPAIGN_STATE.REVIEW && reviewCount < 1)
+        ) {
             require(
                 campaignState == CAMPAIGN_STATE.COLLECTION &&
                     finalizedRequestCount < 1
@@ -708,17 +781,17 @@ contract Campaign is
 
         // check amount
         // determine user % in totalConribution
-        DecimalMath.UFixed memory ratio = DecimalMath.divd(
-            DecimalMath.toUFixed(userTotalContribution[_user]),
-            DecimalMath.toUFixed(totalCampaignContribution)
-        );
-        DecimalMath.UFixed memory percentInPool = DecimalMath.muld(
-            ratio,
-            percent
-        );
-
         DecimalMath.UFixed memory maximumAllowedWithdrawal = DecimalMath.muld(
-            DecimalMath.divd(percentInPool, percent),
+            DecimalMath.divd(
+                DecimalMath.muld(
+                    DecimalMath.divd(
+                        DecimalMath.toUFixed(userTotalContribution[_user]),
+                        DecimalMath.toUFixed(totalCampaignContribution)
+                    ),
+                    percent
+                ),
+                percent
+            ),
             totalCampaignContribution
         );
 
@@ -728,7 +801,16 @@ contract Campaign is
         );
 
         // no longer eligible for any reward
-        if (userHasReward[_user]) userHasReward[_user] = false;
+        if (userRewardCount[_user] >= 1) {
+            userRewardCount[_user] = 0;
+
+            // deduct rewardees count
+            for (uint256 index = 0; index < rewardees.length; index++) {
+                rewardToRewardeesCount[
+                    rewardees[index].rewardId
+                ] = rewardToRewardeesCount[rewardees[index].rewardId].sub(1);
+            }
+        }
 
         // mark user as a non contributor
         approvers[_user] = false;
@@ -858,7 +940,7 @@ contract Campaign is
         requests[_requestId].void = true;
         requests[currentRunningRequest].duration = 0;
 
-        emit RequestVoided(_requestId);
+        emit RequestVoided(_requestId, campaignID);
     }
 
     /**
@@ -868,10 +950,14 @@ contract Campaign is
     function voteOnRequest(uint256 _requestId)
         external
         campaignIsActive
-        canApproveRequest(_requestId)
         userIsVerified(msg.sender)
         whenNotPaused
     {
+        require(
+            approvers[msg.sender] &&
+                !requests[_requestId].approvals[msg.sender] &&
+                block.timestamp <= requests[_requestId].duration
+        );
         require(!requests[_requestId].void);
 
         requests[_requestId].approvals[msg.sender] = true;
@@ -880,7 +966,7 @@ contract Campaign is
             .approvalCount
             .add(1);
 
-        emit Voted(_requestId);
+        emit Voted(_requestId, campaignID);
     }
 
     /**
@@ -890,17 +976,20 @@ contract Campaign is
     function cancelVote(uint256 _requestId)
         external
         campaignIsActive
-        canApproveRequest(_requestId)
         userIsVerified(msg.sender)
         whenNotPaused
     {
+        require(
+            approvers[msg.sender] &&
+                block.timestamp <= requests[_requestId].duration
+        );
         requests[_requestId].approvals[msg.sender] = false;
 
         requests[_requestId].approvalCount = requests[_requestId]
             .approvalCount
             .sub(1);
 
-        emit VoteCancelled(_requestId);
+        emit VoteCancelled(_requestId, campaignID);
     }
 
     /**
@@ -922,13 +1011,14 @@ contract Campaign is
                 !request.void
         );
 
-        uint256 factoryPercentFee = CampaignFactoryLib.factoryPercentFee(
-            campaignFactoryContract,
-            campaignID
-        );
-
         DecimalMath.UFixed memory factoryFee = DecimalMath.muld(
-            DecimalMath.divd(factoryPercentFee, percent),
+            DecimalMath.divd(
+                CampaignFactoryLib.factoryPercentFee(
+                    campaignFactoryContract,
+                    campaignID
+                ),
+                percent
+            ),
             request.value
         );
 
@@ -1010,6 +1100,8 @@ contract Campaign is
         }
 
         reviewCount = reviewCount.add(1);
+
+        emit CampaignReviewed(_approval, campaignID);
     }
 
     /// @dev Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
@@ -1021,13 +1113,16 @@ contract Campaign is
         whenPaused
     {
         // check if reviewers count > 80% of approvers set campaign state to complete
-        uint256 denominatorPercent = CampaignFactoryLib
-            .getCampaignFactoryConfig(
-                campaignFactoryContract,
-                "reviewThresholdMark"
-            );
         DecimalMath.UFixed memory percentOfApproversCount = DecimalMath.muld(
-            DecimalMath.divd(denominatorPercent.mul(DecimalMath.UNIT), percent),
+            DecimalMath.divd(
+                CampaignFactoryLib
+                    .getCampaignFactoryConfig(
+                        campaignFactoryContract,
+                        "reviewThresholdMark"
+                    )
+                    .mul(DecimalMath.UNIT),
+                percent
+            ),
             approversCount
         );
         require(
@@ -1047,7 +1142,9 @@ contract Campaign is
         whenNotPaused
     {
         require(
-            approvers[msg.sender] && campaignState == CAMPAIGN_STATE.COLLECTION
+            (approvers[msg.sender] &&
+                campaignState == CAMPAIGN_STATE.COLLECTION) ||
+                campaignState == CAMPAIGN_STATE.LIVE
         );
         emit CampaignReported(campaignID, msg.sender);
     }
@@ -1057,6 +1154,10 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE(_state);
 
         emit CampaignStateChange(campaignID, CAMPAIGN_STATE(_state));
+    }
+
+    function toggleWithdrawalState(bool _state) external onlyFactory {
+        pauseWithdrawals = _state;
     }
 
     /// @dev Unpauses the campaign, transactions in the campaign resume per usual

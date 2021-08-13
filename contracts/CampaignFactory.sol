@@ -33,7 +33,6 @@ contract CampaignFactory is
         uint256 userId,
         uint256 category
     );
-    event CampaignOwnershipTransferred(address indexed newOwner);
     event CampaignDestroyed(uint256 indexed campaignId);
     event CampaignApproval(uint256 indexed campaignId, bool approval);
     event CampaignActiveToggle(uint256 indexed campaignId, bool active);
@@ -56,10 +55,15 @@ contract CampaignFactory is
     event TokenRemoved(uint256 indexed tokenId, address token);
 
     /// @dev `User Events`
-    event UserAdded(uint256 indexed userId);
+    event UserAdded(uint256 indexed userId, address _userAddress);
     event UserModified(uint256 indexed userId);
     event UserApproval(uint256 indexed userId, bool approval);
     event UserRemoved(uint256 indexed userId);
+    event CampaignApprovalTransfer(
+        uint256 indexed campaignId,
+        address oldAddress,
+        address newAddress
+    );
 
     /// @dev `Category Events`
     event CategoryAdded(uint256 indexed categoryId, bool active);
@@ -84,8 +88,9 @@ contract CampaignFactory is
     address payable public factoryWallet;
     address public campaignImplementation;
     address[] public tokenList;
+    string[] public campaignTransactionConfigList;
     mapping(string => bool) public approvedcampaignTransactionConfig;
-    mapping(string => uint256) private campaignTransactionConfig;
+    mapping(string => uint256) public campaignTransactionConfig;
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokenInList;
     mapping(address => bool) public tokensApproved;
@@ -113,6 +118,7 @@ contract CampaignFactory is
     mapping(address => uint256) public campaignToID;
     mapping(uint256 => bool) public featuredCampaignIsPaused;
     mapping(uint256 => uint256) public pausedFeaturedCampaignTimeLeft;
+    mapping(uint256 => uint256) public campaignApprovalRequestCount;
 
     /// @dev `Categories`
     struct CampaignCategory {
@@ -136,6 +142,7 @@ contract CampaignFactory is
     User[] public users;
     uint256 public userCount;
     mapping(address => uint256) public userID;
+    mapping(address => uint256) public approverTransferRequestCount;
 
     /// @dev `Featured`
     struct Featured {
@@ -199,7 +206,7 @@ contract CampaignFactory is
         root = msg.sender;
         factoryWallet = _wallet;
 
-        string[13] memory transactionConfigs = [
+        string[14] memory transactionConfigs = [
             "defaultCommission",
             "deadlineStrikesAllowed",
             "minimumContributionAllowed",
@@ -212,10 +219,12 @@ contract CampaignFactory is
             "minDeadlineExtension",
             "minRequestDuration",
             "maxRequestDuration",
-            "reviewThresholdMark"
+            "reviewThresholdMark",
+            "maximumUserRequestCount"
         ];
 
         for (uint256 index = 0; index < transactionConfigs.length; index++) {
+            campaignTransactionConfigList.push(transactionConfigs[index]);
             approvedcampaignTransactionConfig[transactionConfigs[index]] = true;
         }
 
@@ -251,6 +260,19 @@ contract CampaignFactory is
     }
 
     /**
+     * @dev        Adds a new transaction setting
+     * @param      _prop    Setting Key
+     */
+    function addFactoryTransactionConfig(string memory _prop)
+        external
+        onlyAdmin
+    {
+        require(!approvedcampaignTransactionConfig[_prop]);
+        campaignTransactionConfigList.push(_prop);
+        approvedcampaignTransactionConfig[_prop] = true;
+    }
+
+    /**
      * @dev        Set Factory controlled values dictating how campaign deployments should run
      * @param      _prop    Setting Key
      * @param      _value   Setting Value
@@ -261,19 +283,6 @@ contract CampaignFactory is
     {
         require(approvedcampaignTransactionConfig[_prop]);
         campaignTransactionConfig[_prop] = _value;
-    }
-
-    /**
-     * @dev        Get Factory controlled values dictating how campaign deployments should run
-     * @param      _prop    Setting Key
-     */
-    function getCampaignTransactionConfig(string memory _prop)
-        public
-        view
-        returns (uint256)
-    {
-        require(approvedcampaignTransactionConfig[_prop]);
-        return campaignTransactionConfig[_prop];
     }
 
     /**
@@ -414,7 +423,7 @@ contract CampaignFactory is
         userID[msg.sender] = users.length.sub(1);
         userCount = userCount.add(1);
 
-        emit UserAdded(users.length.sub(1));
+        emit UserAdded(users.length.sub(1), msg.sender);
     }
 
     /**
@@ -495,30 +504,6 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Transfers campaign ownership from one user to another.
-                   Called only after ownership transfer occurs in the minimal campaign proxy
-     * @param      _newOwner    Address of the user campaign ownership is being transfered to
-     * @param      _campaign    Address of the campaign instance
-     */
-    function transferCampaignOwnership(address _newOwner, Campaign _campaign)
-        external
-        onlyManager(MANAGE_CAMPAIGNS)
-        whenNotPaused
-    {
-        // Ensure the new owner has been enstated in the campaign first
-        require(Campaign(_campaign).root() == _newOwner);
-
-        CampaignInfo storage campaignInfo = deployedCampaigns[
-            campaignToID[address(_campaign)]
-        ];
-        campaignInfo.owner = _newOwner;
-        campaignInfo.updatedAt = block.timestamp;
-        campaignToOwner[address(_campaign)] = _newOwner;
-
-        emit CampaignOwnershipTransferred(_newOwner);
-    }
-
-    /**
      * @dev        Approves or disapproves a campaign. Restricted to campaign managers from factory
      * @param      _campaignId    ID of the campaign
      * @param      _approval      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
@@ -593,14 +578,47 @@ contract CampaignFactory is
         onlyCampaignOwner(campaignToID[address(_campaign)])
         campaignExists(campaignToID[address(_campaign)])
         userIsVerified(msg.sender)
-        whenPaused
+        whenNotPaused
     {
         uint256 _campaignId = campaignToID[address(_campaign)];
         require(
             !deployedCampaigns[_campaignId].approved &&
-                !deployedCampaigns[_campaignId].active
+                campaignApprovalRequestCount[_campaignId] <=
+                campaignTransactionConfig["maximumUserRequestCount"]
         );
+        campaignApprovalRequestCount[
+            _campaignId
+        ] = campaignApprovalRequestCount[_campaignId].add(1);
         emit CampaignApprovalRequest(_campaignId);
+    }
+
+    function requestApprovalTransfer(Campaign _campaign, address _newAddress)
+        external
+        userIsVerified(msg.sender)
+        whenNotPaused
+    {
+        require(
+            approverTransferRequestCount[msg.sender] <=
+                campaignTransactionConfig["maximumUserRequestCount"]
+        );
+        approverTransferRequestCount[msg.sender] = approverTransferRequestCount[
+            msg.sender
+        ].add(1);
+        emit CampaignApprovalTransfer(
+            campaignToID[address(_campaign)],
+            msg.sender,
+            _newAddress
+        );
+    }
+
+    function setMaximumUserRequestCount(uint256 _campaignId, uint256 _count)
+        external
+        onlyManager(MANAGE_CAMPAIGNS)
+        campaignExists(_campaignId)
+        whenNotPaused
+    {
+        require(_count <= campaignTransactionConfig["maximumUserRequestCount"]);
+        campaignApprovalRequestCount[_campaignId] = _count;
     }
 
     /**

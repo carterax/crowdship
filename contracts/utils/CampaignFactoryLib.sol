@@ -5,6 +5,13 @@ pragma solidity >=0.4.22 <0.9.0;
 import "./FactoryInterface.sol";
 
 library CampaignFactoryLib {
+    function canManageCampaigns(
+        CampaignFactoryInterface _factory,
+        address _user
+    ) internal view returns (bool) {
+        return _factory.canManageCampaigns(_user);
+    }
+
     /**
      * @dev        Returns information on a campaign from the factory
      * @param      _factory     Campaign factory interface
@@ -13,8 +20,8 @@ library CampaignFactoryLib {
     function getCampaignFactoryConfig(
         CampaignFactoryInterface _factory,
         string memory _prop
-    ) internal returns (uint256) {
-        return _factory.getCampaignTransactionConfig(_prop);
+    ) internal view returns (uint256) {
+        return _factory.campaignTransactionConfig(_prop);
     }
 
     /**

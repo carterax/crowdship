@@ -117,51 +117,47 @@ contract('CampaignFactory', function([
       campaignImplementation.address
     );
     expect(
-      await this.factory.getCampaignTransactionConfig('defaultCommission')
+      await this.factory.campaignTransactionConfig('defaultCommission')
     ).to.be.bignumber.equal(new BN('0'));
     expect(
-      await this.factory.getCampaignTransactionConfig('minimumCampaignTarget')
+      await this.factory.campaignTransactionConfig('minimumCampaignTarget')
     ).to.be.bignumber.equal(new BN('5000'));
     expect(
-      await this.factory.getCampaignTransactionConfig('maximumCampaignTarget')
+      await this.factory.campaignTransactionConfig('maximumCampaignTarget')
     ).to.be.bignumber.equal(new BN('10000000'));
     expect(
-      await this.factory.getCampaignTransactionConfig('reviewThresholdMark')
+      await this.factory.campaignTransactionConfig('reviewThresholdMark')
     ).to.be.bignumber.equal(new BN('80'));
     expect(
-      await this.factory.getCampaignTransactionConfig(
+      await this.factory.campaignTransactionConfig(
         'minimumRequestAmountAllowed'
       )
     ).to.be.bignumber.equal(new BN('1000'));
     expect(
-      await this.factory.getCampaignTransactionConfig(
+      await this.factory.campaignTransactionConfig(
         'maximumRequestAmountAllowed'
       )
     ).to.be.bignumber.equal(new BN('10000'));
     expect(
-      await this.factory.getCampaignTransactionConfig('minRequestDuration')
+      await this.factory.campaignTransactionConfig('minRequestDuration')
     ).to.be.bignumber.equal(new BN('86400'));
     expect(
-      await this.factory.getCampaignTransactionConfig('maxRequestDuration')
+      await this.factory.campaignTransactionConfig('maxRequestDuration')
     ).to.be.bignumber.equal(new BN('604800'));
     expect(
-      await this.factory.getCampaignTransactionConfig('deadlineStrikesAllowed')
+      await this.factory.campaignTransactionConfig('deadlineStrikesAllowed')
     ).to.be.bignumber.equal(new BN('3'));
     expect(
-      await this.factory.getCampaignTransactionConfig('maxDeadlineExtension')
+      await this.factory.campaignTransactionConfig('maxDeadlineExtension')
     ).to.be.bignumber.equal(new BN('604800'));
     expect(
-      await this.factory.getCampaignTransactionConfig('minDeadlineExtension')
+      await this.factory.campaignTransactionConfig('minDeadlineExtension')
     ).to.be.bignumber.equal(new BN('86400'));
     expect(
-      await this.factory.getCampaignTransactionConfig(
-        'minimumContributionAllowed'
-      )
+      await this.factory.campaignTransactionConfig('minimumContributionAllowed')
     ).to.be.bignumber.equal(new BN('1'));
     expect(
-      await this.factory.getCampaignTransactionConfig(
-        'maximumContributionAllowed'
-      )
+      await this.factory.campaignTransactionConfig('maximumContributionAllowed')
     ).to.be.bignumber.equal(new BN('10000'));
   });
   it('should fail if non admin tries to change factory settings', async function() {
@@ -194,7 +190,7 @@ contract('CampaignFactory', function([
   it('should set default commission on request finalizations', async function() {
     await this.factory.setDefaultCommission(25, 10);
     expect(
-      await this.factory.getCampaignTransactionConfig('defaultCommission')
+      await this.factory.campaignTransactionConfig('defaultCommission')
     ).to.be.bignumber.equal(new BN('2500000000000000000000000000'));
   });
   it('should set commission on request finalizations per category', async function() {

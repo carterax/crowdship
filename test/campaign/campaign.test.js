@@ -75,6 +75,7 @@ contract('Campaign', function([
     await this.factory.signUp({
       from: this.campaignOwner,
     });
+    await this.factory.toggleUserApproval(0, true, { from: this.root });
     await this.factory.toggleUserApproval(1, true, { from: this.root });
     await this.factory.createCampaign(0, {
       from: this.campaignOwner,
@@ -82,6 +83,44 @@ contract('Campaign', function([
     const { campaign } = await this.factory.deployedCampaigns(0);
     this.campaignInstance = await Campaign.at(campaign);
     this.campaignID = await this.campaignInstance.campaignID();
+
+    this.approvedCampaignSetup = async ({
+      approveCampaign = true,
+      activateCampaign = true,
+      target = 20000,
+      minimumContribution = 1,
+      duration = 86400,
+      goalType = 1,
+      allowContributionAfterTargetIsMet = true,
+      from,
+    } = {}) => {
+      await this.campaignInstance.setCampaignSettings(
+        target,
+        minimumContribution,
+        duration,
+        goalType,
+        this.testToken.address,
+        allowContributionAfterTargetIsMet,
+        {
+          from,
+        }
+      );
+
+      if (approveCampaign) {
+        await this.factory.toggleCampaignApproval(this.campaignID, true, {
+          from: this.root,
+        });
+      }
+
+      if (activateCampaign) {
+        await this.factory.toggleCampaignActive(this.campaignID, true, {
+          from: this.root,
+        });
+      }
+
+      await this.campaignInstance.unpauseCampaign({ from: this.root });
+      // await this.campaignInstance.set
+    };
   });
 
   it('deployer owns the campaign', async function() {
@@ -137,53 +176,121 @@ contract('Campaign', function([
       token: this.testToken.address,
     });
   });
-  it('campaign settings modification should work for factory even if campaign has been approved', async function() {});
-  it('campaign settings modification should fail if campaign has been approved', async function() {});
-  it('campaign settings modification should fail if the token has not being approved', async function() {});
-  it('campaign settings modification should fail if minimum contribution is larger that maximum or less than minimum allowed from factory', async function() {});
+  it('campaign settings modification should work for factory even if campaign has been approved', async function() {
+    // this.factory.toggleCampaignApproval(this.campaignID, true, {
+    //   from: this.root,
+    // });
+    // this.factory.toggleCampaignActive(this.campaignID, true, {
+    //   from: this.root,
+    // });
+    await this.campaignInstance.setCampaignSettings(
+      300000,
+      1,
+      604800,
+      1,
+      this.testToken.address,
+      false,
+      {
+        from: this.root,
+      }
+    );
+    expect(await this.campaignInstance.target()).to.be.bignumber.equal(
+      new BN('300000')
+    );
+  });
+  it('campaign settings modification should fail if campaign has been approved', async function() {
+    this.factory.toggleCampaignApproval(this.campaignID, true, {
+      from: this.root,
+    });
+    this.factory.toggleCampaignActive(this.campaignID, true, {
+      from: this.root,
+    });
+    await expectRevert.unspecified(
+      this.campaignInstance.setCampaignSettings(
+        300000,
+        1,
+        604800,
+        1,
+        this.testToken.address,
+        false,
+        {
+          from: this.campaignOwner,
+        }
+      )
+    );
+  });
+  it('campaign settings modification should fail if the token has not being approved', async function() {
+    await this.factory.toggleAcceptedToken(this.testToken.address, false, {
+      from: this.root,
+    });
+    await expectRevert.unspecified(
+      this.campaignInstance.setCampaignSettings(
+        300000,
+        1,
+        604800,
+        1,
+        this.testToken.address,
+        false,
+        {
+          from: this.campaignOwner,
+        }
+      )
+    );
+  });
+  it('campaign settings modification should fail if minimum contribution is larger than maximum or less than minimum allowed from factory', async function() {
+    await this.factory.setCampaignTransactionConfig(
+      'minimumContributionAllowed',
+      2,
+      {
+        from: this.root,
+      }
+    );
+    await expectRevert.unspecified(
+      this.campaignInstance.setCampaignSettings(
+        300000,
+        1,
+        604800,
+        1,
+        this.testToken.address,
+        false,
+        {
+          from: this.campaignOwner,
+        }
+      )
+    );
+    await expectRevert.unspecified(
+      this.campaignInstance.setCampaignSettings(
+        300000,
+        20000,
+        604800,
+        1,
+        this.testToken.address,
+        false,
+        {
+          from: this.campaignOwner,
+        }
+      )
+    );
+  });
 
   /* -------------------------------------------------------------------------- */
   /*                               extendDeadline                               */
   /* -------------------------------------------------------------------------- */
-  it('should extend the campaign duration', async function() {});
-  it("duration extension should fail if the campaign isn't active or enabled", async function() {});
-  it("duration extension should fail if the campaign duration hasn't expired", async function() {});
-  it('duration extension should fail if ability to extend has been exhausted', async function() {});
-  it('duration extension should fail if the time to extend by is less or greater than allowed from factory', async function() {});
+  it('should extend the campaign duration', async function() {
+    await this.approvedCampaignSetup({
+      duration: 6,
+      from: this.campaignOwner,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await this.campaignInstance.extendDeadline(86400, {
+      from: this.campaignOwner,
+    });
 
-  /* -------------------------------------------------------------------------- */
-  /*                             setDeadlineSetTimes                            */
-  /* -------------------------------------------------------------------------- */
-  it('should set the ability to extend campaign duration', async function() {});
-  it('should fail if the ability to extend campaign duration is called by the campaign owner', async function() {});
-
-  /* -------------------------------------------------------------------------- */
-  /*                                createReward                                */
-  /* -------------------------------------------------------------------------- */
-  it('should create rewards', async function() {});
-  it("reward creation should fail if campaign isn't active or enabled", async function() {});
-  it('reward creation should fail if the cost is less than minimum allowed contribution', async function() {});
-  it('reward creation should fail if the cost is less than minimum allowed contribution', async function() {});
-  it('reward creation should fail if the cost is greater than minimum allowed contribution', async function() {});
-
-  /* -------------------------------------------------------------------------- */
-  /*                                modifyReward                                */
-  /* -------------------------------------------------------------------------- */
-  it('should modify a reward', async function() {});
-  it("reward modification should fail if campaign isn't active or enabled", async function() {});
-  it("reward modification should fail if campaign isn't active or enabled", async function() {});
-  it("reward modification should fail if the reward doesn't exist", async function() {});
-
-  /* -------------------------------------------------------------------------- */
-  /*                                destroyReward                               */
-  /* -------------------------------------------------------------------------- */
-  it('should delete a reward', async function() {});
-  it("reward removal should fail if the reward doesn't exist", async function() {});
-
-  /* -------------------------------------------------------------------------- */
-  /*                             campaignSentReward                             */
-  /* -------------------------------------------------------------------------- */
-  it('should mark a reward as delivered', async function() {});
-  it('reward delivery update should fail if not called by the campaign owner', async function() {});
-  it('reward delivery update should fail if not called by the campaign owner', async function() {});
+    expect(await this.campaignInstance.deadline()).to.be.bignumber.equal(
+      new BN('86400')
+    );
+    expect(
+      await this.campaignInstance.deadlineSetTimes()
+    ).to.be.bignumber.equal(new BN('1'));
+  });
 });
