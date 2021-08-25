@@ -20,9 +20,11 @@
 | requests | struct Campaign.Request[] |
 | requestCount | uint256 |
 | rewards | struct Campaign.Reward[] |
-| rewardees | struct Campaign.Rewardee[] |
-| userHasReward | mapping(address => bool) |
-| reviews | struct Campaign.Review[] |
+| rewardToRewardRecipientCount | mapping(uint256 => uint256) |
+| rewardRecipients | struct Campaign.RewardRecipient[] |
+| userRewardCount | mapping(address => uint256) |
+| positiveReviewCount | uint256 |
+| reviewCount | uint256 |
 | reviewed | mapping(address => bool) |
 | root | address |
 | acceptedToken | address |
@@ -35,10 +37,9 @@
 | target | uint256 |
 | deadline | uint256 |
 | deadlineSetTimes | uint256 |
-| positiveReviewCount | uint256 |
-| reviewCount | uint256 |
 | finalizedRequestCount | uint256 |
 | currentRunningRequest | uint256 |
+| pauseWithdrawals | bool |
 | approvers | mapping(address => bool) |
 | userTotalContribution | mapping(address => uint256) |
 | percentBase | uint256 |
@@ -92,21 +93,12 @@
 ```
 
 
-### canApproveRequest
-> Ensures a user is eligible to vote on a request
-
-#### Declaration
-```solidity
-  modifier canApproveRequest
-```
-
-
-### deadlineIsUp
+### withinDeadline
 > Ensures the campaign is within it's deadline, applies only if goal type is fixed
 
 #### Declaration
 ```solidity
-  modifier deadlineIsUp
+  modifier withinDeadline
 ```
 
 
@@ -143,20 +135,47 @@
 #### Declaration
 ```solidity
   function transferCampaignOwnership(
-    address _newOwner
-  ) external userIsVerified onlyFactory
+    address _newRoot
+  ) external onlyAdmin whenNotPaused userIsVerified
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| onlyAdmin |
+| whenNotPaused |
 | userIsVerified |
-| onlyFactory |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_newOwner` | address |    Address of the user campaign ownership is being transfered to
+|`_newRoot` | address |    Address of the user campaign ownership is being transfered to
+---  
+### transferCampaignUserData
+>        Transfers user data in the campaign to another verifed user
+
+
+#### Declaration
+```solidity
+  function transferCampaignUserData(
+    address _oldAddress,
+    address _newAddress
+  ) external onlyFactory nonReentrant whenNotPaused userIsVerified
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyFactory |
+| nonReentrant |
+| whenNotPaused |
+| userIsVerified |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_oldAddress` | address |    Address of the user transferring
+|`_newAddress` | address |    Address of the user being transferred to
 ---  
 ### setCampaignSettings
 >         Modifies campaign details while it's not approved
@@ -187,7 +206,7 @@
 |`_target` | uint256 |                              Contribution target of the campaign
 |`_minimumContribution` | uint256 |                 The minimum amout required to be an approver
 |`_duration` | uint256 |                            How long until the campaign stops receiving contributions
-|`_goalType` | uint256 |                            Indicates if campaign is fixed or flexible with contributions
+|`_goalType` | uint256 |                            If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
 |`_token` | address |                               Address of token to be used for transactions by default
 |`_allowContributionAfterTargetIsMet` | bool |   Indicates if the campaign can receive contributions after duration expires
 ---  
@@ -250,14 +269,13 @@
     uint256 _deliveryDate,
     uint256 _stock,
     bool _active
-  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused
+  ) external adminOrFactory userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | adminOrFactory |
-| campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
 
@@ -276,30 +294,54 @@
 #### Declaration
 ```solidity
   function modifyReward(
-    uint256 _id,
+    uint256 _rewardId,
     uint256 _value,
     uint256 _deliveryDate,
     uint256 _stock,
     bool _active
-  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused
+  ) external adminOrFactory userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | adminOrFactory |
-| campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_id` | uint256 |              Reward unique id
+|`_rewardId` | uint256 |        Reward unique id
 |`_value` | uint256 |           Reward cost
 |`_deliveryDate` | uint256 |    Time in which reward will be deliverd to contriutors
 |`_stock` | uint256 |           Quantity available for dispatch
 |`_active` | bool |          Indicates if contributors can attain the reward
+---  
+### increaseRewardStock
+>        Increases a reward stock count
+
+
+#### Declaration
+```solidity
+  function increaseRewardStock(
+    uint256 _rewardId,
+    uint256 _count
+  ) external adminOrFactory userIsVerified whenNotPaused
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| adminOrFactory |
+| userIsVerified |
+| whenNotPaused |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_rewardId` | uint256 |        Reward unique id
+|`_count` | uint256 |           Stock count to increase by
 ---  
 ### destroyReward
 >        Deletes a reward by id
@@ -309,14 +351,13 @@
 ```solidity
   function destroyReward(
     uint256 _rewardId
-  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused
+  ) external adminOrFactory userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | adminOrFactory |
-| campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
 
@@ -326,13 +367,13 @@
 |`_rewardId` | uint256 |    Reward unique id
 ---  
 ### campaignSentReward
->        Used by the campaign owner to indicate they delivered the reward to the rewardee
+>        Called by the campaign owner to indicate they delivered the reward to the rewardRecipient
 
 
 #### Declaration
 ```solidity
   function campaignSentReward(
-    uint256 _rewardeeId,
+    uint256 _rewardRecipientId,
     bool _status
   ) external campaignIsActive userIsVerified adminOrFactory whenNotPaused
 ```
@@ -348,18 +389,17 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_rewardeeId` | uint256 |  ID to struct containing reward and user to be rewarded
+|`_rewardRecipientId` | uint256 |  ID to struct containing reward and user to be rewarded
 |`_status` | bool |      Indicates if the delivery was successful or not
 ---  
 ### userReceivedCampaignReward
->        Used by a user eligible for rewards to indicate they received their reward
+>        Called by a user eligible for rewards to indicate they received their reward
 
 
 #### Declaration
 ```solidity
   function userReceivedCampaignReward(
-    uint256 _rewardeeId,
-    bool _status
+    uint256 _rewardRecipientId
   ) external campaignIsActive userIsVerified whenNotPaused
 ```
 
@@ -373,8 +413,7 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_rewardeeId` | uint256 |  ID to struct containing reward and user to be rewarded
-|`_status` | bool |      Indicates if the delivery was successful or not
+|`_rewardRecipientId` | uint256 |  ID to struct containing reward and user to be rewarded
 ---  
 ### contribute
 >        Contribute method enables a user become an approver in the campaign
@@ -386,7 +425,7 @@
     address _token,
     uint256 _rewardId,
     bool _withReward
-  ) external campaignIsActive userIsVerified deadlineIsUp whenNotPaused nonReentrant returns (uint256 targetCompletionValue)
+  ) external campaignIsActive userIsVerified withinDeadline whenNotPaused nonReentrant returns (uint256 targetCompletionValue)
 ```
 
 #### Modifiers:
@@ -394,7 +433,7 @@
 | --- |
 | campaignIsActive |
 | userIsVerified |
-| deadlineIsUp |
+| withinDeadline |
 | whenNotPaused |
 | nonReentrant |
 
@@ -414,15 +453,13 @@
   function withdrawOwnContribution(
     uint256 _amount,
     address payable _wallet
-  ) external campaignIsActive userIsVerified whenNotPaused nonReentrant
+  ) external userIsVerified nonReentrant
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| campaignIsActive |
 | userIsVerified |
-| whenNotPaused |
 | nonReentrant |
 
 #### Args:
@@ -442,7 +479,7 @@
     address _user,
     uint256 _amount,
     address payable _wallet
-  ) external onlyFactory nonReentrant whenNotPaused
+  ) external onlyFactory nonReentrant
 ```
 
 #### Modifiers:
@@ -450,7 +487,6 @@
 | --- |
 | onlyFactory |
 | nonReentrant |
-| whenNotPaused |
 
 #### Args:
 | Arg | Type | Description |
@@ -470,7 +506,7 @@
     address payable _recipient,
     uint256 _value,
     uint256 _duration
-  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused deadlineIsUp
+  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused withinDeadline
 ```
 
 #### Modifiers:
@@ -480,7 +516,7 @@
 | campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
-| deadlineIsUp |
+| withinDeadline |
 
 #### Args:
 | Arg | Type | Description |
@@ -521,14 +557,13 @@
 ```solidity
   function voteOnRequest(
     uint256 _requestId
-  ) external campaignIsActive canApproveRequest userIsVerified whenNotPaused
+  ) external campaignIsActive userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | campaignIsActive |
-| canApproveRequest |
 | userIsVerified |
 | whenNotPaused |
 
@@ -545,14 +580,13 @@
 ```solidity
   function cancelVote(
     uint256 _requestId
-  ) external campaignIsActive canApproveRequest userIsVerified whenNotPaused
+  ) external campaignIsActive userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | campaignIsActive |
-| canApproveRequest |
 | userIsVerified |
 | whenNotPaused |
 
@@ -681,6 +715,27 @@
 
 
 ---  
+### toggleWithdrawalState
+>        Pauses and Unpauses withdrawals
+
+
+#### Declaration
+```solidity
+  function toggleWithdrawalState(
+    bool _state
+  ) external onlyFactory
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyFactory |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_state` | bool |      Indicates pause or unpause state
+---  
 ### unpauseCampaign
 > Unpauses the campaign, transactions in the campaign resume per usual
 
@@ -719,17 +774,17 @@
 
 ## Events
 
-### CampaignIDset
+### CampaignOwnerSet
 > `Campaign`
   
 
 
-### CampaignSettingsUpdated
+### CampaignOwnershipTransferred
 
   
 
 
-### CampaignGoalTypeChange
+### CampaignSettingsUpdated
 
   
 
@@ -741,6 +796,11 @@
 
 ### CampaignReported
 
+  
+
+
+### CampaignUserDataTransferred
+> `Approval Transfer`
   
 
 
@@ -784,17 +844,27 @@
   
 
 
+### RewardStockIncreased
+
+  
+
+
 ### RewardDestroyed
 
   
 
 
-### RewardeeAdded
-> `Rwardee Events`
+### RewardRecipientAdded
+> `Rward Recipient Events`
   
 
 
-### RewardeeApproval
+### RewarderApproval
+
+  
+
+
+### RewardRecipientApproval
 
   
 
@@ -806,6 +876,11 @@
 
 ### VoteCancelled
 
+  
+
+
+### CampaignReviewed
+> `Review Events`
   
 
 

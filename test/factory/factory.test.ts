@@ -1,4 +1,5 @@
 // test/factory.test.js
+export {};
 const { expect } = require('chai');
 
 // Load compiled artifacts

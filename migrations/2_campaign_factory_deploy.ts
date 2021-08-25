@@ -1,4 +1,5 @@
 // migrations/2_deploy_upgradeable_campaign_factory.js
+export {};
 const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 const CampaignFactory = artifacts.require('CampaignFactory');

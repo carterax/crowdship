@@ -21,7 +21,9 @@
 | factoryWallet | address payable |
 | campaignImplementation | address |
 | tokenList | address[] |
+| campaignTransactionConfigList | string[] |
 | approvedcampaignTransactionConfig | mapping(string => bool) |
+| campaignTransactionConfig | mapping(string => uint256) |
 | categoryCommission | mapping(uint256 => uint256) |
 | tokenInList | mapping(address => bool) |
 | tokensApproved | mapping(address => bool) |
@@ -39,6 +41,7 @@
 | users | struct CampaignFactory.User[] |
 | userCount | uint256 |
 | userID | mapping(address => uint256) |
+| approverTransferRequestCount | mapping(address => uint256) |
 | featurePackages | struct CampaignFactory.Featured[] |
 | featurePackageCount | uint256 |
 
@@ -137,6 +140,27 @@
 |`_wallet` | address payable |                      Address where all revenue gets deposited
 |`_implementation` | contract Campaign |              Address of base contract to deploy minimal proxies to campaigns
 ---  
+### addFactoryTransactionConfig
+>        Adds a new transaction setting
+
+
+#### Declaration
+```solidity
+  function addFactoryTransactionConfig(
+    string _prop
+  ) external onlyAdmin
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyAdmin |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_prop` | string |    Setting Key
+---  
 ### setCampaignTransactionConfig
 >        Set Factory controlled values dictating how campaign deployments should run
 
@@ -159,25 +183,6 @@
 | --- | --- | --- |
 |`_prop` | string |    Setting Key
 |`_value` | uint256 |   Setting Value
----  
-### getCampaignTransactionConfig
->        Get Factory controlled values dictating how campaign deployments should run
-
-
-#### Declaration
-```solidity
-  function getCampaignTransactionConfig(
-    string _prop
-  ) public returns (uint256)
-```
-
-#### Modifiers:
-No modifiers
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_prop` | string |    Setting Key
 ---  
 ### setDefaultCommission
 >        Sets default commission on all request finalization
@@ -482,31 +487,6 @@ No modifiers
 | --- | --- | --- |
 |`_categoryId` | uint256 |    ID of category campaign deployer specifies
 ---  
-### transferCampaignOwnership
->        Transfers campaign ownership from one user to another.
-                   Called only after ownership transfer occurs in the minimal campaign proxy
-
-
-#### Declaration
-```solidity
-  function transferCampaignOwnership(
-    address _newOwner,
-    contract Campaign _campaign
-  ) external onlyManager whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyManager |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_newOwner` | address |    Address of the user campaign ownership is being transfered to
-|`_campaign` | contract Campaign |    Address of the campaign instance
----  
 ### toggleCampaignApproval
 >        Approves or disapproves a campaign. Restricted to campaign managers from factory
 
@@ -581,30 +561,6 @@ No modifiers
 | --- | --- | --- |
 |`_campaignId` | uint256 |      ID of the campaign
 |`_newCategoryId` | uint256 |   ID of the category being switched to
----  
-### campaignApprovalRequest
->        Called by a campaign owner seeking to be approved and ready to receive contributions
-
-
-#### Declaration
-```solidity
-  function campaignApprovalRequest(
-    address _campaign
-  ) external onlyCampaignOwner campaignExists userIsVerified whenPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyCampaignOwner |
-| campaignExists |
-| userIsVerified |
-| whenPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_campaign` | address |    Address of campaign instance
 ---  
 ### featureCampaign
 >        Purchases time for which the specified campaign will be featured. Restricted to
@@ -682,29 +638,6 @@ No modifiers
 | --- | --- | --- |
 |`_campaignId` | uint256 |   ID of the campaign
 ---  
-### destroyCampaign
->        Deletes a campaign
-
-
-#### Declaration
-```solidity
-  function destroyCampaign(
-    uint256 _campaignId
-  ) external onlyManager campaignExists whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyManager |
-| campaignExists |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_campaignId` | uint256 |   ID of campaign
----  
 ### createCategory
 >        Creates a category
 
@@ -750,28 +683,6 @@ No modifiers
 | --- | --- | --- |
 |`_categoryId` | uint256 |   ID of the category
 |`_active` | bool |       Indicates if a category is active allowing for campaigns to be assigned to it
----  
-### destroyCategory
->        Deletes a category
-
-
-#### Declaration
-```solidity
-  function destroyCategory(
-    uint256 _categoryId
-  ) external onlyManager whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| onlyManager |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_categoryId` | uint256 |   ID of category
 ---  
 ### createFeaturePackage
 >        Creates a feature package purchased by campaig owners to feature their campaigns
@@ -888,16 +799,6 @@ No modifiers
   
 
 
-### CampaignOwnershipTransferred
-
-  
-
-
-### CampaignDestroyed
-
-  
-
-
 ### CampaignApproval
 
   
@@ -924,11 +825,6 @@ No modifiers
 
 
 ### CampaignFeatureUnpaused
-
-  
-
-
-### CampaignApprovalRequest
 
   
 
@@ -974,11 +870,6 @@ No modifiers
 
 
 ### CategoryModified
-
-  
-
-
-### CategoryDestroyed
 
   
 

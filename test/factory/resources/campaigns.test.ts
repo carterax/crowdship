@@ -1,3 +1,4 @@
+export {};
 const { expect } = require('chai');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
@@ -256,44 +257,44 @@ module.exports = function() {
     );
   });
 
-  /* -------------------------------------------------------------------------- */
-  /*                               destroyCampaign                              */
-  /* -------------------------------------------------------------------------- */
-  it('should delete campaign with right role', async function() {
-    const campaignID = 0;
-    await campaignSetup(this.factory);
-    const receipt = await this.factory.destroyCampaign(campaignID);
-    const campaign = await this.factory.deployedCampaigns(campaignID);
-    expect(campaign.exists).to.equal(false);
-    expectEvent(receipt, 'CampaignDestroyed', {
-      campaignId: new BN(campaignID),
-    });
-  });
-  it('should not delete campaign without role', async function() {
-    const catID = 0,
-      campaignID = 0,
-      userId = await this.factory.userID(this.addr1);
-    await this.factory.createCategory(true);
-    await this.factory.toggleUserApproval(userId, true);
-    await this.factory.createCampaign(catID, { from: this.addr1 });
-    await expectRevert.unspecified(
-      this.factory.destroyCampaign(campaignID, { from: this.addr2 })
-    );
-    const campaign = await this.factory.deployedCampaigns(campaignID);
-    expect(campaign.exists).to.equal(true);
-  });
-  it('should not delete campaign if factory is paused', async function() {
-    await campaignSetup(this.factory);
-    await this.factory.pauseCampaign();
-    await expectRevert.unspecified(this.factory.destroyCampaign(0));
-  });
-  it('should delete campaign if factory is unpaused', async function() {
-    await campaignSetup(this.factory);
-    await this.factory.pauseCampaign();
-    await this.factory.unpauseCampaign();
-    await this.factory.destroyCampaign(0);
-    expect((await this.factory.deployedCampaigns(0)).exists).to.be.equal(false);
-  });
+  // /* -------------------------------------------------------------------------- */
+  // /*                               destroyCampaign                              */
+  // /* -------------------------------------------------------------------------- */
+  // it('should delete campaign with right role', async function() {
+  //   const campaignID = 0;
+  //   await campaignSetup(this.factory);
+  //   const receipt = await this.factory.destroyCampaign(campaignID);
+  //   const campaign = await this.factory.deployedCampaigns(campaignID);
+  //   expect(campaign.exists).to.equal(false);
+  //   expectEvent(receipt, 'CampaignDestroyed', {
+  //     campaignId: new BN(campaignID),
+  //   });
+  // });
+  // it('should not delete campaign without role', async function() {
+  //   const catID = 0,
+  //     campaignID = 0,
+  //     userId = await this.factory.userID(this.addr1);
+  //   await this.factory.createCategory(true);
+  //   await this.factory.toggleUserApproval(userId, true);
+  //   await this.factory.createCampaign(catID, { from: this.addr1 });
+  //   await expectRevert.unspecified(
+  //     this.factory.destroyCampaign(campaignID, { from: this.addr2 })
+  //   );
+  //   const campaign = await this.factory.deployedCampaigns(campaignID);
+  //   expect(campaign.exists).to.equal(true);
+  // });
+  // it('should not delete campaign if factory is paused', async function() {
+  //   await campaignSetup(this.factory);
+  //   await this.factory.pauseCampaign();
+  //   await expectRevert.unspecified(this.factory.destroyCampaign(0));
+  // });
+  // it('should delete campaign if factory is unpaused', async function() {
+  //   await campaignSetup(this.factory);
+  //   await this.factory.pauseCampaign();
+  //   await this.factory.unpauseCampaign();
+  //   await this.factory.destroyCampaign(0);
+  //   expect((await this.factory.deployedCampaigns(0)).exists).to.be.equal(false);
+  // });
 
   /* -------------------------------------------------------------------------- */
   /*                               featureCampaign                              */
@@ -312,7 +313,7 @@ module.exports = function() {
     const block = await web3.eth.getBlock(receipt.receipt.blockNumber);
     expect(
       (await this.factory.deployedCampaigns(0)).featureFor
-    ).to.be.bignumber.equal(new BN(`${block.timestamp + 86400}`));
+    ).to.be.bignumber.equal(new BN(`${+block.timestamp + 86400}`));
     // check factory revenue
     expect(await this.factory.factoryRevenue()).to.be.bignumber.equal(
       new BN('1000')
@@ -415,7 +416,7 @@ module.exports = function() {
     const block = await web3.eth.getBlock(receipt.receipt.blockNumber);
     expect(
       (await this.factory.deployedCampaigns(0)).featureFor
-    ).to.be.bignumber.equal(new BN(`${block.timestamp + 86400}`));
+    ).to.be.bignumber.equal(new BN(`${+block.timestamp + 86400}`));
   });
 
   /* -------------------------------------------------------------------------- */
@@ -555,16 +556,16 @@ module.exports = function() {
       this.factory.unpauseCampaignFeatured(0, { from: this.addr1 })
     );
   });
-  it('campaign unpause feature should fail if campaign does not exist', async function() {
-    await featureCampaignSetup(this.factory, this.testToken);
-    await this.factory.featureCampaign(0, 0, this.testToken.address, {
-      value: 1000,
-    });
-    await this.factory.pauseCampaignFeatured(0);
-    await this.factory.destroyCampaign(0);
+  // it('campaign unpause feature should fail if campaign does not exist', async function() {
+  //   await featureCampaignSetup(this.factory, this.testToken);
+  //   await this.factory.featureCampaign(0, 0, this.testToken.address, {
+  //     value: 1000,
+  //   });
+  //   await this.factory.pauseCampaignFeatured(0);
+  //   await this.factory.destroyCampaign(0);
 
-    await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
-  });
+  //   await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
+  // });
   it('campaign unpause feature should fail if user is not verified', async function() {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {

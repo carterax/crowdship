@@ -1,3 +1,4 @@
+export {};
 const { expect } = require('chai');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
@@ -53,42 +54,42 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                               destroyCategory                              */
   /* -------------------------------------------------------------------------- */
-  it('cannot delete a category that does not exist', async function() {
-    await expectRevert.unspecified(this.factory.destroyCategory(0));
-  });
-  it('manager with role can delete category', async function() {
-    await this.factory.createCategory(false);
-    const receipt = await this.factory.destroyCategory(0);
-    const category = await this.factory.campaignCategories(0);
+  // it('cannot delete a category that does not exist', async function() {
+  //   await expectRevert.unspecified(this.factory.destroyCategory(0));
+  // });
+  // it('manager with role can delete category', async function() {
+  //   await this.factory.createCategory(false);
+  //   const receipt = await this.factory.destroyCategory(0);
+  //   const category = await this.factory.campaignCategories(0);
 
-    expect(category.exists).to.be.equal(false);
-    expectEvent(receipt, 'CategoryDestroyed', {
-      categoryId: new BN('0'),
-    });
-  });
-  it('cannot delete categories without role', async function() {
-    await this.factory.createCategory(false);
-    await expectRevert.unspecified(
-      this.factory.destroyCategory(0, { from: this.addr1 })
-    );
+  //   expect(category.exists).to.be.equal(false);
+  //   expectEvent(receipt, 'CategoryDestroyed', {
+  //     categoryId: new BN('0'),
+  //   });
+  // });
+  // it('cannot delete categories without role', async function() {
+  //   await this.factory.createCategory(false);
+  //   await expectRevert.unspecified(
+  //     this.factory.destroyCategory(0, { from: this.addr1 })
+  //   );
 
-    const category = await this.factory.campaignCategories(0);
+  //   const category = await this.factory.campaignCategories(0);
 
-    expect(category.exists).to.equal(true);
-  });
-  it('category destruction should fail if contract is paused', async function() {
-    await this.factory.createCategory(true);
-    await this.factory.pauseCampaign();
-    await expectRevert.unspecified(this.factory.destroyCategory(0));
-  });
-  it('category destruction should work if contract is unpaused', async function() {
-    await this.factory.createCategory(true);
-    await this.factory.pauseCampaign();
-    await this.factory.unpauseCampaign();
-    await this.factory.destroyCategory(0);
-    const category = await this.factory.campaignCategories(0);
-    expect(category.exists).to.be.equal(false);
-  });
+  //   expect(category.exists).to.equal(true);
+  // });
+  // it('category destruction should fail if contract is paused', async function() {
+  //   await this.factory.createCategory(true);
+  //   await this.factory.pauseCampaign();
+  //   await expectRevert.unspecified(this.factory.destroyCategory(0));
+  // });
+  // it('category destruction should work if contract is unpaused', async function() {
+  //   await this.factory.createCategory(true);
+  //   await this.factory.pauseCampaign();
+  //   await this.factory.unpauseCampaign();
+  //   await this.factory.destroyCategory(0);
+  //   const category = await this.factory.campaignCategories(0);
+  //   expect(category.exists).to.be.equal(false);
+  // });
 
   /* -------------------------------------------------------------------------- */
   /*                                categoryCount                               */

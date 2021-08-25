@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./utils/AccessControl.sol";
 import "./Campaign.sol";
-import "./utils/math/DecimalMath.sol";
+import "./libraries/math/DecimalMath.sol";
 
 contract CampaignFactory is
     Initializable,
@@ -33,7 +33,7 @@ contract CampaignFactory is
         uint256 userId,
         uint256 category
     );
-    event CampaignDestroyed(uint256 indexed campaignId);
+    // event CampaignDestroyed(uint256 indexed campaignId);
     event CampaignApproval(uint256 indexed campaignId, bool approval);
     event CampaignActiveToggle(uint256 indexed campaignId, bool active);
     event CampaignCategoryChange(
@@ -47,7 +47,7 @@ contract CampaignFactory is
     );
     event CampaignFeaturePaused(uint256 indexed campaignId);
     event CampaignFeatureUnpaused(uint256 indexed campaignId, uint256 timeLeft);
-    event CampaignApprovalRequest(uint256 campaignId);
+    // event CampaignApprovalRequest(uint256 campaignId);
 
     /// @dev `Token Events`
     event TokenAdded(address indexed token);
@@ -59,16 +59,17 @@ contract CampaignFactory is
     event UserModified(uint256 indexed userId);
     event UserApproval(uint256 indexed userId, bool approval);
     event UserRemoved(uint256 indexed userId);
-    event CampaignApprovalTransfer(
-        uint256 indexed campaignId,
-        address oldAddress,
-        address newAddress
-    );
+    // event UserCampaignDataTransferRequest(
+    //     uint256 indexed campaignId,
+    //     address oldAddress,
+    //     address newAddress
+    // );
+    // event UserRequestCountModified(address indexed user, uint256 count);
 
     /// @dev `Category Events`
     event CategoryAdded(uint256 indexed categoryId, bool active);
     event CategoryModified(uint256 indexed categoryId, bool active);
-    event CategoryDestroyed(uint256 indexed categoryId);
+    // event CategoryDestroyed(uint256 indexed categoryId);
 
     /// @dev `Feature Package Events`
     event FeaturePackageAdded(
@@ -118,7 +119,7 @@ contract CampaignFactory is
     mapping(address => uint256) public campaignToID;
     mapping(uint256 => bool) public featuredCampaignIsPaused;
     mapping(uint256 => uint256) public pausedFeaturedCampaignTimeLeft;
-    mapping(uint256 => uint256) public campaignApprovalRequestCount;
+    // mapping(uint256 => uint256) public campaignApprovalRequestCount;
 
     /// @dev `Categories`
     struct CampaignCategory {
@@ -206,7 +207,7 @@ contract CampaignFactory is
         root = msg.sender;
         factoryWallet = _wallet;
 
-        string[14] memory transactionConfigs = [
+        string[13] memory transactionConfigs = [
             "defaultCommission",
             "deadlineStrikesAllowed",
             "minimumContributionAllowed",
@@ -219,8 +220,7 @@ contract CampaignFactory is
             "minDeadlineExtension",
             "minRequestDuration",
             "maxRequestDuration",
-            "reviewThresholdMark",
-            "maximumUserRequestCount"
+            "reviewThresholdMark"
         ];
 
         for (uint256 index = 0; index < transactionConfigs.length; index++) {
@@ -531,6 +531,19 @@ contract CampaignFactory is
         campaignExists(_campaignId)
         whenNotPaused
     {
+        // if caller is a campaign owner
+        // check campaign has approvers less than or equal to 5
+        // check campaign target isn't met
+        if (!canManageCampaigns(msg.sender))
+            require(
+                Campaign(deployedCampaigns[_campaignId].campaign)
+                    .approversCount() <=
+                    5 &&
+                    Campaign(deployedCampaigns[_campaignId].campaign)
+                        .totalCampaignContribution() <
+                    Campaign(deployedCampaigns[_campaignId].campaign).target()
+            );
+
         deployedCampaigns[_campaignId].active = _active;
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
@@ -569,57 +582,71 @@ contract CampaignFactory is
         }
     }
 
-    /**
-     * @dev        Called by a campaign owner seeking to be approved and ready to receive contributions
-     * @param      _campaign    Address of campaign instance
-     */
-    function campaignApprovalRequest(address _campaign)
-        external
-        onlyCampaignOwner(campaignToID[address(_campaign)])
-        campaignExists(campaignToID[address(_campaign)])
-        userIsVerified(msg.sender)
-        whenNotPaused
-    {
-        uint256 _campaignId = campaignToID[address(_campaign)];
-        require(
-            !deployedCampaigns[_campaignId].approved &&
-                campaignApprovalRequestCount[_campaignId] <=
-                campaignTransactionConfig["maximumUserRequestCount"]
-        );
-        campaignApprovalRequestCount[
-            _campaignId
-        ] = campaignApprovalRequestCount[_campaignId].add(1);
-        emit CampaignApprovalRequest(_campaignId);
-    }
+    // /**
+    //  * @dev        Called by a campaign owner seeking to be approved and ready to receive contributions
+    //  * @param      _campaign    Address of campaign instance
+    //  */
+    // function campaignApprovalRequest(address _campaign)
+    //     external
+    //     onlyCampaignOwner(campaignToID[address(_campaign)])
+    //     campaignExists(campaignToID[address(_campaign)])
+    //     userIsVerified(msg.sender)
+    //     whenNotPaused
+    // {
+    //     uint256 _campaignId = campaignToID[address(_campaign)];
+    //     require(
+    //         !deployedCampaigns[_campaignId].approved &&
+    //             campaignApprovalRequestCount[_campaignId] <=
+    //             campaignTransactionConfig["maximumUserRequestCount"]
+    //     );
+    //     campaignApprovalRequestCount[
+    //         _campaignId
+    //     ] = campaignApprovalRequestCount[_campaignId].add(1);
+    //     emit CampaignApprovalRequest(_campaignId);
+    // }
 
-    function requestApprovalTransfer(Campaign _campaign, address _newAddress)
-        external
-        userIsVerified(msg.sender)
-        whenNotPaused
-    {
-        require(
-            approverTransferRequestCount[msg.sender] <=
-                campaignTransactionConfig["maximumUserRequestCount"]
-        );
-        approverTransferRequestCount[msg.sender] = approverTransferRequestCount[
-            msg.sender
-        ].add(1);
-        emit CampaignApprovalTransfer(
-            campaignToID[address(_campaign)],
-            msg.sender,
-            _newAddress
-        );
-    }
+    // /**
+    //  * @dev        Called by a campaign approver seeking to be transferred to a new verified account
+    //  * @param      _campaign    Address of campaign instance
+    //  * @param      _newAddress  Address of the new user being transferred to
+    //  */
+    // function requestUserCampaignDataTransfer(
+    //     Campaign _campaign,
+    //     address _newAddress
+    // ) external userIsVerified(msg.sender) whenNotPaused {
+    //     require(
+    //         approverTransferRequestCount[msg.sender] <=
+    //             campaignTransactionConfig["maximumUserRequestCount"]
+    //     );
+    //     approverTransferRequestCount[msg.sender] = approverTransferRequestCount[
+    //         msg.sender
+    //     ].add(1);
+    //     emit UserCampaignDataTransferRequest(
+    //         campaignToID[address(_campaign)],
+    //         msg.sender,
+    //         _newAddress
+    //     );
+    // }
 
-    function setMaximumUserRequestCount(uint256 _campaignId, uint256 _count)
-        external
-        onlyManager(MANAGE_CAMPAIGNS)
-        campaignExists(_campaignId)
-        whenNotPaused
-    {
-        require(_count <= campaignTransactionConfig["maximumUserRequestCount"]);
-        campaignApprovalRequestCount[_campaignId] = _count;
-    }
+    // function setUserRequestCount(address _user, uint256 _count)
+    //     external
+    //     onlyManager(MANAGE_USERS)
+    //     whenNotPaused
+    // {
+    //     approverTransferRequestCount[_user] = _count;
+
+    //     emit UserRequestCountModified(_user, _count);
+    // }
+
+    // function setMaximumUserRequestCount(uint256 _campaignId, uint256 _count)
+    //     external
+    //     onlyManager(MANAGE_CAMPAIGNS)
+    //     campaignExists(_campaignId)
+    //     whenNotPaused
+    // {
+    //     require(_count <= campaignTransactionConfig["maximumUserRequestCount"]);
+    //     campaignApprovalRequestCount[_campaignId] = _count;
+    // }
 
     /**
      * @dev        Purchases time for which the specified campaign will be featured. Restricted to
@@ -724,22 +751,22 @@ contract CampaignFactory is
         );
     }
 
-    /**
-     * @dev        Deletes a campaign
-     * @param      _campaignId   ID of campaign
-     */
-    function destroyCampaign(uint256 _campaignId)
-        external
-        onlyManager(MANAGE_CAMPAIGNS)
-        campaignExists(_campaignId)
-        whenNotPaused
-    {
-        // delete the campaign from array
-        delete deployedCampaigns[_campaignId];
+    // /**
+    //  * @dev        Deletes a campaign
+    //  * @param      _campaignId   ID of campaign
+    //  */
+    // function destroyCampaign(uint256 _campaignId)
+    //     external
+    //     onlyManager(MANAGE_CAMPAIGNS)
+    //     campaignExists(_campaignId)
+    //     whenNotPaused
+    // {
+    //     // delete the campaign from array
+    //     delete deployedCampaigns[_campaignId];
 
-        // emit event
-        emit CampaignDestroyed(_campaignId);
-    }
+    //     // emit event
+    //     emit CampaignDestroyed(_campaignId);
+    // }
 
     /**
      * @dev        Creates a category
@@ -783,23 +810,23 @@ contract CampaignFactory is
         emit CategoryModified(_categoryId, _active);
     }
 
-    /**
-     * @dev        Deletes a category
-     * @param      _categoryId   ID of category
-     */
-    function destroyCategory(uint256 _categoryId)
-        external
-        onlyManager(MANAGE_CATEGORIES)
-        whenNotPaused
-    {
-        // check if category exists
-        require(campaignCategories[_categoryId].exists);
+    // /**
+    //  * @dev        Deletes a category
+    //  * @param      _categoryId   ID of category
+    //  */
+    // function destroyCategory(uint256 _categoryId)
+    //     external
+    //     onlyManager(MANAGE_CATEGORIES)
+    //     whenNotPaused
+    // {
+    //     // check if category exists
+    //     require(campaignCategories[_categoryId].exists);
 
-        // delete the category from `campaignCategories`
-        delete campaignCategories[_categoryId];
+    //     // delete the category from `campaignCategories`
+    //     delete campaignCategories[_categoryId];
 
-        emit CategoryDestroyed(_categoryId);
-    }
+    //     emit CategoryDestroyed(_categoryId);
+    // }
 
     /**
      * @dev        Creates a feature package purchased by campaig owners to feature their campaigns
