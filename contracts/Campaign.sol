@@ -659,7 +659,6 @@ contract Campaign is
         withinDeadline
         whenNotPaused
         nonReentrant
-        returns (uint256 targetCompletionValue)
     {
         // campaign owner cannot contribute to own campaign
         // token must be accepted
@@ -678,15 +677,10 @@ contract Campaign is
         if (!allowContributionAfterTargetIsMet) {
             // check user contribution added to current total contribution doesn't exceed target
             // if it does, calculate the amount to target completion return it back to user to change contribution value
-            uint256 overheadTotalCampaignContribution = totalCampaignContribution
-                    .add(msg.value);
-
-            if (overheadTotalCampaignContribution > totalCampaignContribution) {
-                return
-                    overheadTotalCampaignContribution.sub(
-                        totalCampaignContribution
-                    );
-            }
+            require(
+                msg.value <= target &&
+                    totalCampaignContribution.add(msg.value) <= target
+            );
         }
 
         if (_withReward) {
@@ -847,9 +841,8 @@ contract Campaign is
         );
 
         // transfer to _user
-        SafeERC20Upgradeable.safeTransferFrom(
+        SafeERC20Upgradeable.safeTransfer(
             IERC20Upgradeable(acceptedToken),
-            address(this),
             _wallet,
             _amount
         );
@@ -1064,9 +1057,8 @@ contract Campaign is
         );
 
         for (uint256 i = 0; i < addresses.length; i++) {
-            SafeERC20Upgradeable.safeTransferFrom(
+            SafeERC20Upgradeable.safeTransfer(
                 IERC20Upgradeable(acceptedToken),
-                address(this),
                 addresses[i],
                 payouts[i]
             );
@@ -1178,7 +1170,7 @@ contract Campaign is
     }
 
     /**
-     * @dev        Pauses and Unpauses withdrawals
+     * @dev        Pauses or Unpauses withdrawals depending on state passed in argument
      * @param      _state      Indicates pause or unpause state
      */
     function toggleWithdrawalState(bool _state) external onlyFactory {

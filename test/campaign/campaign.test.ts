@@ -8,6 +8,32 @@ const Factory = artifacts.require('CampaignFactory');
 const Campaign = artifacts.require('Campaign');
 const TestToken = artifacts.require('TestToken');
 
+interface CampaignFactoryConfig {
+  deadlineStrikesAllowed: number;
+  maxDeadlineExtension: number;
+  minDeadlineExtension: number;
+  minimumContributionAllowed: number;
+  maximumContributionAllowed: number;
+  minRequestDuration: number;
+  maxRequestDuration: number;
+  minimumRequestAmountAllowed: number;
+  maximumRequestAmountAllowed: number;
+  reviewThresholdMark: number;
+  minimumCampaignTarget: number;
+  maximumCampaignTarget: number;
+}
+
+interface CampaignSetupConfig {
+  approveCampaign?: boolean;
+  activateCampaign?: boolean;
+  target?: number;
+  minimumContribution?: number;
+  duration?: number;
+  goalType?: number;
+  allowContributionAfterTargetIsMet?: boolean;
+  from?: string;
+}
+
 contract('Campaign', function([
   campaignOwner,
   root,
@@ -91,7 +117,7 @@ contract('Campaign', function([
 
     await this.testToken.increaseAllowance(
       this.campaignInstance.address,
-      100000,
+      1000000,
       { from: this.root }
     );
 
@@ -104,7 +130,7 @@ contract('Campaign', function([
       goalType = 1,
       allowContributionAfterTargetIsMet = true,
       from = this.campaignOwner,
-    } = {}) => {
+    }: CampaignSetupConfig): Promise<any> => {
       await this.campaignInstance.setCampaignSettings(
         target,
         minimumContribution,
@@ -130,7 +156,10 @@ contract('Campaign', function([
       }
 
       await this.campaignInstance.unpauseCampaign({ from: this.root });
-      // await this.campaignInstance.set
+      await this.campaignInstance.toggleWithdrawalState(false, {
+        from: this.root,
+      });
+      await this.campaignInstance.setCampaignState(1, { from: this.root });
     };
   });
 
@@ -766,7 +795,7 @@ contract('Campaign', function([
       amount: new BN('600'),
     });
   });
-  it('should emit an event when the campagin target is met', async function() {
+  it('should emit an event and set campaign state set to live when the campagin target is met', async function() {
     await this.approvedCampaignSetup({
       duration: 184000,
       target: 5000,
@@ -782,12 +811,181 @@ contract('Campaign', function([
       }
     );
     // check campaign state
+    // where 2 is LIVE
+    expect(
+      (await this.campaignInstance.campaignState()).toString()
+    ).to.be.equal('2');
     expectEvent(receipt, 'TargetMet', {
       campaignId: new BN(this.campaignID),
       amount: new BN('5000'),
     });
   });
-  // it("should fail if token used for contribution isn't accepted", async function() {
+  it("should fail if token used for contribution isn't accepted", async function() {
+    await this.approvedCampaignSetup({
+      duration: 184000,
+      from: this.campaignOwner,
+    });
+    await expectRevert.unspecified(
+      this.campaignInstance.contribute(
+        '0x4dbcdf9b62e891a7cec5a2568c3f4faf9e8abe2b',
+        0,
+        false,
+        {
+          from: this.root,
+          value: 5000,
+        }
+      )
+    );
+  });
+  it('should fail if contribution amount is below minimum or above maximum', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      minimumContribution: 10,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await expectRevert.unspecified(
+      this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 1,
+      })
+    );
+    await expectRevert.unspecified(
+      this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 100000,
+      })
+    );
+  });
+  it('contribution should fail if campaign does not allow contribution after target is met', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      target: 6000,
+      minimumContribution: 10,
+      allowContributionAfterTargetIsMet: false,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await expectRevert.unspecified(
+      this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 7000,
+      })
+    );
+  });
+  it('should mark a contributor eligible for a reward', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await this.campaignInstance.createReward(500, 86400, 3, true, {
+      from: this.campaignOwner,
+    });
+    const receipt = await this.campaignInstance.contribute(
+      this.testToken.address,
+      0,
+      true,
+      {
+        from: this.root,
+        value: 1000,
+      }
+    );
 
-  // });
+    expect(
+      (await this.campaignInstance.rewardRecipients(0)).rewardId
+    ).to.be.bignumber.equal(new BN('0'));
+    expect((await this.campaignInstance.rewardRecipients(0)).user).to.be.equal(
+      this.root
+    );
+    expect(
+      (await this.campaignInstance.rewardRecipients(0))
+        .deliveryConfirmedByCampaign
+    ).to.be.equal(false);
+    expect(
+      (await this.campaignInstance.rewardRecipients(0)).deliveryConfirmedByUser
+    ).to.be.equal(false);
+    expect(
+      await this.campaignInstance.userRewardCount(this.root)
+    ).to.be.bignumber.equal(new BN('1'));
+    expect(
+      await this.campaignInstance.rewardToRewardRecipientCount(0)
+    ).to.be.bignumber.equal(new BN('1'));
+
+    expectEvent(receipt, 'RewardRecipientAdded', {
+      rewardId: new BN('0'),
+      campaignId: new BN(this.campaignID),
+      user: new BN(await this.factory.userID(this.root)),
+      amount: new BN('1000'),
+    });
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /*                           withdrawOwnContribution                          */
+  /* -------------------------------------------------------------------------- */
+  it('should withdraw user contribution and remove the user as a contributor', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await this.campaignInstance.createReward(500, 86400, 3, true, {
+      from: this.campaignOwner,
+    });
+    await this.campaignInstance.createReward(700, 86400, 3, true, {
+      from: this.campaignOwner,
+    });
+    await this.campaignInstance.contribute(this.testToken.address, 0, true, {
+      from: this.root,
+      value: 1000,
+    });
+    await this.campaignInstance.contribute(this.testToken.address, 1, true, {
+      from: this.root,
+      value: 700,
+    });
+    const receipt = await this.campaignInstance.withdrawOwnContribution(
+      1700,
+      this.root,
+      {
+        from: this.root,
+      }
+    );
+
+    expect(await this.campaignInstance.approvers(this.root)).to.be.equal(false);
+    expect(await this.campaignInstance.approversCount()).to.be.bignumber.equal(
+      new BN('0')
+    );
+    expect(
+      await this.campaignInstance.userRewardCount(this.root)
+    ).to.be.bignumber.equal(new BN('0'));
+    expect(
+      await this.campaignInstance.rewardToRewardRecipientCount(0)
+    ).to.be.bignumber.equal(new BN('0'));
+    expect(
+      await this.campaignInstance.rewardToRewardRecipientCount(1)
+    ).to.be.bignumber.equal(new BN('0'));
+    expect(
+      await this.campaignInstance.userTotalContribution(this.root)
+    ).to.be.bignumber.equal(new BN('0'));
+    expect(
+      await this.campaignInstance.totalCampaignContribution()
+    ).to.be.bignumber.equal(new BN('0'));
+
+    expectEvent(receipt, 'ContributionWithdrawn', {
+      campaignId: new BN(this.campaignID),
+      userId: new BN(await this.factory.userID(this.root)),
+      amount: new BN('1700'),
+    });
+  });
+  it('should withdraw user contribution if the campaign state is in review mode and there are left over funds', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 1,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await this.campaignInstance.contribute(this.testToken.address, 1, true, {
+      from: this.root,
+      value: 700,
+    });
+  });
 });
