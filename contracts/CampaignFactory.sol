@@ -31,34 +31,49 @@ contract CampaignFactory is
     event CampaignDeployed(
         uint256 indexed campaignId,
         uint256 userId,
-        uint256 category
+        uint256 category,
+        address sender
     );
     // event CampaignDestroyed(uint256 indexed campaignId);
-    event CampaignApproval(uint256 indexed campaignId, bool approval);
-    event CampaignActiveToggle(uint256 indexed campaignId, bool active);
+    event CampaignApproval(
+        uint256 indexed campaignId,
+        bool approval,
+        address sender
+    );
+    event CampaignActiveToggle(
+        uint256 indexed campaignId,
+        bool active,
+        address sender
+    );
     event CampaignCategoryChange(
         uint256 indexed campaignId,
-        uint256 newCategory
+        uint256 newCategory,
+        address sender
     );
     event CampaignFeatured(
         uint256 indexed campaignId,
         uint256 featurePackageId,
-        uint256 amount
+        uint256 amount,
+        address sender
     );
-    event CampaignFeaturePaused(uint256 indexed campaignId);
-    event CampaignFeatureUnpaused(uint256 indexed campaignId, uint256 timeLeft);
+    event CampaignFeaturePaused(uint256 indexed campaignId, address sender);
+    event CampaignFeatureUnpaused(
+        uint256 indexed campaignId,
+        uint256 timeLeft,
+        address sender
+    );
     // event CampaignApprovalRequest(uint256 campaignId);
 
     /// @dev `Token Events`
-    event TokenAdded(address indexed token);
-    event TokenApproval(address indexed token, bool state);
-    event TokenRemoved(uint256 indexed tokenId, address token);
+    event TokenAdded(address indexed token, address sender);
+    event TokenApproval(address indexed token, bool state, address sender);
+    event TokenRemoved(uint256 indexed tokenId, address token, address sender);
 
     /// @dev `User Events`
-    event UserAdded(uint256 indexed userId, address _userAddress);
-    event UserModified(uint256 indexed userId);
-    event UserApproval(uint256 indexed userId, bool approval);
-    event UserRemoved(uint256 indexed userId);
+    event UserAdded(uint256 indexed userId, address userAddress);
+    event UserModified(uint256 indexed userId, address sender);
+    event UserApproval(uint256 indexed userId, bool approval, address sender);
+    event UserRemoved(uint256 indexed userId, address sender);
     // event UserCampaignDataTransferRequest(
     //     uint256 indexed campaignId,
     //     address oldAddress,
@@ -67,22 +82,32 @@ contract CampaignFactory is
     // event UserRequestCountModified(address indexed user, uint256 count);
 
     /// @dev `Category Events`
-    event CategoryAdded(uint256 indexed categoryId, bool active);
-    event CategoryModified(uint256 indexed categoryId, bool active);
+    event CategoryAdded(
+        uint256 indexed categoryId,
+        bool active,
+        address sender
+    );
+    event CategoryModified(
+        uint256 indexed categoryId,
+        bool active,
+        address sender
+    );
     // event CategoryDestroyed(uint256 indexed categoryId);
 
     /// @dev `Feature Package Events`
     event FeaturePackageAdded(
         uint256 indexed packageId,
         uint256 cost,
-        uint256 time
+        uint256 time,
+        address sender
     );
     event FeaturePackageModified(
         uint256 indexed packageId,
         uint256 cost,
-        uint256 time
+        uint256 time,
+        address sender
     );
-    event FeaturePackageDestroyed(uint256 indexed packageId);
+    event FeaturePackageDestroyed(uint256 indexed packageId, address sender);
 
     /// @dev Settings
     address public root;
@@ -159,39 +184,40 @@ contract CampaignFactory is
     /// @dev Ensures caller is campaign owner or campaign manager
     modifier campaignOwnerOrManager(uint256 _campaignId) {
         require(
-            campaignToOwner[deployedCampaigns[_campaignId].campaign] ==
-                msg.sender ||
-                hasRole(MANAGE_CAMPAIGNS, msg.sender)
+            deployedCampaigns[_campaignId].owner == msg.sender ||
+                hasRole(MANAGE_CAMPAIGNS, msg.sender),
+            "campaign owner or manager"
         );
         _;
     }
 
-    /// @dev Ensures caller is campaign owner
-    modifier onlyCampaignOwner(uint256 _campaignId) {
+    /// @dev Ensures caller is a registered campaign contract from factory
+    modifier onlyRegisteredCampaigns(uint256 _campaignId) {
         require(
-            campaignToOwner[deployedCampaigns[_campaignId].campaign] ==
-                msg.sender
+            deployedCampaigns[_campaignId].campaign == msg.sender,
+            "only campaign owner"
         );
         _;
     }
 
     /// @dev Ensures campaign exists
     modifier campaignExists(uint256 _campaignId) {
-        require(deployedCampaigns[_campaignId].exists);
+        require(deployedCampaigns[_campaignId].exists, "campaign not found");
         _;
     }
 
     /// @dev Ensures campaign is active and approved
     modifier campaignIsEnabled(uint256 _id) {
         require(
-            deployedCampaigns[_id].approved && deployedCampaigns[_id].active
+            deployedCampaigns[_id].approved && deployedCampaigns[_id].active,
+            "campaign disabled"
         );
         _;
     }
 
     /// @dev Ensures user is verifed
     modifier userIsVerified(address _user) {
-        require(users[userID[_user]].verified);
+        require(users[userID[_user]].verified, "unverified user");
         _;
     }
 
@@ -227,6 +253,8 @@ contract CampaignFactory is
             campaignTransactionConfigList.push(transactionConfigs[index]);
             approvedcampaignTransactionConfig[transactionConfigs[index]] = true;
         }
+
+        campaignTransactionConfig["defaultCommission"] = 0;
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
         _setupRole(MANAGE_CATEGORIES, root);
@@ -331,7 +359,7 @@ contract CampaignFactory is
         tokenList.push(_token);
         tokenInList[_token] = true;
 
-        emit TokenAdded(_token);
+        emit TokenAdded(_token, msg.sender);
     }
 
     /**
@@ -346,7 +374,7 @@ contract CampaignFactory is
         tokensApproved[_token] = false;
         delete tokenList[_tokenId];
 
-        emit TokenRemoved(_tokenId, _token);
+        emit TokenRemoved(_tokenId, _token, msg.sender);
     }
 
     /**
@@ -361,7 +389,7 @@ contract CampaignFactory is
         require(tokenInList[_token]);
         tokensApproved[_token] = _state;
 
-        emit TokenApproval(_token, _state);
+        emit TokenApproval(_token, _state, msg.sender);
     }
 
     /**
@@ -406,7 +434,7 @@ contract CampaignFactory is
      */
     function receiveCampaignCommission(uint256 _amount, Campaign _campaign)
         external
-        onlyCampaignOwner(campaignToID[address(_campaign)])
+        onlyRegisteredCampaigns(campaignToID[address(_campaign)])
         campaignIsEnabled(campaignToID[address(_campaign)])
         campaignExists(campaignToID[address(_campaign)])
     {
@@ -440,7 +468,7 @@ contract CampaignFactory is
         users[_userId].verified = _approval;
         users[_userId].updatedAt = block.timestamp;
 
-        emit UserApproval(_userId, _approval);
+        emit UserApproval(_userId, _approval, msg.sender);
     }
 
     /**
@@ -456,7 +484,7 @@ contract CampaignFactory is
         require(user.exists);
         delete users[_userId];
 
-        emit UserRemoved(_userId);
+        emit UserRemoved(_userId, msg.sender);
     }
 
     /**
@@ -500,7 +528,12 @@ contract CampaignFactory is
 
         Campaign(campaign).__Campaign_init(address(this), msg.sender);
 
-        emit CampaignDeployed(campaignId, userID[msg.sender], _categoryId);
+        emit CampaignDeployed(
+            campaignId,
+            userID[msg.sender],
+            _categoryId,
+            msg.sender
+        );
     }
 
     /**
@@ -517,7 +550,7 @@ contract CampaignFactory is
         deployedCampaigns[_campaignId].approved = _approval;
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignApproval(_campaignId, _approval);
+        emit CampaignApproval(_campaignId, _approval, msg.sender);
     }
 
     /**
@@ -547,7 +580,7 @@ contract CampaignFactory is
         deployedCampaigns[_campaignId].active = _active;
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignActiveToggle(_campaignId, _active);
+        emit CampaignActiveToggle(_campaignId, _active, msg.sender);
     }
 
     /**
@@ -578,7 +611,11 @@ contract CampaignFactory is
 
             deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-            emit CampaignCategoryChange(_campaignId, _newCategoryId);
+            emit CampaignCategoryChange(
+                _campaignId,
+                _newCategoryId,
+                msg.sender
+            );
         }
     }
 
@@ -588,7 +625,7 @@ contract CampaignFactory is
     //  */
     // function campaignApprovalRequest(address _campaign)
     //     external
-    //     onlyCampaignOwner(campaignToID[address(_campaign)])
+    //     onlyRegisteredCampaigns(campaignToID[address(_campaign)])
     //     campaignExists(campaignToID[address(_campaign)])
     //     userIsVerified(msg.sender)
     //     whenNotPaused
@@ -667,9 +704,12 @@ contract CampaignFactory is
         whenNotPaused
         nonReentrant
     {
-        require(tokensApproved[_token]);
-        require(featurePackages[_featurePackageId].exists);
-        require(msg.value >= featurePackages[_featurePackageId].cost);
+        require(tokensApproved[_token], "disapproved token");
+        require(featurePackages[_featurePackageId].exists, "package not found");
+        require(
+            msg.value >= featurePackages[_featurePackageId].cost,
+            "price exceeds amount"
+        );
 
         // update campaign revenue to factory
         factoryRevenue = factoryRevenue.add(msg.value);
@@ -696,7 +736,12 @@ contract CampaignFactory is
             msg.value
         );
 
-        emit CampaignFeatured(_campaignId, _featurePackageId, msg.value);
+        emit CampaignFeatured(
+            _campaignId,
+            _featurePackageId,
+            msg.value,
+            msg.sender
+        );
     }
 
     /**
@@ -710,8 +755,14 @@ contract CampaignFactory is
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(deployedCampaigns[_campaignId].featureFor >= block.timestamp); // check time in campaign feature hasn't expired
-        require(!featuredCampaignIsPaused[_campaignId]); // make sure campaign feature isn't paused
+        require(
+            deployedCampaigns[_campaignId].featureFor >= block.timestamp,
+            "campaign feature expired"
+        ); // check time in campaign feature hasn't expired
+        require(
+            !featuredCampaignIsPaused[_campaignId],
+            "campaign feature already paused"
+        ); // make sure campaign feature isn't paused
 
         // time in campaign currently - current time
         pausedFeaturedCampaignTimeLeft[_campaignId] = deployedCampaigns[
@@ -720,7 +771,7 @@ contract CampaignFactory is
 
         featuredCampaignIsPaused[_campaignId] = true;
 
-        emit CampaignFeaturePaused(_campaignId);
+        emit CampaignFeaturePaused(_campaignId, msg.sender);
     }
 
     /**
@@ -747,7 +798,8 @@ contract CampaignFactory is
 
         emit CampaignFeatureUnpaused(
             _campaignId,
-            pausedFeaturedCampaignTimeLeft[_campaignId]
+            pausedFeaturedCampaignTimeLeft[_campaignId],
+            msg.sender
         );
     }
 
@@ -789,7 +841,13 @@ contract CampaignFactory is
 
         categoryCount = categoryCount.add(1);
 
-        emit CategoryAdded(campaignCategories.length.sub(1), _active);
+        categoryCommission[campaignCategories.length.sub(1)] = 0;
+
+        emit CategoryAdded(
+            campaignCategories.length.sub(1),
+            _active,
+            msg.sender
+        );
     }
 
     /**
@@ -807,7 +865,7 @@ contract CampaignFactory is
         campaignCategories[_categoryId].active = _active;
         campaignCategories[_categoryId].updatedAt = block.timestamp;
 
-        emit CategoryModified(_categoryId, _active);
+        emit CategoryModified(_categoryId, _active, msg.sender);
     }
 
     // /**
@@ -841,7 +899,12 @@ contract CampaignFactory is
         featurePackages.push(Featured(block.timestamp, 0, _time, _cost, true));
         featurePackageCount = featurePackageCount.add(1);
 
-        emit FeaturePackageAdded(featurePackages.length.sub(1), _cost, _time);
+        emit FeaturePackageAdded(
+            featurePackages.length.sub(1),
+            _cost,
+            _time,
+            msg.sender
+        );
     }
 
     /**
@@ -860,7 +923,7 @@ contract CampaignFactory is
         featurePackages[_packageId].time = _time;
         featurePackages[_packageId].updatedAt = block.timestamp;
 
-        emit FeaturePackageModified(_packageId, _cost, _time);
+        emit FeaturePackageModified(_packageId, _cost, _time, msg.sender);
     }
 
     /**
@@ -876,7 +939,7 @@ contract CampaignFactory is
 
         delete featurePackages[_packageId];
 
-        emit FeaturePackageDestroyed(_packageId);
+        emit FeaturePackageDestroyed(_packageId, msg.sender);
     }
 
     /// @dev Unpauses the factory, transactions in the factory resumes per usual

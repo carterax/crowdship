@@ -97,7 +97,7 @@ library CampaignFactoryLib {
     function factoryPercentFee(
         CampaignFactoryInterface _factory,
         uint256 _campaignId
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         uint256 campaignCategory;
         uint256 percentCommission;
 
@@ -107,7 +107,7 @@ library CampaignFactoryLib {
         percentCommission = _factory.categoryCommission(campaignCategory);
 
         if (percentCommission == 0) {
-            percentCommission = _factory.getCampaignTransactionConfig(
+            percentCommission = _factory.campaignTransactionConfig(
                 "defaultCommission"
             );
         }

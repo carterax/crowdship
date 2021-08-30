@@ -54,7 +54,7 @@ abstract contract CampaignFactoryInterface {
         virtual
         returns (bool);
 
-    function receiveCampaignCommission(uint256 _amount, address campaign)
+    function receiveCampaignCommission(uint256 _amount, address _campaign)
         external
         virtual;
 }
