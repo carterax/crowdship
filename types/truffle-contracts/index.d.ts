@@ -7,6 +7,9 @@ import { AccessControlUpgradeableContract } from "./AccessControlUpgradeable";
 import { CampaignContract } from "./Campaign";
 import { CampaignFactoryContract } from "./CampaignFactory";
 import { CampaignFactoryInterfaceContract } from "./CampaignFactoryInterface";
+import { CampaignInterfaceContract } from "./CampaignInterface";
+import { CampaignRewardInterfaceContract } from "./CampaignRewardInterface";
+import { CampaignRewardsContract } from "./CampaignRewards";
 import { ERC165UpgradeableContract } from "./ERC165Upgradeable";
 import { ERC20UpgradeableContract } from "./ERC20Upgradeable";
 import { IAccessControlUpgradeableContract } from "./IAccessControlUpgradeable";
@@ -29,6 +32,9 @@ declare global {
       require(
         name: "CampaignFactoryInterface"
       ): CampaignFactoryInterfaceContract;
+      require(name: "CampaignInterface"): CampaignInterfaceContract;
+      require(name: "CampaignRewardInterface"): CampaignRewardInterfaceContract;
+      require(name: "CampaignRewards"): CampaignRewardsContract;
       require(name: "ERC165Upgradeable"): ERC165UpgradeableContract;
       require(name: "ERC20Upgradeable"): ERC20UpgradeableContract;
       require(
@@ -60,6 +66,18 @@ export {
   CampaignFactoryInterfaceContract,
   CampaignFactoryInterfaceInstance,
 } from "./CampaignFactoryInterface";
+export {
+  CampaignInterfaceContract,
+  CampaignInterfaceInstance,
+} from "./CampaignInterface";
+export {
+  CampaignRewardInterfaceContract,
+  CampaignRewardInterfaceInstance,
+} from "./CampaignRewardInterface";
+export {
+  CampaignRewardsContract,
+  CampaignRewardsInstance,
+} from "./CampaignRewards";
 export {
   ERC165UpgradeableContract,
   ERC165UpgradeableInstance,

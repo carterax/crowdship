@@ -14,8 +14,10 @@ export interface CampaignDeadlineExtended {
   args: {
     campaignId: BN;
     time: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -24,8 +26,10 @@ export interface CampaignOwnerSet {
   args: {
     campaignId: BN;
     user: string;
+    sender: string;
     0: BN;
     1: string;
+    2: string;
   };
 }
 
@@ -34,8 +38,10 @@ export interface CampaignOwnershipTransferred {
   args: {
     campaignId: BN;
     newUser: string;
+    sender: string;
     0: BN;
     1: string;
+    2: string;
   };
 }
 
@@ -54,8 +60,10 @@ export interface CampaignReviewed {
   args: {
     approvalStatus: boolean;
     campaignId: BN;
+    sender: string;
     0: boolean;
     1: BN;
+    2: string;
   };
 }
 
@@ -67,11 +75,13 @@ export interface CampaignSettingsUpdated {
     deadline: BN;
     goalType: BN;
     token: string;
+    sender: string;
     0: BN;
     1: BN;
     2: BN;
     3: BN;
     4: string;
+    5: string;
   };
 }
 
@@ -80,8 +90,10 @@ export interface CampaignStateChange {
   args: {
     campaignId: BN;
     state: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -91,9 +103,11 @@ export interface CampaignUserDataTransferred {
     campaignId: BN;
     oldAddress: string;
     newAddress: string;
+    sender: string;
     0: BN;
     1: string;
     2: string;
+    3: string;
   };
 }
 
@@ -101,11 +115,11 @@ export interface ContributionMade {
   name: "ContributionMade";
   args: {
     campaignId: BN;
-    userId: BN;
     amount: BN;
+    sender: string;
     0: BN;
     1: BN;
-    2: BN;
+    2: string;
   };
 }
 
@@ -113,11 +127,11 @@ export interface ContributionWithdrawn {
   name: "ContributionWithdrawn";
   args: {
     campaignId: BN;
-    userId: BN;
     amount: BN;
+    sender: string;
     0: BN;
     1: BN;
-    2: BN;
+    2: string;
   };
 }
 
@@ -135,13 +149,15 @@ export interface RequestAdded {
     requestId: BN;
     campaignId: BN;
     duration: BN;
-    recipient: string;
     value: BN;
+    recipient: string;
+    sender: string;
     0: BN;
     1: BN;
     2: BN;
-    3: string;
-    4: BN;
+    3: BN;
+    4: string;
+    5: string;
   };
 }
 
@@ -150,8 +166,10 @@ export interface RequestComplete {
   args: {
     requestId: BN;
     campaignId: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -160,102 +178,10 @@ export interface RequestVoided {
   args: {
     requestId: BN;
     campaignId: BN;
+    sender: string;
     0: BN;
     1: BN;
-  };
-}
-
-export interface RewardCreated {
-  name: "RewardCreated";
-  args: {
-    rewardId: BN;
-    campaignId: BN;
-    value: BN;
-    deliveryDate: BN;
-    stock: BN;
-    active: boolean;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: BN;
-    4: BN;
-    5: boolean;
-  };
-}
-
-export interface RewardDestroyed {
-  name: "RewardDestroyed";
-  args: {
-    rewardId: BN;
-    campaignId: BN;
-    0: BN;
-    1: BN;
-  };
-}
-
-export interface RewardModified {
-  name: "RewardModified";
-  args: {
-    rewardId: BN;
-    campaignId: BN;
-    value: BN;
-    deliveryDate: BN;
-    stock: BN;
-    active: boolean;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: BN;
-    4: BN;
-    5: boolean;
-  };
-}
-
-export interface RewardRecipientAdded {
-  name: "RewardRecipientAdded";
-  args: {
-    rewardId: BN;
-    campaignId: BN;
-    user: BN;
-    amount: BN;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: BN;
-  };
-}
-
-export interface RewardRecipientApproval {
-  name: "RewardRecipientApproval";
-  args: {
-    rewardRecipientId: BN;
-    campaignId: BN;
-    0: BN;
-    1: BN;
-  };
-}
-
-export interface RewardStockIncreased {
-  name: "RewardStockIncreased";
-  args: {
-    rewardId: BN;
-    campaignId: BN;
-    count: BN;
-    0: BN;
-    1: BN;
-    2: BN;
-  };
-}
-
-export interface RewarderApproval {
-  name: "RewarderApproval";
-  args: {
-    rewardRecipientId: BN;
-    campaignId: BN;
-    status: boolean;
-    0: BN;
-    1: BN;
-    2: boolean;
+    2: string;
   };
 }
 
@@ -300,8 +226,10 @@ export interface TargetMet {
   args: {
     campaignId: BN;
     amount: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -318,8 +246,10 @@ export interface VoteCancelled {
   args: {
     requestId: BN;
     campaignId: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -328,8 +258,10 @@ export interface Voted {
   args: {
     requestId: BN;
     campaignId: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -348,13 +280,6 @@ type AllEvents =
   | RequestAdded
   | RequestComplete
   | RequestVoided
-  | RewardCreated
-  | RewardDestroyed
-  | RewardModified
-  | RewardRecipientAdded
-  | RewardRecipientApproval
-  | RewardStockIncreased
-  | RewarderApproval
   | RoleAdminChanged
   | RoleGranted
   | RoleRevoked
@@ -379,9 +304,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   approversCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-  campaignFactoryContract(
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<string>;
+  campaignBalance(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -440,11 +363,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
-  maximumContribution(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
   minimumContribution(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-  pauseWithdrawals(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
 
   /**
    * Returns true if the contract is paused, and false otherwise.
@@ -484,7 +403,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   requests(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: string; 1: boolean; 2: BN; 3: BN; 4: BN; 5: BN; 6: boolean }>;
+  ): Promise<{ 0: string; 1: boolean; 2: BN; 3: BN; 4: BN; 5: boolean }>;
 
   reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -519,21 +438,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<number>;
   };
 
-  rewardRecipients(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: string; 2: boolean; 3: boolean }>;
-
-  rewardToRewardRecipientCount(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
-
-  rewards(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
-
   root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
   /**
@@ -550,15 +454,17 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
-  userRewardCount(
+  userContributionWithdrawn(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
+  ): Promise<boolean>;
 
   userTotalContribution(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
+
+  withdrawalsPaused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
 
   /**
    * Constructor
@@ -733,189 +639,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Creates rewards contributors can attain
-   * @param _active Indicates if contributors can attain the reward
-   * @param _deliveryDate Time in which reward will be deliverd to contriutors
-   * @param _stock Quantity available for dispatch
-   * @param _value Reward cost
-   */
-  createReward: {
-    (
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Modifies a reward by id
-   * @param _active Indicates if contributors can attain the reward
-   * @param _deliveryDate Time in which reward will be deliverd to contriutors
-   * @param _rewardId Reward unique id
-   * @param _stock Quantity available for dispatch
-   * @param _value Reward cost
-   */
-  modifyReward: {
-    (
-      _rewardId: number | BN | string,
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _rewardId: number | BN | string,
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _rewardId: number | BN | string,
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _rewardId: number | BN | string,
-      _value: number | BN | string,
-      _deliveryDate: number | BN | string,
-      _stock: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Increases a reward stock count
-   * @param _count Stock count to increase by
-   * @param _rewardId Reward unique id
-   */
-  increaseRewardStock: {
-    (
-      _rewardId: number | BN | string,
-      _count: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _rewardId: number | BN | string,
-      _count: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _rewardId: number | BN | string,
-      _count: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _rewardId: number | BN | string,
-      _count: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Deletes a reward by id
-   * @param _rewardId Reward unique id
-   */
-  destroyReward: {
-    (
-      _rewardId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _rewardId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _rewardId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _rewardId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Called by the campaign owner to indicate they delivered the reward to the rewardRecipient
-   * @param _rewardRecipientId ID to struct containing reward and user to be rewarded
-   * @param _status Indicates if the delivery was successful or not
-   */
-  campaignSentReward: {
-    (
-      _rewardRecipientId: number | BN | string,
-      _status: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _rewardRecipientId: number | BN | string,
-      _status: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _rewardRecipientId: number | BN | string,
-      _status: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _rewardRecipientId: number | BN | string,
-      _status: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Called by a user eligible for rewards to indicate they received their reward
-   * @param _rewardRecipientId ID to struct containing reward and user to be rewarded
-   */
-  userReceivedCampaignReward: {
-    (
-      _rewardRecipientId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _rewardRecipientId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _rewardRecipientId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _rewardRecipientId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
    * Contribute method enables a user become an approver in the campaign
    * @param _rewardId Reward unique id
    * @param _token Address of token to be used for transactions by default
@@ -933,7 +656,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       _rewardId: number | BN | string,
       _withReward: boolean,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
+    ): Promise<void>;
     sendTransaction(
       _token: string,
       _rewardId: number | BN | string,
@@ -950,27 +673,21 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   /**
    * Allows withdrawal of contribution by a user, works if campaign target isn't met
-   * @param _amount Amount requested to be withdrawn from contributions
    * @param _wallet Address where amount is delivered
    */
   withdrawOwnContribution: {
-    (
-      _amount: number | BN | string,
-      _wallet: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
     call(
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -978,36 +695,40 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   /**
    * Allows withdrawal of balance by factory on behalf of a user.  Cases where users wallet is compromised
-   * @param _amount Amount requested to be withdrawn from contributions
    * @param _user User whose funds are being requested
    * @param _wallet Address where amount is delivered
    */
   withdrawContributionForUser: {
     (
       _user: string,
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _user: string,
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _user: string,
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _user: string,
-      _amount: number | BN | string,
       _wallet: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
+
+  /**
+   * Used to measure user funds left after request finalizations
+   * @param _user Address of user check is carried out on
+   */
+  userContributionLoss(
+    _user: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
 
   /**
    * Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory Restricted unless target is met and deadline is expired
@@ -1215,7 +936,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Pauses and Unpauses withdrawals
+   * Pauses or Unpauses withdrawals depending on state passed in argument
    * @param _state Indicates pause or unpause state
    */
   toggleWithdrawalState: {
@@ -1276,9 +997,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     approversCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-    campaignFactoryContract(
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
+    campaignBalance(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1337,11 +1056,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
-    maximumContribution(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
     minimumContribution(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-    pauseWithdrawals(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
 
     /**
      * Returns true if the contract is paused, and false otherwise.
@@ -1381,15 +1096,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     requests(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{
-      0: string;
-      1: boolean;
-      2: BN;
-      3: BN;
-      4: BN;
-      5: BN;
-      6: boolean;
-    }>;
+    ): Promise<{ 0: string; 1: boolean; 2: BN; 3: BN; 4: BN; 5: boolean }>;
 
     reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1424,21 +1131,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       ): Promise<number>;
     };
 
-    rewardRecipients(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: string; 2: boolean; 3: boolean }>;
-
-    rewardToRewardRecipientCount(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
-
-    rewards(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
-
     root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
     /**
@@ -1455,15 +1147,17 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
-    userRewardCount(
+    userContributionWithdrawn(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
+    ): Promise<boolean>;
 
     userTotalContribution(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
+
+    withdrawalsPaused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
 
     /**
      * Constructor
@@ -1638,189 +1332,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Creates rewards contributors can attain
-     * @param _active Indicates if contributors can attain the reward
-     * @param _deliveryDate Time in which reward will be deliverd to contriutors
-     * @param _stock Quantity available for dispatch
-     * @param _value Reward cost
-     */
-    createReward: {
-      (
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Modifies a reward by id
-     * @param _active Indicates if contributors can attain the reward
-     * @param _deliveryDate Time in which reward will be deliverd to contriutors
-     * @param _rewardId Reward unique id
-     * @param _stock Quantity available for dispatch
-     * @param _value Reward cost
-     */
-    modifyReward: {
-      (
-        _rewardId: number | BN | string,
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _rewardId: number | BN | string,
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _rewardId: number | BN | string,
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _rewardId: number | BN | string,
-        _value: number | BN | string,
-        _deliveryDate: number | BN | string,
-        _stock: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Increases a reward stock count
-     * @param _count Stock count to increase by
-     * @param _rewardId Reward unique id
-     */
-    increaseRewardStock: {
-      (
-        _rewardId: number | BN | string,
-        _count: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _rewardId: number | BN | string,
-        _count: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _rewardId: number | BN | string,
-        _count: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _rewardId: number | BN | string,
-        _count: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Deletes a reward by id
-     * @param _rewardId Reward unique id
-     */
-    destroyReward: {
-      (
-        _rewardId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _rewardId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _rewardId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _rewardId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Called by the campaign owner to indicate they delivered the reward to the rewardRecipient
-     * @param _rewardRecipientId ID to struct containing reward and user to be rewarded
-     * @param _status Indicates if the delivery was successful or not
-     */
-    campaignSentReward: {
-      (
-        _rewardRecipientId: number | BN | string,
-        _status: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _rewardRecipientId: number | BN | string,
-        _status: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _rewardRecipientId: number | BN | string,
-        _status: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _rewardRecipientId: number | BN | string,
-        _status: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Called by a user eligible for rewards to indicate they received their reward
-     * @param _rewardRecipientId ID to struct containing reward and user to be rewarded
-     */
-    userReceivedCampaignReward: {
-      (
-        _rewardRecipientId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _rewardRecipientId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _rewardRecipientId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _rewardRecipientId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
      * Contribute method enables a user become an approver in the campaign
      * @param _rewardId Reward unique id
      * @param _token Address of token to be used for transactions by default
@@ -1838,7 +1349,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
         _rewardId: number | BN | string,
         _withReward: boolean,
         txDetails?: Truffle.TransactionDetails
-      ): Promise<BN>;
+      ): Promise<void>;
       sendTransaction(
         _token: string,
         _rewardId: number | BN | string,
@@ -1855,27 +1366,21 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     /**
      * Allows withdrawal of contribution by a user, works if campaign target isn't met
-     * @param _amount Amount requested to be withdrawn from contributions
      * @param _wallet Address where amount is delivered
      */
     withdrawOwnContribution: {
-      (
-        _amount: number | BN | string,
-        _wallet: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
       call(
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
@@ -1883,36 +1388,40 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     /**
      * Allows withdrawal of balance by factory on behalf of a user.  Cases where users wallet is compromised
-     * @param _amount Amount requested to be withdrawn from contributions
      * @param _user User whose funds are being requested
      * @param _wallet Address where amount is delivered
      */
     withdrawContributionForUser: {
       (
         _user: string,
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _user: string,
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _user: string,
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _user: string,
-        _amount: number | BN | string,
         _wallet: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
+
+    /**
+     * Used to measure user funds left after request finalizations
+     * @param _user Address of user check is carried out on
+     */
+    userContributionLoss(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
 
     /**
      * Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory Restricted unless target is met and deadline is expired
@@ -2120,7 +1629,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Pauses and Unpauses withdrawals
+     * Pauses or Unpauses withdrawals depending on state passed in argument
      * @param _state Indicates pause or unpause state
      */
     toggleWithdrawalState: {

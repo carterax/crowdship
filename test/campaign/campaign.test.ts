@@ -990,44 +990,84 @@ contract('Campaign', function([
       duration: 2,
       from: this.campaignOwner,
     };
+    let rootContribution = 5379,
+      addr1Contribution = 1735,
+      requestAmount = 3956;
+
     await this.approvedCampaignSetup(config);
     await this.campaignInstance.contribute(this.testToken.address, 0, false, {
       from: this.root,
-      value: 700,
+      value: rootContribution,
     });
     await this.campaignInstance.contribute(this.testToken.address, 0, false, {
       from: this.addr1,
-      value: 1000,
+      value: addr1Contribution,
     });
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
-      from: this.campaignOwner,
-    });
+    await this.campaignInstance.createRequest(
+      this.addr3,
+      requestAmount,
+      86400,
+      {
+        from: this.campaignOwner,
+      }
+    );
     await this.campaignInstance.voteOnRequest(0, { from: this.root });
     await this.campaignInstance.voteOnRequest(0, { from: this.addr1 });
     await this.campaignInstance.finalizeRequest(0, {
       from: this.campaignOwner,
     });
     await this.campaignInstance.reviewMode({ from: this.campaignOwner });
-    const receipt = await this.campaignInstance.withdrawOwnContribution(
-      400,
+
+    let rootLoss = await this.campaignInstance.userContributionLoss(this.root);
+    let addr1Loss = await this.campaignInstance.userContributionLoss(
+      this.addr1
+    );
+    let rootTotalContribution = await this.campaignInstance.userTotalContribution(
+      this.root
+    );
+    let addr1TotalContribution = await this.campaignInstance.userTotalContribution(
+      this.addr1
+    );
+
+    const receipt1 = await this.campaignInstance.withdrawOwnContribution(
       this.root,
       {
         from: this.root,
       }
     );
-    // console.log(await this.campaignInstance.userBalanceSoFar(this.root));
-    // expect(
-    //   await this.campaignInstance.userTotalContribution(this.root)
-    // ).to.be.bignumber.equal(new BN('500'));
-    // expect(
-    //   await this.campaignInstance.totalCampaignContribution()
-    // ).to.be.bignumber.equal(new BN('0'));
-    // expectEvent(receipt, 'ContributionWithdrawn', {
-    //   campaignId: new BN(this.campaignID),
-    //   userId: new BN(await this.factory.userID(this.root)),
-    //   amount: new BN('200'),
-    //   sender: this.root,
-    // });
+    const receipt2 = await this.campaignInstance.withdrawOwnContribution(
+      this.addr1,
+      {
+        from: this.addr1,
+      }
+    );
+
+    const amountWithdrawnByRoot = rootTotalContribution - rootLoss,
+      amountWithdrawnByAddr1 = addr1TotalContribution - addr1Loss;
+
+    expect(
+      await this.campaignInstance.userTotalContribution(this.root)
+    ).to.be.bignumber.equal(
+      new BN(`${rootTotalContribution - amountWithdrawnByRoot}`)
+    );
+    expect(
+      await this.campaignInstance.userTotalContribution(this.addr1)
+    ).to.be.bignumber.equal(
+      new BN(`${addr1TotalContribution - amountWithdrawnByAddr1}`)
+    );
+    expect(await this.campaignInstance.campaignBalance()).to.be.bignumber.equal(
+      new BN(rootContribution + addr1Contribution - requestAmount)
+    );
+    expectEvent(receipt1, 'ContributionWithdrawn', {
+      campaignId: new BN(this.campaignID),
+      amount: new BN(rootTotalContribution - rootLoss),
+      sender: this.root,
+    });
+    expectEvent(receipt2, 'ContributionWithdrawn', {
+      campaignId: new BN(this.campaignID),
+      amount: new BN(addr1TotalContribution - addr1Loss),
+      sender: this.addr1,
+    });
   });
 });

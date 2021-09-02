@@ -1,4 +1,4 @@
-// contracts/FactoryInterface.sol
+// contracts/interfaces/FactoryInterface.sol
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
@@ -54,7 +54,7 @@ abstract contract CampaignFactoryInterface {
         virtual
         returns (bool);
 
-    function receiveCampaignCommission(uint256 _amount, address _campaign)
+    function receiveCampaignCommission(address _campaign, uint256 _amount)
         external
         virtual;
 }

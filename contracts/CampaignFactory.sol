@@ -10,8 +10,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import "./utils/AccessControl.sol";
 import "./Campaign.sol";
+import "./CampaignRewards.sol";
+import "./utils/AccessControl.sol";
 import "./libraries/math/DecimalMath.sol";
 
 contract CampaignFactory is
@@ -113,6 +114,7 @@ contract CampaignFactory is
     address public root;
     address payable public factoryWallet;
     address public campaignImplementation;
+    address public campaignRewardsImplementation;
     address[] public tokenList;
     string[] public campaignTransactionConfigList;
     mapping(string => bool) public approvedcampaignTransactionConfig;
@@ -129,6 +131,7 @@ contract CampaignFactory is
     /// @dev `Campaigns`
     struct CampaignInfo {
         address campaign;
+        address campaignRewards;
         address owner;
         uint256 createdAt;
         uint256 updatedAt;
@@ -271,20 +274,22 @@ contract CampaignFactory is
 
     /**
      * @dev        Set Factory controlled values dictating how campaigns should run
-     * @param      _wallet                      Address where all revenue gets deposited
-     * @param      _implementation              Address of base contract to deploy minimal proxies to campaigns
+     * @param      _wallet                          Address where all revenue gets deposited
+     * @param      _campaignImplementation          Address of base contract to deploy minimal proxies to campaigns
+     * @param      _campaignRewardsImplementation   Address of base contract to deploy minimal proxies to campaign rewards
      */
-    function setFactoryConfig(address payable _wallet, Campaign _implementation)
-        external
-        onlyAdmin
-    {
-        require(
-            address(_wallet) != address(0) &&
-                address(_implementation) != address(0)
-        );
+    function setFactoryConfig(
+        address payable _wallet,
+        Campaign _campaignImplementation,
+        CampaignRewards _campaignRewardsImplementation
+    ) external onlyAdmin {
+        require(address(_wallet) != address(0));
+        require(address(_campaignImplementation) != address(0));
+        require(address(_campaignRewardsImplementation) != address(0));
 
         factoryWallet = _wallet;
-        campaignImplementation = address(_implementation);
+        campaignImplementation = address(_campaignImplementation);
+        campaignRewardsImplementation = address(_campaignRewardsImplementation);
     }
 
     /**
@@ -432,7 +437,7 @@ contract CampaignFactory is
      * @param      _amount      Amount transfered and collected by factory from campaign request finalization
      * @param      _campaign    Address of campaign instance
      */
-    function receiveCampaignCommission(uint256 _amount, Campaign _campaign)
+    function receiveCampaignCommission(Campaign _campaign, uint256 _amount)
         external
         onlyRegisteredCampaigns(campaignToID[address(_campaign)])
         campaignIsEnabled(campaignToID[address(_campaign)])
@@ -503,9 +508,13 @@ contract CampaignFactory is
         );
 
         address campaign = ClonesUpgradeable.clone(campaignImplementation);
+        address campaignRewards = ClonesUpgradeable.clone(
+            campaignRewardsImplementation
+        );
 
         CampaignInfo memory campaignInfo = CampaignInfo({
-            campaign: address(campaign),
+            campaign: campaign,
+            campaignRewards: campaignRewards,
             category: _categoryId,
             owner: msg.sender,
             createdAt: block.timestamp,
@@ -526,7 +535,12 @@ contract CampaignFactory is
         ].campaignCount.add(1);
         campaignCount = campaignCount.add(1);
 
-        Campaign(campaign).__Campaign_init(address(this), msg.sender);
+        Campaign(campaign).__Campaign_init(CampaignFactory(this), msg.sender);
+        CampaignRewards(campaignRewards).__CampaignRewards_init(
+            CampaignFactory(this),
+            msg.sender,
+            campaignId
+        );
 
         emit CampaignDeployed(
             campaignId,
@@ -560,6 +574,7 @@ contract CampaignFactory is
      */
     function toggleCampaignActive(uint256 _campaignId, bool _active)
         external
+        userIsVerified(msg.sender)
         campaignOwnerOrManager(_campaignId)
         campaignExists(_campaignId)
         whenNotPaused
@@ -590,6 +605,7 @@ contract CampaignFactory is
      */
     function modifyCampaignCategory(uint256 _campaignId, uint256 _newCategoryId)
         external
+        userIsVerified(msg.sender)
         campaignOwnerOrManager(_campaignId)
         campaignExists(_campaignId)
         whenNotPaused

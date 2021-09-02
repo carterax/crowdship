@@ -89,23 +89,23 @@ export interface CampaignFactoryInterfaceInstance
 
   receiveCampaignCommission: {
     (
+      _campaign: string,
       _amount: number | BN | string,
-      campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
+      _campaign: string,
       _amount: number | BN | string,
-      campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
+      _campaign: string,
       _amount: number | BN | string,
-      campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
+      _campaign: string,
       _amount: number | BN | string,
-      campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -184,23 +184,23 @@ export interface CampaignFactoryInterfaceInstance
 
     receiveCampaignCommission: {
       (
+        _campaign: string,
         _amount: number | BN | string,
-        campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
+        _campaign: string,
         _amount: number | BN | string,
-        campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
+        _campaign: string,
         _amount: number | BN | string,
-        campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
+        _campaign: string,
         _amount: number | BN | string,
-        campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

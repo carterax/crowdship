@@ -5,6 +5,11 @@ pragma solidity >=0.4.22 <0.9.0;
 import "../../interfaces/FactoryInterface.sol";
 
 library CampaignFactoryLib {
+    /**
+     * @dev        Returns if caller can manage campaigns
+     * @param      _factory     Campaign factory interface
+     * @param      _user        Address of caller
+     */
     function canManageCampaigns(
         CampaignFactoryInterface _factory,
         address _user
@@ -15,7 +20,7 @@ library CampaignFactoryLib {
     /**
      * @dev        Returns information on a campaign from the factory
      * @param      _factory     Campaign factory interface
-     * @param      _prop        Transaction setting key
+     * @param      _prop        Transaction config key
      */
     function getCampaignFactoryConfig(
         CampaignFactoryInterface _factory,
@@ -37,6 +42,7 @@ library CampaignFactoryLib {
         view
         returns (
             address,
+            address,
             uint256,
             bool,
             bool
@@ -45,22 +51,24 @@ library CampaignFactoryLib {
         bool campaignIsEnabled;
         bool campaignIsApproved;
         address campaignAddress;
+        address campaignRewardAddress;
         uint256 campaignCategory;
 
         (
             campaignAddress,
+            campaignRewardAddress,
             ,
             ,
             ,
             campaignCategory,
             ,
             campaignIsEnabled,
-            campaignIsApproved,
-
+            campaignIsApproved
         ) = _factory.deployedCampaigns(_campaignId);
 
         return (
             campaignAddress,
+            campaignRewardAddress,
             campaignCategory,
             campaignIsEnabled,
             campaignIsApproved
@@ -87,6 +95,20 @@ library CampaignFactoryLib {
         );
 
         return (userAddress, verified);
+    }
+
+    /**
+     * @dev        Sends fee after request finalization to factory
+     * @param      _factory     Campaign factory interface
+     * @param      _campaign    Address of campaign sending fee
+     * @param      _amount      Amount being sent
+     */
+    function sendCommissionFee(
+        CampaignFactoryInterface _factory,
+        address _campaign,
+        uint256 _amount
+    ) internal {
+        _factory.receiveCampaignCommission(_campaign, _amount);
     }
 
     /**

@@ -15,8 +15,10 @@ export interface CampaignActiveToggle {
   args: {
     campaignId: BN;
     active: boolean;
+    sender: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -25,8 +27,10 @@ export interface CampaignApproval {
   args: {
     campaignId: BN;
     approval: boolean;
+    sender: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -35,8 +39,10 @@ export interface CampaignCategoryChange {
   args: {
     campaignId: BN;
     newCategory: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -46,9 +52,11 @@ export interface CampaignDeployed {
     campaignId: BN;
     userId: BN;
     category: BN;
+    sender: string;
     0: BN;
     1: BN;
     2: BN;
+    3: string;
   };
 }
 
@@ -56,7 +64,9 @@ export interface CampaignFeaturePaused {
   name: "CampaignFeaturePaused";
   args: {
     campaignId: BN;
+    sender: string;
     0: BN;
+    1: string;
   };
 }
 
@@ -65,8 +75,10 @@ export interface CampaignFeatureUnpaused {
   args: {
     campaignId: BN;
     timeLeft: BN;
+    sender: string;
     0: BN;
     1: BN;
+    2: string;
   };
 }
 
@@ -76,9 +88,11 @@ export interface CampaignFeatured {
     campaignId: BN;
     featurePackageId: BN;
     amount: BN;
+    sender: string;
     0: BN;
     1: BN;
     2: BN;
+    3: string;
   };
 }
 
@@ -87,8 +101,10 @@ export interface CategoryAdded {
   args: {
     categoryId: BN;
     active: boolean;
+    sender: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -97,8 +113,10 @@ export interface CategoryModified {
   args: {
     categoryId: BN;
     active: boolean;
+    sender: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -108,9 +126,11 @@ export interface FeaturePackageAdded {
     packageId: BN;
     cost: BN;
     time: BN;
+    sender: string;
     0: BN;
     1: BN;
     2: BN;
+    3: string;
   };
 }
 
@@ -118,7 +138,9 @@ export interface FeaturePackageDestroyed {
   name: "FeaturePackageDestroyed";
   args: {
     packageId: BN;
+    sender: string;
     0: BN;
+    1: string;
   };
 }
 
@@ -128,9 +150,11 @@ export interface FeaturePackageModified {
     packageId: BN;
     cost: BN;
     time: BN;
+    sender: string;
     0: BN;
     1: BN;
     2: BN;
+    3: string;
   };
 }
 
@@ -182,7 +206,9 @@ export interface TokenAdded {
   name: "TokenAdded";
   args: {
     token: string;
+    sender: string;
     0: string;
+    1: string;
   };
 }
 
@@ -191,8 +217,10 @@ export interface TokenApproval {
   args: {
     token: string;
     state: boolean;
+    sender: string;
     0: string;
     1: boolean;
+    2: string;
   };
 }
 
@@ -201,8 +229,10 @@ export interface TokenRemoved {
   args: {
     tokenId: BN;
     token: string;
+    sender: string;
     0: BN;
     1: string;
+    2: string;
   };
 }
 
@@ -218,7 +248,7 @@ export interface UserAdded {
   name: "UserAdded";
   args: {
     userId: BN;
-    _userAddress: string;
+    userAddress: string;
     0: BN;
     1: string;
   };
@@ -229,8 +259,10 @@ export interface UserApproval {
   args: {
     userId: BN;
     approval: boolean;
+    sender: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -238,7 +270,9 @@ export interface UserModified {
   name: "UserModified";
   args: {
     userId: BN;
+    sender: string;
     0: BN;
+    1: string;
   };
 }
 
@@ -246,7 +280,9 @@ export interface UserRemoved {
   name: "UserRemoved";
   args: {
     userId: BN;
+    sender: string;
     0: BN;
+    1: string;
   };
 }
 
@@ -316,6 +352,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
+  campaignRewardsImplementation(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   campaignToID(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
@@ -349,13 +389,14 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   ): Promise<{
     0: string;
     1: string;
-    2: BN;
+    2: string;
     3: BN;
     4: BN;
     5: BN;
-    6: boolean;
+    6: BN;
     7: boolean;
     8: boolean;
+    9: boolean;
   }>;
 
   factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
@@ -537,28 +578,33 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   /**
    * Set Factory controlled values dictating how campaigns should run
-   * @param _implementation Address of base contract to deploy minimal proxies to campaigns
+   * @param _campaignImplementation Address of base contract to deploy minimal proxies to campaigns
+   * @param _campaignRewardsImplementation Address of base contract to deploy minimal proxies to campaign rewards
    * @param _wallet Address where all revenue gets deposited
    */
   setFactoryConfig: {
     (
       _wallet: string,
-      _implementation: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _wallet: string,
-      _implementation: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _wallet: string,
-      _implementation: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _wallet: string,
-      _implementation: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -830,23 +876,23 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    */
   receiveCampaignCommission: {
     (
-      _amount: number | BN | string,
       _campaign: string,
+      _amount: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
-      _amount: number | BN | string,
       _campaign: string,
+      _amount: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _amount: number | BN | string,
       _campaign: string,
+      _amount: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _amount: number | BN | string,
       _campaign: string,
+      _amount: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1297,6 +1343,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
+    campaignRewardsImplementation(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     campaignToID(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
@@ -1330,13 +1380,14 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     ): Promise<{
       0: string;
       1: string;
-      2: BN;
+      2: string;
       3: BN;
       4: BN;
       5: BN;
-      6: boolean;
+      6: BN;
       7: boolean;
       8: boolean;
+      9: boolean;
     }>;
 
     factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
@@ -1518,28 +1569,33 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     /**
      * Set Factory controlled values dictating how campaigns should run
-     * @param _implementation Address of base contract to deploy minimal proxies to campaigns
+     * @param _campaignImplementation Address of base contract to deploy minimal proxies to campaigns
+     * @param _campaignRewardsImplementation Address of base contract to deploy minimal proxies to campaign rewards
      * @param _wallet Address where all revenue gets deposited
      */
     setFactoryConfig: {
       (
         _wallet: string,
-        _implementation: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _wallet: string,
-        _implementation: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _wallet: string,
-        _implementation: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _wallet: string,
-        _implementation: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1817,23 +1873,23 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      */
     receiveCampaignCommission: {
       (
-        _amount: number | BN | string,
         _campaign: string,
+        _amount: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
-        _amount: number | BN | string,
         _campaign: string,
+        _amount: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _amount: number | BN | string,
         _campaign: string,
+        _amount: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _amount: number | BN | string,
         _campaign: string,
+        _amount: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
