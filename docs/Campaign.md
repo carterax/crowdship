@@ -16,13 +16,9 @@
 | --- | --- |
 | goalType | enum Campaign.GOALTYPE |
 | campaignState | enum Campaign.CAMPAIGN_STATE |
-| campaignFactoryContract | contract CampaignFactoryInterface |
+| requestApprovals | mapping(uint256 => mapping(address => bool)) |
 | requests | struct Campaign.Request[] |
 | requestCount | uint256 |
-| rewards | struct Campaign.Reward[] |
-| rewardToRewardRecipientCount | mapping(uint256 => uint256) |
-| rewardRecipients | struct Campaign.RewardRecipient[] |
-| userRewardCount | mapping(address => uint256) |
 | positiveReviewCount | uint256 |
 | reviewCount | uint256 |
 | reviewed | mapping(address => bool) |
@@ -31,19 +27,18 @@
 | allowContributionAfterTargetIsMet | bool |
 | campaignID | uint256 |
 | totalCampaignContribution | uint256 |
+| campaignBalance | uint256 |
 | minimumContribution | uint256 |
-| maximumContribution | uint256 |
 | approversCount | uint256 |
 | target | uint256 |
 | deadline | uint256 |
 | deadlineSetTimes | uint256 |
 | finalizedRequestCount | uint256 |
 | currentRunningRequest | uint256 |
-| pauseWithdrawals | bool |
+| withdrawalsPaused | bool |
 | approvers | mapping(address => bool) |
 | userTotalContribution | mapping(address => uint256) |
-| percentBase | uint256 |
-| percent | uint256 |
+| userContributionWithdrawn | mapping(address => bool) |
 
 
 ## Modifiers
@@ -93,15 +88,6 @@
 ```
 
 
-### withinDeadline
-> Ensures the campaign is within it's deadline, applies only if goal type is fixed
-
-#### Declaration
-```solidity
-  modifier withinDeadline
-```
-
-
 
 ## Functions
 
@@ -112,7 +98,7 @@
 #### Declaration
 ```solidity
   function __Campaign_init(
-    address _campaignFactory,
+    contract CampaignFactory _campaignFactory,
     address _root
   ) public initializer
 ```
@@ -125,7 +111,7 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignFactory` | address |     Address of factory
+|`_campaignFactory` | contract CampaignFactory |     Address of factory
 |`_root` | address |                Address of campaign owner
 ---  
 ### transferCampaignOwnership
@@ -242,7 +228,7 @@
 #### Declaration
 ```solidity
   function setDeadlineSetTimes(
-    uint256 _count
+    uint8 _count
   ) external onlyFactory campaignIsActive whenNotPaused
 ```
 
@@ -256,164 +242,7 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_count` | uint256 |   Number of times a campaign owner can extend the deadline
----  
-### createReward
->        Creates rewards contributors can attain
-
-
-#### Declaration
-```solidity
-  function createReward(
-    uint256 _value,
-    uint256 _deliveryDate,
-    uint256 _stock,
-    bool _active
-  ) external adminOrFactory userIsVerified whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| adminOrFactory |
-| userIsVerified |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_value` | uint256 |        Reward cost
-|`_deliveryDate` | uint256 | Time in which reward will be deliverd to contriutors
-|`_stock` | uint256 |        Quantity available for dispatch
-|`_active` | bool |       Indicates if contributors can attain the reward
----  
-### modifyReward
->        Modifies a reward by id
-
-
-#### Declaration
-```solidity
-  function modifyReward(
-    uint256 _rewardId,
-    uint256 _value,
-    uint256 _deliveryDate,
-    uint256 _stock,
-    bool _active
-  ) external adminOrFactory userIsVerified whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| adminOrFactory |
-| userIsVerified |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_rewardId` | uint256 |        Reward unique id
-|`_value` | uint256 |           Reward cost
-|`_deliveryDate` | uint256 |    Time in which reward will be deliverd to contriutors
-|`_stock` | uint256 |           Quantity available for dispatch
-|`_active` | bool |          Indicates if contributors can attain the reward
----  
-### increaseRewardStock
->        Increases a reward stock count
-
-
-#### Declaration
-```solidity
-  function increaseRewardStock(
-    uint256 _rewardId,
-    uint256 _count
-  ) external adminOrFactory userIsVerified whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| adminOrFactory |
-| userIsVerified |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_rewardId` | uint256 |        Reward unique id
-|`_count` | uint256 |           Stock count to increase by
----  
-### destroyReward
->        Deletes a reward by id
-
-
-#### Declaration
-```solidity
-  function destroyReward(
-    uint256 _rewardId
-  ) external adminOrFactory userIsVerified whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| adminOrFactory |
-| userIsVerified |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_rewardId` | uint256 |    Reward unique id
----  
-### campaignSentReward
->        Called by the campaign owner to indicate they delivered the reward to the rewardRecipient
-
-
-#### Declaration
-```solidity
-  function campaignSentReward(
-    uint256 _rewardRecipientId,
-    bool _status
-  ) external campaignIsActive userIsVerified adminOrFactory whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| campaignIsActive |
-| userIsVerified |
-| adminOrFactory |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_rewardRecipientId` | uint256 |  ID to struct containing reward and user to be rewarded
-|`_status` | bool |      Indicates if the delivery was successful or not
----  
-### userReceivedCampaignReward
->        Called by a user eligible for rewards to indicate they received their reward
-
-
-#### Declaration
-```solidity
-  function userReceivedCampaignReward(
-    uint256 _rewardRecipientId
-  ) external campaignIsActive userIsVerified whenNotPaused
-```
-
-#### Modifiers:
-| Modifier |
-| --- |
-| campaignIsActive |
-| userIsVerified |
-| whenNotPaused |
-
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_rewardRecipientId` | uint256 |  ID to struct containing reward and user to be rewarded
+|`_count` | uint8 |   Number of times a campaign owner can extend the deadline
 ---  
 ### contribute
 >        Contribute method enables a user become an approver in the campaign
@@ -425,7 +254,7 @@
     address _token,
     uint256 _rewardId,
     bool _withReward
-  ) external campaignIsActive userIsVerified withinDeadline whenNotPaused nonReentrant returns (uint256 targetCompletionValue)
+  ) external campaignIsActive userIsVerified whenNotPaused nonReentrant
 ```
 
 #### Modifiers:
@@ -433,7 +262,6 @@
 | --- |
 | campaignIsActive |
 | userIsVerified |
-| withinDeadline |
 | whenNotPaused |
 | nonReentrant |
 
@@ -451,7 +279,6 @@
 #### Declaration
 ```solidity
   function withdrawOwnContribution(
-    uint256 _amount,
     address payable _wallet
   ) external userIsVerified nonReentrant
 ```
@@ -465,7 +292,6 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_amount` | uint256 |    Amount requested to be withdrawn from contributions
 |`_wallet` | address payable |    Address where amount is delivered
 ---  
 ### withdrawContributionForUser
@@ -477,7 +303,6 @@
 ```solidity
   function withdrawContributionForUser(
     address _user,
-    uint256 _amount,
     address payable _wallet
   ) external onlyFactory nonReentrant
 ```
@@ -492,8 +317,26 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_user` | address |      User whose funds are being requested
-|`_amount` | uint256 |    Amount requested to be withdrawn from contributions
 |`_wallet` | address payable |    Address where amount is delivered
+---  
+### userContributionLoss
+>        Used to measure user funds left after request finalizations
+
+
+#### Declaration
+```solidity
+  function userContributionLoss(
+    address _user
+  ) public returns (uint256)
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_user` | address |    Address of user check is carried out on
 ---  
 ### createRequest
 >        Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory
@@ -506,7 +349,7 @@
     address payable _recipient,
     uint256 _value,
     uint256 _duration
-  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused withinDeadline
+  ) external adminOrFactory campaignIsActive userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
@@ -516,7 +359,6 @@
 | campaignIsActive |
 | userIsVerified |
 | whenNotPaused |
-| withinDeadline |
 
 #### Args:
 | Arg | Type | Description |
@@ -716,7 +558,7 @@
 
 ---  
 ### toggleWithdrawalState
->        Pauses and Unpauses withdrawals
+>        Pauses or Unpauses withdrawals depending on state passed in argument
 
 
 #### Declaration
@@ -775,12 +617,12 @@
 ## Events
 
 ### CampaignOwnerSet
-> `Campaign`
+> `Initializer Event`
   
 
 
 ### CampaignOwnershipTransferred
-
+> `Campaign Config Events`
   
 
 
@@ -830,41 +672,6 @@
 
 
 ### RequestComplete
-
-  
-
-
-### RewardCreated
-> `Reward Events`
-  
-
-
-### RewardModified
-
-  
-
-
-### RewardStockIncreased
-
-  
-
-
-### RewardDestroyed
-
-  
-
-
-### RewardRecipientAdded
-> `Rward Recipient Events`
-  
-
-
-### RewarderApproval
-
-  
-
-
-### RewardRecipientApproval
 
   
 

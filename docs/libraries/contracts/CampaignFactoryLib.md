@@ -14,18 +14,25 @@
 ## Functions
 
 ### canManageCampaigns
+>        Returns if caller can manage campaigns
 
 
 #### Declaration
 ```solidity
   function canManageCampaigns(
+    contract CampaignFactoryInterface _factory,
+    address _user
   ) internal returns (bool)
 ```
 
 #### Modifiers:
 No modifiers
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_user` | address |        Address of caller
 ---  
 ### getCampaignFactoryConfig
 >        Returns information on a campaign from the factory
@@ -46,7 +53,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
-|`_prop` | string |        Transaction setting key
+|`_prop` | string |        Transaction config key
 ---  
 ### campaignInfo
 >        Returns information on a campaign from the factory
@@ -57,7 +64,7 @@ No modifiers
   function campaignInfo(
     contract CampaignFactoryInterface _factory,
     uint256 _campaignId
-  ) internal returns (address, uint256, bool, bool)
+  ) internal returns (address, address, uint256, bool, bool)
 ```
 
 #### Modifiers:
@@ -89,6 +96,29 @@ No modifiers
 | --- | --- | --- |
 |`_factory` | contract CampaignFactoryInterface |      Campaign factory interface
 |`_userAddress` | address |  Address of the user
+---  
+### sendCommissionFee
+>        Sends fee after request finalization to factory
+
+
+#### Declaration
+```solidity
+  function sendCommissionFee(
+    contract CampaignFactoryInterface _factory,
+    address _campaign,
+    uint256 _amount
+  ) internal
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_campaign` | address |    Address of campaign sending fee
+|`_amount` | uint256 |      Amount being sent
 ---  
 ### factoryPercentFee
 >        Returns factory percentage cut on all requests per category

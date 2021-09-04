@@ -20,6 +20,7 @@
 | root | address |
 | factoryWallet | address payable |
 | campaignImplementation | address |
+| campaignRewardsImplementation | address |
 | tokenList | address[] |
 | campaignTransactionConfigList | string[] |
 | approvedcampaignTransactionConfig | mapping(string => bool) |
@@ -57,12 +58,12 @@
 ```
 
 
-### onlyCampaignOwner
-> Ensures caller is campaign owner
+### onlyRegisteredCampaigns
+> Ensures caller is a registered campaign contract from factory
 
 #### Declaration
 ```solidity
-  modifier onlyCampaignOwner
+  modifier onlyRegisteredCampaigns
 ```
 
 
@@ -125,7 +126,8 @@
 ```solidity
   function setFactoryConfig(
     address payable _wallet,
-    contract Campaign _implementation
+    contract Campaign _campaignImplementation,
+    contract CampaignRewards _campaignRewardsImplementation
   ) external onlyAdmin
 ```
 
@@ -137,8 +139,9 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_wallet` | address payable |                      Address where all revenue gets deposited
-|`_implementation` | contract Campaign |              Address of base contract to deploy minimal proxies to campaigns
+|`_wallet` | address payable |                          Address where all revenue gets deposited
+|`_campaignImplementation` | contract Campaign |          Address of base contract to deploy minimal proxies to campaigns
+|`_campaignRewardsImplementation` | contract CampaignRewards |   Address of base contract to deploy minimal proxies to campaign rewards
 ---  
 ### addFactoryTransactionConfig
 >        Adds a new transaction setting
@@ -385,23 +388,23 @@ No modifiers
 #### Declaration
 ```solidity
   function receiveCampaignCommission(
-    uint256 _amount,
-    contract Campaign _campaign
-  ) external onlyCampaignOwner campaignIsEnabled campaignExists
+    contract Campaign _amount,
+    uint256 _campaign
+  ) external onlyRegisteredCampaigns campaignIsEnabled campaignExists
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyCampaignOwner |
+| onlyRegisteredCampaigns |
 | campaignIsEnabled |
 | campaignExists |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_amount` | uint256 |      Amount transfered and collected by factory from campaign request finalization
-|`_campaign` | contract Campaign |    Address of campaign instance
+|`_amount` | contract Campaign |      Amount transfered and collected by factory from campaign request finalization
+|`_campaign` | uint256 |    Address of campaign instance
 ---  
 ### signUp
 > Keep track of user addresses. KYC purpose
@@ -521,12 +524,13 @@ No modifiers
   function toggleCampaignActive(
     uint256 _campaignId,
     bool _active
-  ) external campaignOwnerOrManager campaignExists whenNotPaused
+  ) external userIsVerified campaignOwnerOrManager campaignExists whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| userIsVerified |
 | campaignOwnerOrManager |
 | campaignExists |
 | whenNotPaused |
@@ -546,12 +550,13 @@ No modifiers
   function modifyCampaignCategory(
     uint256 _campaignId,
     uint256 _newCategoryId
-  ) external campaignOwnerOrManager campaignExists whenNotPaused
+  ) external userIsVerified campaignOwnerOrManager campaignExists whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| userIsVerified |
 | campaignOwnerOrManager |
 | campaignExists |
 | whenNotPaused |
