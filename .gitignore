@@ -34,3 +34,6 @@ yarn-error.log*
 coverage
 coverage.json
 coverageEnv
+
+campaign-ignore.sol
+factory-ignore.sol

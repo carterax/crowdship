@@ -16,10 +16,10 @@
 | --- | --- |
 | goalType | enum Campaign.GOALTYPE |
 | campaignState | enum Campaign.CAMPAIGN_STATE |
-| requestApprovals | mapping(uint256 => mapping(address => bool)) |
+| requestSupport | mapping(uint256 => mapping(address => uint8)) |
+| hasVoted | mapping(uint256 => mapping(address => bool)) |
 | requests | struct Campaign.Request[] |
 | requestCount | uint256 |
-| positiveReviewCount | uint256 |
 | reviewCount | uint256 |
 | reviewed | mapping(address => bool) |
 | root | address |
@@ -398,7 +398,8 @@ No modifiers
 #### Declaration
 ```solidity
   function voteOnRequest(
-    uint256 _requestId
+    uint256 _requestId,
+    uint8 _support
   ) external campaignIsActive userIsVerified whenNotPaused
 ```
 
@@ -413,6 +414,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_requestId` | uint256 |   ID of request being voted on
+|`_support` | uint8 |     An integer of 0 for against, 1 for in-favor, and 2 for abstain
 ---  
 ### cancelVote
 >        Approvers only method which cancels initial vote on a request
@@ -482,13 +484,11 @@ No modifiers
 
 ---  
 ### reviewCampaignPerformance
->        User acknowledgement of review state enabled by the campaign owner
-
+> User acknowledgement of review state enabled by the campaign owner
 
 #### Declaration
 ```solidity
   function reviewCampaignPerformance(
-    bool _approval
   ) external userIsVerified campaignIsActive whenPaused
 ```
 
@@ -499,10 +499,7 @@ No modifiers
 | campaignIsActive |
 | whenPaused |
 
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`_approval` | bool |      Indicates user approval of the campaign
+
 ---  
 ### markCampaignComplete
 > Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users

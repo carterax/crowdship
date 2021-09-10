@@ -118,8 +118,18 @@ contract Campaign is
     );
 
     /// @dev `Vote Events`
-    event Voted(uint256 requestId, uint256 campaignId, address sender);
-    event VoteCancelled(uint256 requestId, uint256 campaignId, address sender);
+    event Voted(
+        uint256 requestId,
+        uint8 support,
+        uint256 campaignId,
+        address sender
+    );
+    event VoteCancelled(
+        uint256 requestId,
+        uint8 support,
+        uint256 campaignId,
+        address sender
+    );
 
     /// @dev `Review Events`
     event CampaignReviewed(uint256 campaignId, address sender);
@@ -140,10 +150,13 @@ contract Campaign is
         bool complete;
         uint256 value;
         uint256 approvalCount;
+        uint256 againstCount;
+        uint256 abstainedCount;
         uint256 duration;
         bool void;
     }
-    mapping(uint256 => mapping(address => bool)) public requestApprovals;
+    mapping(uint256 => mapping(address => uint8)) public requestSupport;
+    mapping(uint256 => mapping(address => bool)) public hasVoted;
     Request[] public requests;
     uint256 public requestCount;
 
@@ -235,12 +248,6 @@ contract Campaign is
         require(verified, "user not verified");
         _;
     }
-
-    /// @dev Ensures the campaign is within it's deadline, applies only if goal type is fixed
-    // modifier withinDeadline() {
-    //     require(block.timestamp <= deadline);
-    //     _;
-    // }
 
     /**
      * @dev        Constructor
@@ -417,7 +424,7 @@ contract Campaign is
     {
         require(block.timestamp > deadline);
         require(
-            deadlineSetTimes <=
+            deadlineSetTimes <
                 CampaignFactoryLib.getCampaignFactoryConfig(
                     campaignFactoryContract,
                     "deadlineStrikesAllowed"
@@ -736,6 +743,8 @@ contract Campaign is
                 false,
                 _value,
                 0,
+                0,
+                0,
                 block.timestamp.add(_duration),
                 false
             )
@@ -769,7 +778,7 @@ contract Campaign is
         // request should not have been finalized
         require(!requests[_requestId].void, "voided");
         require(requests[_requestId].approvalCount < 1, "has approvals");
-        require(!requests[_requestId].complete, "already finalized");
+        // require(!requests[_requestId].complete, "already finalized");
 
         requests[_requestId].void = true;
 
@@ -779,15 +788,16 @@ contract Campaign is
     /**
      * @dev        Approvers only method which approves spending request issued by the campaign manager or factory
      * @param      _requestId   ID of request being voted on
+     * @param      _support     An integer of 0 for against, 1 for in-favor, and 2 for abstain
      */
-    function voteOnRequest(uint256 _requestId)
+    function voteOnRequest(uint256 _requestId, uint8 _support)
         external
         campaignIsActive
         userIsVerified(msg.sender)
         whenNotPaused
     {
         require(approvers[msg.sender], "not an approver");
-        require(!requestApprovals[_requestId][msg.sender], "already voted");
+        require(!hasVoted[_requestId][msg.sender], "already voted");
         require(
             block.timestamp <= requests[_requestId].duration,
             "request expired"
@@ -795,13 +805,24 @@ contract Campaign is
 
         require(!requests[_requestId].void, "voided");
 
-        requestApprovals[_requestId][msg.sender] = true;
+        hasVoted[_requestId][msg.sender] = true;
+        requestSupport[_requestId][msg.sender] = _support;
 
-        requests[_requestId].approvalCount = requests[_requestId]
-            .approvalCount
-            .add(1);
+        if (_support == 0) {
+            requests[_requestId].againstCount = requests[_requestId]
+                .againstCount
+                .add(1);
+        } else if (_support == 1) {
+            requests[_requestId].approvalCount = requests[_requestId]
+                .approvalCount
+                .add(1);
+        } else {
+            requests[_requestId].abstainedCount = requests[_requestId]
+                .abstainedCount
+                .add(1);
+        }
 
-        emit Voted(_requestId, campaignID, msg.sender);
+        emit Voted(_requestId, _support, campaignID, msg.sender);
     }
 
     /**
@@ -819,15 +840,30 @@ contract Campaign is
             block.timestamp <= requests[_requestId].duration,
             "request expired"
         );
-        require(requestApprovals[_requestId][msg.sender], "not voted before");
+        require(hasVoted[_requestId][msg.sender], "not voted before");
 
-        requestApprovals[_requestId][msg.sender] = false;
+        hasVoted[_requestId][msg.sender] = false;
 
-        requests[_requestId].approvalCount = requests[_requestId]
-            .approvalCount
-            .sub(1);
+        if (requestSupport[_requestId][msg.sender] == 0) {
+            requests[_requestId].againstCount = requests[_requestId]
+                .againstCount
+                .sub(1);
+        } else if (requestSupport[_requestId][msg.sender] == 1) {
+            requests[_requestId].approvalCount = requests[_requestId]
+                .approvalCount
+                .sub(1);
+        } else {
+            requests[_requestId].abstainedCount = requests[_requestId]
+                .abstainedCount
+                .sub(1);
+        }
 
-        emit VoteCancelled(_requestId, campaignID, msg.sender);
+        emit VoteCancelled(
+            _requestId,
+            requestSupport[_requestId][msg.sender],
+            campaignID,
+            msg.sender
+        );
     }
 
     /**
@@ -851,10 +887,10 @@ contract Campaign is
             ),
             percent
         );
-        uint256 thresholdMark = 51;
+        uint256 requestFinalizationThreshold = 51;
         require(
             percentOfRequestApprovals.value >=
-                thresholdMark.mul(DecimalMath.UNIT),
+                requestFinalizationThreshold.mul(DecimalMath.UNIT),
             "approvals too low"
         );
         require(!request.complete, "already finalized");
@@ -962,18 +998,6 @@ contract Campaign is
             ),
             percent
         );
-        // DecimalMath.UFixed memory percentOfApproversCount = DecimalMath.muld(
-        //     DecimalMath.divd(
-        //         CampaignFactoryLib
-        //             .getCampaignFactoryConfig(
-        //                 campaignFactoryContract,
-        //                 "reviewThresholdMark"
-        //             )
-        //             .mul(DecimalMath.UNIT),
-        //         percent
-        //     ),
-        //     approversCount
-        // );
         require(
             campaignState == CAMPAIGN_STATE.REVIEW,
             "campaign not in review"

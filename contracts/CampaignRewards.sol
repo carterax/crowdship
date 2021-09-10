@@ -1,4 +1,4 @@
-// contracts/Campaign.sol
+// contracts/CampaignRewards.sol
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
 
@@ -152,17 +152,17 @@ contract CampaignRewards is Initializable, AccessControl {
     /**
      * @dev        Constructor
      * @param      _campaignFactory     Address of factory
-     * @param      _root                Address of campaign owner
+     * @param      _campaignOwner                Address of campaign owner
      * @param      _campaignId          ID of campaign reward contract belongs to
      */
     function __CampaignRewards_init(
         CampaignFactory _campaignFactory,
-        address _root,
+        address _campaignOwner,
         uint256 _campaignId
     ) public initializer {
-        require(address(_root) != address(0), "zero address");
+        require(address(_campaignOwner) != address(0), "zero address");
 
-        _setupRole(DEFAULT_ADMIN_ROLE, _root);
+        _setupRole(DEFAULT_ADMIN_ROLE, _campaignOwner);
 
         address campaignAddress;
 
@@ -175,7 +175,7 @@ contract CampaignRewards is Initializable, AccessControl {
         );
         campaignContract = CampaignInterface(address(campaignAddress));
         campaignID = _campaignId;
-        root = _root;
+        root = _campaignOwner;
 
         emit CampaignRewardOwnerSet(_campaignId, root, msg.sender);
     }
@@ -234,7 +234,7 @@ contract CampaignRewards is Initializable, AccessControl {
         address _user
     ) external onlyRegisteredCampaigns userIsVerified(_user) {
         require(_amount >= rewards[_rewardId].value, "amount too low");
-        require(rewards[_rewardId].stock > 0, "out of stock");
+        require(rewards[_rewardId].stock >= 1, "out of stock");
         require(rewards[_rewardId].exists, "not found");
         require(rewards[_rewardId].active, "not active");
 
@@ -243,6 +243,7 @@ contract CampaignRewards is Initializable, AccessControl {
         rewardToRewardRecipientCount[_rewardId] = rewardToRewardRecipientCount[
             _rewardId
         ].add(1);
+
         emit RewardRecipientAdded(_rewardId, campaignID, _amount, _user);
     }
 
@@ -266,8 +267,8 @@ contract CampaignRewards is Initializable, AccessControl {
          * check reward has no backers
          * check reward exists
          */
-        require(rewardToRewardRecipientCount[_rewardId] < 1, "has backers");
         require(rewards[_rewardId].exists, "not found");
+        require(rewardToRewardRecipientCount[_rewardId] < 1, "has backers");
         require(
             _value >
                 CampaignFactoryLib.getCampaignFactoryConfig(
@@ -327,10 +328,7 @@ contract CampaignRewards is Initializable, AccessControl {
         userIsVerified(msg.sender)
     {
         // check reward has no backers
-        require(
-            rewardToRewardRecipientCount[_rewardId] < 1,
-            "reward has backers"
-        );
+        require(rewardToRewardRecipientCount[_rewardId] < 1, "has backers");
         require(rewards[_rewardId].exists, "not found");
 
         delete rewards[_rewardId];
@@ -375,6 +373,10 @@ contract CampaignRewards is Initializable, AccessControl {
         userIsVerified(msg.sender)
     {
         require(
+            CampaignLib.isAnApprover(campaignContract, msg.sender),
+            "not an approver"
+        );
+        require(
             rewardRecipients[_rewardRecipientId].deliveryConfirmedByCampaign,
             "reward not delivered yet"
         );
@@ -388,10 +390,6 @@ contract CampaignRewards is Initializable, AccessControl {
         );
 
         require(userRewardCount[msg.sender] >= 1, "you have no reward");
-        require(
-            CampaignLib.isAnApprover(campaignContract, msg.sender),
-            "not an approver"
-        );
 
         rewardRecipients[_rewardRecipientId].deliveryConfirmedByUser = true;
         emit RewardRecipientApproval(

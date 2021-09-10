@@ -71,7 +71,7 @@
 ```solidity
   function __CampaignRewards_init(
     contract CampaignFactory _campaignFactory,
-    address _root,
+    address _campaignOwner,
     uint256 _campaignId
   ) public initializer
 ```
@@ -85,7 +85,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaignFactory` | contract CampaignFactory |     Address of factory
-|`_root` | address |                Address of campaign owner
+|`_campaignOwner` | address |                Address of campaign owner
 |`_campaignId` | uint256 |          ID of campaign reward contract belongs to
 ---  
 ### createReward

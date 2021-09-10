@@ -1,28 +1,12 @@
-// test/campaign.test.js
 export {};
 const { expect } = require('chai');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
-// Load compiled artifacts
+// compiled artifacts
 const Factory = artifacts.require('CampaignFactory');
 const Campaign = artifacts.require('Campaign');
 const CampaignRewards = artifacts.require('CampaignRewards');
 const TestToken = artifacts.require('TestToken');
-
-interface CampaignFactoryConfig {
-  deadlineStrikesAllowed: number;
-  maxDeadlineExtension: number;
-  minDeadlineExtension: number;
-  minimumContributionAllowed: number;
-  maximumContributionAllowed: number;
-  minRequestDuration: number;
-  maxRequestDuration: number;
-  minimumRequestAmountAllowed: number;
-  maximumRequestAmountAllowed: number;
-  reviewThresholdMark: number;
-  minimumCampaignTarget: number;
-  maximumCampaignTarget: number;
-}
 
 interface CampaignSetupConfig {
   approveCampaign?: boolean;
@@ -78,6 +62,7 @@ contract('Campaign', function([
       reviewThresholdMark: 80,
       minimumCampaignTarget: 5000,
       maximumCampaignTarget: 10000000,
+      requestFinalizationThreshold: 51,
     };
     await this.factory.setFactoryConfig(
       factoryWallet,
@@ -114,9 +99,14 @@ contract('Campaign', function([
     await this.factory.createCampaign(0, {
       from: this.campaignOwner,
     });
-    const { campaign } = await this.factory.deployedCampaigns(0);
+    const { campaign, campaignRewards } = await this.factory.deployedCampaigns(
+      0
+    );
     this.campaignInstance = await Campaign.at(campaign);
     this.campaignID = await this.campaignInstance.campaignID();
+
+    // rewards contract setup
+    this.rewardsInstance = await CampaignRewards.at(campaignRewards);
 
     await this.testToken.increaseAllowance(
       this.campaignInstance.address,
@@ -190,9 +180,9 @@ contract('Campaign', function([
     assert.equal(await this.campaignInstance.paused(), true);
   });
 
-  // /* -------------------------------------------------------------------------- */
-  // /*                             setCampaignSettings                            */
-  // /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /*                             setCampaignSettings                            */
+  /* -------------------------------------------------------------------------- */
   it('campaign owner can set campaign settings', async function() {
     const receipt = await this.campaignInstance.setCampaignSettings(
       20000,
@@ -238,12 +228,6 @@ contract('Campaign', function([
     });
   });
   it('campaign settings modification should work for factory even if campaign has been approved', async function() {
-    // this.factory.toggleCampaignApproval(this.campaignID, true, {
-    //   from: this.root,
-    // });
-    // this.factory.toggleCampaignActive(this.campaignID, true, {
-    //   from: this.root,
-    // });
     await this.campaignInstance.setCampaignSettings(
       300000,
       1,
@@ -310,7 +294,7 @@ contract('Campaign', function([
     );
     await expectRevert(
       this.campaignInstance.setCampaignSettings(
-        300000,
+        20000,
         1,
         604800,
         1,
@@ -324,8 +308,8 @@ contract('Campaign', function([
     );
     await expectRevert(
       this.campaignInstance.setCampaignSettings(
-        300000,
         20000,
+        300000,
         604800,
         1,
         this.testToken.address,
@@ -378,138 +362,143 @@ contract('Campaign', function([
       })
     );
   });
-  // it("duration extension should fail if the campaign duration hasn't expired", async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 86400,
-  //     from: this.campaignOwner,
-  //   });
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.extendDeadline(86400, {
-  //       from: this.campaignOwner,
-  //     })
-  //   );
-  // });
-  // it('duration extension should fail if ability to extend has been exhausted', async function() {
-  //   await this.factory.setCampaignTransactionConfig(
-  //     'deadlineStrikesAllowed',
-  //     1,
-  //     { from: this.root }
-  //   );
-  //   await this.approvedCampaignSetup({
-  //     duration: 2,
-  //     from: this.campaignOwner,
-  //   });
-  //   await new Promise((resolve) => setTimeout(resolve, 3000));
-  //   await this.campaignInstance.extendDeadline(86400, {
-  //     from: this.campaignOwner,
-  //   });
+  it("duration extension should fail if the campaign duration hasn't expired", async function() {
+    await this.approvedCampaignSetup({
+      duration: 86400,
+      from: this.campaignOwner,
+    });
+    await expectRevert.unspecified(
+      this.campaignInstance.extendDeadline(86400, {
+        from: this.campaignOwner,
+      })
+    );
+  });
+  it('duration extension should fail if ability to extend has been exhausted', async function() {
+    await this.factory.setCampaignTransactionConfig(
+      'deadlineStrikesAllowed',
+      1,
+      { from: this.root }
+    );
+    await this.factory.setCampaignTransactionConfig('minDeadlineExtension', 1, {
+      from: this.root,
+    });
+    await this.approvedCampaignSetup({
+      duration: 3,
+      from: this.campaignOwner,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await this.campaignInstance.extendDeadline(3, {
+      from: this.campaignOwner,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    expect(
+      await this.campaignInstance.deadlineSetTimes()
+    ).to.be.bignumber.equal(new BN('1'));
+    await expectRevert(
+      this.campaignInstance.extendDeadline(86400, {
+        from: this.campaignOwner,
+      }),
+      'exhausted deadline strikes'
+    );
+  });
+  it('duration extension should fail if the time to extend by is less or greater than allowed from factory', async function() {
+    await this.approvedCampaignSetup({
+      duration: 3,
+      from: this.campaignOwner,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await expectRevert.unspecified(
+      this.campaignInstance.extendDeadline(604801, {
+        from: this.campaignOwner,
+      })
+    );
+  });
 
-  //   expect(
-  //     await this.campaignInstance.deadlineSetTimes()
-  //   ).to.be.bignumber.equal(new BN('1'));
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.extendDeadline(86400, {
-  //       from: this.campaignOwner,
-  //     })
-  //   );
-  // });
-  // it('duration extension should fail if the time to extend by is less or greater than allowed from factory', async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 3,
-  //     from: this.campaignOwner,
-  //   });
-  //   await new Promise((resolve) => setTimeout(resolve, 3000));
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.extendDeadline(604801, {
-  //       from: this.campaignOwner,
-  //     })
-  //   );
-  // });
+  /* -------------------------------------------------------------------------- */
+  /*                             setDeadlineSetTimes                            */
+  /* -------------------------------------------------------------------------- */
+  it('should set the number of times a campaign manager has extended deadline', async function() {
+    await this.approvedCampaignSetup({
+      duration: 86400,
+      from: this.campaignOwner,
+    });
+    await this.campaignInstance.setDeadlineSetTimes(2, { from: this.root });
+    expect(
+      await this.campaignInstance.deadlineSetTimes()
+    ).to.be.bignumber.equal(new BN('2'));
+  });
+  it('should fail if the ability to extend campaign duration is called by the campaign owner', async function() {
+    await this.approvedCampaignSetup({
+      duration: 86400,
+      from: this.campaignOwner,
+    });
+    await expectRevert(
+      this.campaignInstance.setDeadlineSetTimes(30, {
+        from: this.campaignOwner,
+      }),
+      'only factory'
+    );
+  });
 
-  // /* -------------------------------------------------------------------------- */
-  // /*                             setDeadlineSetTimes                            */
-  // /* -------------------------------------------------------------------------- */
-  // it('should set the number of times a campaign manager has extended deadline', async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 86400,
-  //     from: this.campaignOwner,
-  //   });
-  //   await this.campaignInstance.setDeadlineSetTimes(2, { from: this.root });
-  //   expect(
-  //     await this.campaignInstance.deadlineSetTimes()
-  //   ).to.be.bignumber.equal(new BN('2'));
-  // });
-  // it('should fail if the ability to extend campaign duration is called by the campaign owner', async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 86400,
-  //     from: this.campaignOwner,
-  //   });
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.setDeadlineSetTimes(3000, {
-  //       from: this.campaignOwner,
-  //     })
-  //   );
-  // });
+  /* -------------------------------------------------------------------------- */
+  /*                                 contribute                                 */
+  /* -------------------------------------------------------------------------- */
+  it('should contribute into the campaign and make user an approver', async function() {
+    await this.approvedCampaignSetup({
+      duration: 184000,
+      from: this.campaignOwner,
+    });
+    const receipt = await this.campaignInstance.contribute(
+      this.testToken.address,
+      0,
+      false,
+      {
+        from: this.root,
+        value: 600,
+      }
+    );
 
-  // /* -------------------------------------------------------------------------- */
-  // /*                                 contribute                                 */
-  // /* -------------------------------------------------------------------------- */
-  // it('should contribute into the campaign and make user an approver', async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 184000,
-  //     from: this.campaignOwner,
-  //   });
-  //   const receipt = await this.campaignInstance.contribute(
-  //     this.testToken.address,
-  //     0,
-  //     false,
-  //     {
-  //       from: this.root,
-  //       value: 600,
-  //     }
-  //   );
-
-  //   expect(await this.campaignInstance.approvers(this.root)).to.be.equal(true);
-  //   expect(await this.campaignInstance.approversCount()).to.be.bignumber.equal(
-  //     new BN('1')
-  //   );
-  //   expect(
-  //     await this.campaignInstance.totalCampaignContribution()
-  //   ).to.be.bignumber.equal(new BN('600'));
-  //   expect(
-  //     await this.campaignInstance.userTotalContribution(this.root)
-  //   ).to.be.bignumber.equal(new BN('600'));
-  //   expectEvent(receipt, 'ContributionMade', {
-  //     campaignId: new BN(this.campaignID),
-  //     userId: new BN(await this.factory.userID(this.root)),
-  //     amount: new BN('600'),
-  //   });
-  // });
-  // it('should emit an event and set campaign state set to live when the campagin target is met', async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 184000,
-  //     target: 5000,
-  //     from: this.campaignOwner,
-  //   });
-  //   const receipt = await this.campaignInstance.contribute(
-  //     this.testToken.address,
-  //     0,
-  //     false,
-  //     {
-  //       from: this.root,
-  //       value: 5000,
-  //     }
-  //   );
-  //   // check campaign state
-  //   // where 2 is LIVE
-  //   expect(
-  //     (await this.campaignInstance.campaignState()).toString()
-  //   ).to.be.equal('2');
-  //   expectEvent(receipt, 'TargetMet', {
-  //     campaignId: new BN(this.campaignID),
-  //     amount: new BN('5000'),
-  //   });
-  // });
+    expect(await this.campaignInstance.approvers(this.root)).to.be.equal(true);
+    expect(await this.campaignInstance.approversCount()).to.be.bignumber.equal(
+      new BN('1')
+    );
+    expect(
+      await this.campaignInstance.totalCampaignContribution()
+    ).to.be.bignumber.equal(new BN('600'));
+    expect(
+      await this.campaignInstance.userTotalContribution(this.root)
+    ).to.be.bignumber.equal(new BN('600'));
+    expectEvent(receipt, 'ContributionMade', {
+      campaignId: new BN(this.campaignID),
+      amount: new BN('600'),
+      sender: this.root,
+    });
+  });
+  it('should emit an event and set campaign state set to live when the campagin target is met', async function() {
+    await this.approvedCampaignSetup({
+      duration: 184000,
+      target: 5000,
+      from: this.campaignOwner,
+    });
+    const receipt = await this.campaignInstance.contribute(
+      this.testToken.address,
+      0,
+      false,
+      {
+        from: this.root,
+        value: 5000,
+      }
+    );
+    // check campaign state
+    // where 2 is LIVE
+    expect(
+      (await this.campaignInstance.campaignState()).toString()
+    ).to.be.equal('2');
+    expectEvent(receipt, 'TargetMet', {
+      campaignId: new BN(this.campaignID),
+      amount: new BN('5000'),
+    });
+  });
   it('contribution should fail if contributor is campaign owner', async function() {
     await this.approvedCampaignSetup({
       duration: 184000,
@@ -523,105 +512,102 @@ contract('Campaign', function([
       'root owner'
     );
   });
-  // it("should fail if token used for contribution isn't accepted", async function() {
-  //   await this.approvedCampaignSetup({
-  //     duration: 184000,
-  //     from: this.campaignOwner,
-  //   });
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.contribute(
-  //       '0x4dbcdf9b62e891a7cec5a2568c3f4faf9e8abe2b',
-  //       0,
-  //       false,
-  //       {
-  //         from: this.root,
-  //         value: 5000,
-  //       }
-  //     )
-  //   );
-  // });
-  // it('should fail if contribution amount is below minimum or above maximum', async function() {
-  //   let config: CampaignSetupConfig = {
-  //     duration: 184000,
-  //     minimumContribution: 10,
-  //     from: this.campaignOwner,
-  //   };
-  //   await this.approvedCampaignSetup(config);
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.contribute(this.testToken.address, 0, false, {
-  //       from: this.root,
-  //       value: 1,
-  //     })
-  //   );
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.contribute(this.testToken.address, 0, false, {
-  //       from: this.root,
-  //       value: 100000,
-  //     })
-  //   );
-  // });
-  // it('contribution should fail if campaign does not allow contribution after target is met', async function() {
-  //   let config: CampaignSetupConfig = {
-  //     duration: 184000,
-  //     target: 6000,
-  //     minimumContribution: 10,
-  //     allowContributionAfterTargetIsMet: false,
-  //     from: this.campaignOwner,
-  //   };
-  //   await this.approvedCampaignSetup(config);
-  //   await expectRevert.unspecified(
-  //     this.campaignInstance.contribute(this.testToken.address, 0, false, {
-  //       from: this.root,
-  //       value: 7000,
-  //     })
-  //   );
-  // });
-  // it('should mark a contributor eligible for a reward', async function() {
-  //   let config: CampaignSetupConfig = {
-  //     duration: 184000,
-  //     from: this.campaignOwner,
-  //   };
-  //   await this.approvedCampaignSetup(config);
-  //   await this.campaignInstance.createReward(500, 86400, 3, true, {
-  //     from: this.campaignOwner,
-  //   });
-  //   const receipt = await this.campaignInstance.contribute(
-  //     this.testToken.address,
-  //     0,
-  //     true,
-  //     {
-  //       from: this.root,
-  //       value: 1000,
-  //     }
-  //   );
+  it("should fail if token used for contribution isn't accepted", async function() {
+    await this.approvedCampaignSetup({
+      duration: 184000,
+      from: this.campaignOwner,
+    });
+    await expectRevert(
+      this.campaignInstance.contribute(
+        '0x4dbcdf9b62e891a7cec5a2568c3f4faf9e8abe2b',
+        0,
+        false,
+        {
+          from: this.root,
+          value: 5000,
+        }
+      ),
+      'token not accepted'
+    );
+  });
+  it('should fail if contribution amount is below minimum or above maximum', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      minimumContribution: 10,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await expectRevert(
+      this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 1,
+      }),
+      'value too low'
+    );
+    await expectRevert(
+      this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 1000000,
+      }),
+      'value too high'
+    );
+  });
+  it('contribution should fail if campaign does not allow contribution after target is met', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      target: 6000,
+      minimumContribution: 10,
+      allowContributionAfterTargetIsMet: false,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await expectRevert(
+      this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 7000,
+      }),
+      'exceeds target'
+    );
+  });
+  it('should mark a contributor eligible for a reward', async function() {
+    let config: CampaignSetupConfig = {
+      duration: 184000,
+      from: this.campaignOwner,
+    };
+    await this.approvedCampaignSetup(config);
+    await this.rewardsInstance.createReward(500, 86400, 3, true, {
+      from: this.campaignOwner,
+    });
+    const receipt = await this.campaignInstance.contribute(
+      this.testToken.address,
+      0,
+      true,
+      {
+        from: this.root,
+        value: 1000,
+      }
+    );
 
-  //   expect(
-  //     (await this.campaignInstance.rewardRecipients(0)).rewardId
-  //   ).to.be.bignumber.equal(new BN('0'));
-  //   expect((await this.campaignInstance.rewardRecipients(0)).user).to.be.equal(
-  //     this.root
-  //   );
-  //   expect(
-  //     (await this.campaignInstance.rewardRecipients(0))
-  //       .deliveryConfirmedByCampaign
-  //   ).to.be.equal(false);
-  //   expect(
-  //     (await this.campaignInstance.rewardRecipients(0)).deliveryConfirmedByUser
-  //   ).to.be.equal(false);
-  //   expect(
-  //     await this.campaignInstance.userRewardCount(this.root)
-  //   ).to.be.bignumber.equal(new BN('1'));
-  //   expect(
-  //     await this.campaignInstance.rewardToRewardRecipientCount(0)
-  //   ).to.be.bignumber.equal(new BN('1'));
-
-  //   expectEvent(receipt, 'RewardRecipientAdded', {
-  //     rewardId: new BN('0'),
-  //     campaignId: new BN(this.campaignID),
-  //     user: new BN(await this.factory.userID(this.root)),
-  //     amount: new BN('1000'),
-  //   });
-  // });
+    expect(
+      (await this.rewardsInstance.rewardRecipients(0)).rewardId
+    ).to.be.bignumber.equal(new BN('0'));
+    expect((await this.rewardsInstance.rewardRecipients(0)).user).to.be.equal(
+      this.root
+    );
+    expect(
+      (await this.rewardsInstance.rewardRecipients(0))
+        .deliveryConfirmedByCampaign
+    ).to.be.equal(false);
+    expect(
+      (await this.rewardsInstance.rewardRecipients(0)).deliveryConfirmedByUser
+    ).to.be.equal(false);
+    expect(
+      await this.rewardsInstance.userRewardCount(this.root)
+    ).to.be.bignumber.equal(new BN('1'));
+    expect(
+      await this.rewardsInstance.rewardToRewardRecipientCount(0)
+    ).to.be.bignumber.equal(new BN('1'));
+  });
 
   /* -------------------------------------------------------------------------- */
   /*                           withdrawOwnContribution                          */
@@ -632,10 +618,10 @@ contract('Campaign', function([
       from: this.campaignOwner,
     };
     await this.approvedCampaignSetup(config);
-    await this.campaignInstance.createReward(500, 86400, 3, true, {
+    await this.rewardsInstance.createReward(500, 86400, 3, true, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.createReward(700, 86400, 3, true, {
+    await this.rewardsInstance.createReward(700, 86400, 3, true, {
       from: this.campaignOwner,
     });
     await this.campaignInstance.contribute(this.testToken.address, 0, true, {
@@ -647,7 +633,6 @@ contract('Campaign', function([
       value: 700,
     });
     const receipt = await this.campaignInstance.withdrawOwnContribution(
-      1700,
       this.root,
       {
         from: this.root,
@@ -659,13 +644,13 @@ contract('Campaign', function([
       new BN('0')
     );
     expect(
-      await this.campaignInstance.userRewardCount(this.root)
+      await this.rewardsInstance.userRewardCount(this.root)
     ).to.be.bignumber.equal(new BN('0'));
     expect(
-      await this.campaignInstance.rewardToRewardRecipientCount(0)
+      await this.rewardsInstance.rewardToRewardRecipientCount(0)
     ).to.be.bignumber.equal(new BN('0'));
     expect(
-      await this.campaignInstance.rewardToRewardRecipientCount(1)
+      await this.rewardsInstance.rewardToRewardRecipientCount(1)
     ).to.be.bignumber.equal(new BN('0'));
     expect(
       await this.campaignInstance.userTotalContribution(this.root)
@@ -707,8 +692,8 @@ contract('Campaign', function([
         from: this.campaignOwner,
       }
     );
-    await this.campaignInstance.voteOnRequest(0, { from: this.root });
-    await this.campaignInstance.voteOnRequest(0, { from: this.addr1 });
+    await this.campaignInstance.voteOnRequest(0, 1, { from: this.root });
+    await this.campaignInstance.voteOnRequest(0, 1, { from: this.addr1 });
     await this.campaignInstance.finalizeRequest(0, {
       from: this.campaignOwner,
     });
@@ -812,7 +797,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 1133, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, { from: this.addr1 });
+    await this.campaignInstance.voteOnRequest(0, 1, { from: this.addr1 });
     await this.campaignInstance.finalizeRequest(0, {
       from: this.campaignOwner,
     });
@@ -1160,32 +1145,10 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, { from: this.addr1 });
+    await this.campaignInstance.voteOnRequest(0, 1, { from: this.addr1 });
     await expectRevert(
       this.campaignInstance.voidRequest(0, { from: this.campaignOwner }),
       'has approvals'
-    );
-  });
-  it('voiding a spending request should fail if the request is already complete', async function() {
-    let config: CampaignSetupConfig = {
-      duration: 86400,
-      from: this.campaignOwner,
-    };
-    await this.approvedCampaignSetup(config);
-    await this.campaignInstance.contribute(this.testToken.address, 0, false, {
-      from: this.addr1,
-      value: 20000,
-    });
-    await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
-      from: this.campaignOwner,
-    });
-    await this.campaignInstance.voteOnRequest(0, { from: this.addr1 });
-    await this.campaignInstance.finalizeRequest(0, {
-      from: this.campaignOwner,
-    });
-    await expectRevert(
-      this.campaignInstance.voidRequest(0, { from: this.campaignOwner }),
-      'already finalized'
     );
   });
   it('voiding a spending request should fail if not called by campaign owner or factory', async function() {
@@ -1225,18 +1188,19 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    const receipt = await this.campaignInstance.voteOnRequest(0, {
+    const receipt = await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
 
-    expect(
-      await this.campaignInstance.requestApprovals(0, this.addr1)
-    ).to.be.equal(true);
+    expect(await this.campaignInstance.hasVoted(0, this.addr1)).to.be.equal(
+      true
+    );
     expect(
       (await this.campaignInstance.requests(0)).approvalCount
     ).to.be.bignumber.equal(new BN('1'));
     expectEvent(receipt, 'Voted', {
       requestId: new BN('0'),
+      support: new BN('1'),
       campaignId: new BN(this.campaignID),
       sender: this.addr1,
     });
@@ -1254,11 +1218,11 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 2, {
       from: this.addr1,
     });
     await expectRevert(
-      this.campaignInstance.voteOnRequest(0, {
+      this.campaignInstance.voteOnRequest(0, 1, {
         from: this.addr1,
       }),
       'already voted'
@@ -1282,7 +1246,7 @@ contract('Campaign', function([
     });
     await new Promise((resolve) => setTimeout(resolve, 3000));
     await expectRevert(
-      this.campaignInstance.voteOnRequest(0, {
+      this.campaignInstance.voteOnRequest(0, 1, {
         from: this.addr1,
       }),
       'request expired'
@@ -1305,7 +1269,7 @@ contract('Campaign', function([
       from: this.campaignOwner,
     });
     await expectRevert(
-      this.campaignInstance.voteOnRequest(0, {
+      this.campaignInstance.voteOnRequest(0, 0, {
         from: this.addr1,
       }),
       'voided'
@@ -1325,7 +1289,7 @@ contract('Campaign', function([
       from: this.campaignOwner,
     });
     await expectRevert(
-      this.campaignInstance.voteOnRequest(0, {
+      this.campaignInstance.voteOnRequest(0, 1, {
         from: this.addr3,
       }),
       'not an approver'
@@ -1348,21 +1312,22 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     const receipt = await this.campaignInstance.cancelVote(0, {
       from: this.addr1,
     });
 
-    expect(
-      await this.campaignInstance.requestApprovals(0, this.addr1)
-    ).to.be.equal(false);
+    expect(await this.campaignInstance.hasVoted(0, this.addr1)).to.be.equal(
+      false
+    );
     expect(
       (await this.campaignInstance.requests(0)).approvalCount
     ).to.be.bignumber.equal(new BN('0'));
     expectEvent(receipt, 'VoteCancelled', {
       requestId: new BN('0'),
+      support: new BN('1'),
       campaignId: new BN(this.campaignID),
       sender: this.addr1,
     });
@@ -1420,12 +1385,17 @@ contract('Campaign', function([
       from: this.addr1,
       value: 20000,
     });
-    await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
+    await this.campaignInstance.createRequest(this.addr3, 500, 4, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await expectRevert(
+      this.campaignInstance.cancelVote(0, { from: this.addr1 }),
+      'request expired'
+    );
   });
 
   /* -------------------------------------------------------------------------- */
@@ -1444,7 +1414,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
 
@@ -1503,7 +1473,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1532,7 +1502,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1580,7 +1550,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1611,7 +1581,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1624,14 +1594,10 @@ contract('Campaign', function([
     });
 
     expect(await this.campaignInstance.reviewed(this.addr1)).to.be.equal(true);
-    expect(
-      await this.campaignInstance.positiveReviewCount()
-    ).to.be.bignumber.equal(new BN('1'));
     expect(await this.campaignInstance.reviewCount()).to.be.bignumber.equal(
       new BN('1')
     );
     expectEvent(receipt, 'CampaignReviewed', {
-      approvalStatus: true,
       campaignId: new BN(this.campaignID),
       sender: this.addr1,
     });
@@ -1649,7 +1615,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1677,7 +1643,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1708,7 +1674,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1740,7 +1706,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1780,10 +1746,10 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.root,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {
@@ -1813,7 +1779,7 @@ contract('Campaign', function([
     await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
       from: this.campaignOwner,
     });
-    await this.campaignInstance.voteOnRequest(0, {
+    await this.campaignInstance.voteOnRequest(0, 1, {
       from: this.addr1,
     });
     await this.campaignInstance.finalizeRequest(0, {

@@ -1,10 +1,10 @@
-// test/factory.test.js
 export {};
 const { expect } = require('chai');
 
 // Load compiled artifacts
 const Factory = artifacts.require('CampaignFactory');
 const Campaign = artifacts.require('Campaign');
+const CampaignRewards = artifacts.require('CampaignRewards');
 const TestToken = artifacts.require('TestToken');
 
 const userTests = require('./resources/users.test');
@@ -99,10 +99,13 @@ contract('CampaignFactory', function([
     expect(await this.factory.root()).to.be.equal(this.owner);
   });
   it('should change factory settings', async function() {
-    const campaignImplementation = await Campaign.new();
+    const campaignImplementation = await Campaign.new(),
+      campaignRewardsImplementation = await CampaignRewards.new();
+
     await this.factory.setFactoryConfig(
       otherFactoryWallet,
-      campaignImplementation.address
+      campaignImplementation.address,
+      campaignRewardsImplementation.address
     );
     await Promise.all(
       Object.keys(this.factorySettings).map(async (setting) => {
@@ -162,12 +165,14 @@ contract('CampaignFactory', function([
     ).to.be.bignumber.equal(new BN('10000'));
   });
   it('should fail if non admin tries to change factory settings', async function() {
-    const campaignImplementation = await Campaign.new();
+    const campaignImplementation = await Campaign.new(),
+      campaignRewardsImplementation = await CampaignRewards.new();
 
     await expectRevert.unspecified(
       this.factory.setFactoryConfig(
         otherFactoryWallet,
         campaignImplementation.address,
+        campaignRewardsImplementation.address,
         {
           from: this.addr1,
         }
