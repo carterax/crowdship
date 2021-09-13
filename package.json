@@ -10,9 +10,11 @@
     "compile": "npx truffle compile --all",
     "docs": "npx solidity-docgen --solc-module solc-0.8 --templates ./docs/template",
     "generate-types": "npx typechain --target=truffle-v5 'build/contracts/*.json'",
-    "postinstall": "npx truffle compile && npm run generate-types"
+    "postinstall": "npx truffle compile && npm run generate-types",
+    "ganache": "ganache -d"
   },
   "dependencies": {
+    "ganache": "^6.4.5",
     "solidity-docgen": "^0.5.13",
     "truffle": "^5.3.9",
     "truffle-contract-size": "^2.0.1"
