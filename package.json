@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
     "test": "npx truffle test",
     "migrate": "npx truffle migrate",
     "contract-size": "npx truffle run contract-size",
@@ -16,12 +13,6 @@
     "postinstall": "npx truffle compile && npm run generate-types"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.21.0",
-    "@graphprotocol/graph-ts": "^0.20.1",
-    "bnc-onboard": "^1.27.0",
-    "next": "10.2.3",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
     "solidity-docgen": "^0.5.13",
     "truffle": "^5.3.9",
     "truffle-contract-size": "^2.0.1"
@@ -33,7 +24,6 @@
     "@typechain/truffle-v5": "^5.0.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.7.1",
-    "@types/react": "^17.0.19",
     "chai": "^4.3.4",
     "eth-gas-reporter": "^0.2.22",
     "faker": "^5.5.3",

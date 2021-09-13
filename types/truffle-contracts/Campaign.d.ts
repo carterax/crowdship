@@ -49,7 +49,7 @@ export interface CampaignReported {
   name: "CampaignReported";
   args: {
     campaignId: BN;
-    user: string;
+    sender: string;
     0: BN;
     1: string;
   };
@@ -58,12 +58,10 @@ export interface CampaignReported {
 export interface CampaignReviewed {
   name: "CampaignReviewed";
   args: {
-    approvalStatus: boolean;
     campaignId: BN;
     sender: string;
-    0: boolean;
-    1: BN;
-    2: string;
+    0: BN;
+    1: string;
   };
 }
 
@@ -128,10 +126,12 @@ export interface ContributionWithdrawn {
   args: {
     campaignId: BN;
     amount: BN;
+    user: string;
     sender: string;
     0: BN;
     1: BN;
     2: string;
+    3: string;
   };
 }
 
@@ -245,11 +245,13 @@ export interface VoteCancelled {
   name: "VoteCancelled";
   args: {
     requestId: BN;
+    support: BN;
     campaignId: BN;
     sender: string;
     0: BN;
     1: BN;
-    2: string;
+    2: BN;
+    3: string;
   };
 }
 
@@ -257,11 +259,13 @@ export interface Voted {
   name: "Voted";
   args: {
     requestId: BN;
+    support: BN;
     campaignId: BN;
     sender: string;
     0: BN;
     1: BN;
-    2: string;
+    2: BN;
+    3: string;
   };
 }
 
@@ -363,14 +367,18 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
+  hasVoted(
+    arg0: number | BN | string,
+    arg1: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
   minimumContribution(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   /**
    * Returns true if the contract is paused, and false otherwise.
    */
   paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
-
-  positiveReviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   /**
    * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -400,10 +408,25 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   requestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+  requestSupport(
+    arg0: number | BN | string,
+    arg1: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
+
   requests(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: string; 1: boolean; 2: BN; 3: BN; 4: BN; 5: boolean }>;
+  ): Promise<{
+    0: string;
+    1: boolean;
+    2: BN;
+    3: BN;
+    4: BN;
+    5: BN;
+    6: BN;
+    7: boolean;
+  }>;
 
   reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -789,22 +812,27 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   /**
    * Approvers only method which approves spending request issued by the campaign manager or factory
    * @param _requestId ID of request being voted on
+   * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
    */
   voteOnRequest: {
     (
       _requestId: number | BN | string,
+      _support: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _requestId: number | BN | string,
+      _support: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _requestId: number | BN | string,
+      _support: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _requestId: number | BN | string,
+      _support: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -869,24 +897,14 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   /**
    * User acknowledgement of review state enabled by the campaign owner
-   * @param _approval Indicates user approval of the campaign
    */
   reviewCampaignPerformance: {
-    (_approval: boolean, txDetails?: Truffle.TransactionDetails): Promise<
+    (txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
-    call(
-      _approval: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _approval: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _approval: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
+    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
   };
 
   /**
@@ -1056,14 +1074,18 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
+    hasVoted(
+      arg0: number | BN | string,
+      arg1: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
     minimumContribution(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     /**
      * Returns true if the contract is paused, and false otherwise.
      */
     paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
-
-    positiveReviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     /**
      * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -1093,10 +1115,25 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     requestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    requestSupport(
+      arg0: number | BN | string,
+      arg1: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
+
     requests(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: string; 1: boolean; 2: BN; 3: BN; 4: BN; 5: boolean }>;
+    ): Promise<{
+      0: string;
+      1: boolean;
+      2: BN;
+      3: BN;
+      4: BN;
+      5: BN;
+      6: BN;
+      7: boolean;
+    }>;
 
     reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1482,22 +1519,27 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     /**
      * Approvers only method which approves spending request issued by the campaign manager or factory
      * @param _requestId ID of request being voted on
+     * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
      */
     voteOnRequest: {
       (
         _requestId: number | BN | string,
+        _support: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _requestId: number | BN | string,
+        _support: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _requestId: number | BN | string,
+        _support: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _requestId: number | BN | string,
+        _support: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1562,24 +1604,14 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     /**
      * User acknowledgement of review state enabled by the campaign owner
-     * @param _approval Indicates user approval of the campaign
      */
     reviewCampaignPerformance: {
-      (_approval: boolean, txDetails?: Truffle.TransactionDetails): Promise<
+      (txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
-      call(
-        _approval: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _approval: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _approval: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
+      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
     };
 
     /**

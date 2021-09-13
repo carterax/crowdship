@@ -311,30 +311,30 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
    * Constructor
    * @param _campaignFactory Address of factory
    * @param _campaignId ID of campaign reward contract belongs to
-   * @param _root Address of campaign owner
+   * @param _campaignOwner Address of campaign owner
    */
   __CampaignRewards_init: {
     (
       _campaignFactory: string,
-      _root: string,
+      _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _campaignFactory: string,
-      _root: string,
+      _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _campaignFactory: string,
-      _root: string,
+      _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _campaignFactory: string,
-      _root: string,
+      _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -737,30 +737,30 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
      * Constructor
      * @param _campaignFactory Address of factory
      * @param _campaignId ID of campaign reward contract belongs to
-     * @param _root Address of campaign owner
+     * @param _campaignOwner Address of campaign owner
      */
     __CampaignRewards_init: {
       (
         _campaignFactory: string,
-        _root: string,
+        _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _campaignFactory: string,
-        _root: string,
+        _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _campaignFactory: string,
-        _root: string,
+        _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _campaignFactory: string,
-        _root: string,
+        _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
