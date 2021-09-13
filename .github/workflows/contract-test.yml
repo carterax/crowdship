@@ -39,7 +39,6 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run ganache
-      - run: sleep 5
       - run: npm run migrate
       - run: npm test
       - run: npm run coverage
