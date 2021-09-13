@@ -39,7 +39,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm install ganache --global
-      - run: ganache-cli -d > /dev/null &
+      - run: ganache -d > /dev/null &
       - run: sleep 5
       - run: npm run migrate
       - run: npm test
