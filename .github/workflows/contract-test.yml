@@ -38,7 +38,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-      - run: ganache-cli > /dev/null &
+      - run: npm install ganache --global
+      - run: ganache-cli -d > /dev/null &
       - run: sleep 5
       - run: npm run migrate
       - run: npm test
