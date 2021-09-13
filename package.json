@@ -11,7 +11,7 @@
     "docs": "npx solidity-docgen --solc-module solc-0.8 --templates ./docs/template",
     "generate-types": "npx typechain --target=truffle-v5 'build/contracts/*.json'",
     "postinstall": "npx truffle compile && npm run generate-types",
-    "ganache": "ganache-cli -d"
+    "ganache": "ganache-cli -d > /dev/null &"
   },
   "dependencies": {
     "ganache-cli": "^6.12.2",
