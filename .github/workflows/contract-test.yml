@@ -26,6 +26,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
+      - run: npm run ganache
       - run: npm run migrate
       - run: npm run coverage
       - run: bash <(curl -s https://codecov.io/bash) -t 10300c39-4ccc-419e-9b5b-4849de32d025
