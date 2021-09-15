@@ -38,15 +38,3 @@ jobs:
           npm run migrate
           npm run coverage
           bash <(curl -s https://codecov.io/bash) -t 10300c39-4ccc-419e-9b5b-4849de32d025
-      - name: Send Mail
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          secure: false
-          username: ${{secrets.MAIL_USERNAME}}
-          password: ${{secrets.MAIL_PASSWORD}}
-          subject: Github Actions Complete
-          to: carteraxwebsolution@gmail.com
-          from: Crowdship Capital # <user@example.com>
-          body: Build job of ${{github.repository}} completed successfully!
