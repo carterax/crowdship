@@ -25,13 +25,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - name: Verify Changed files
+      - name: Verify Changed Files
         uses: tj-actions/verify-changed-files@v7.2
         id: verify-changed-files
         with:
           files: |
             test
-      - name: Update test coverage
+      - name: Update Test Coverage
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           npm ci
