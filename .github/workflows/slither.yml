@@ -36,14 +36,7 @@ jobs:
       - name: Install slither
         run: |
           pip3 install slither-analyzer
-      - name: Verify Changed Files
-        uses: tj-actions/verify-changed-files@v7.2
-        id: verify-changed-files
-        with:
-          files: |
-            contracts
       - name: Slither Analysis
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           npm ci
           slither .
