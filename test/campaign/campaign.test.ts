@@ -1641,7 +1641,7 @@ contract(
         'approval deficit'
       );
     });
-    it.only('request finalization should fail if the request was finalized', async function () {
+    it('request finalization should fail if the request was finalized', async function () {
       let config: CampaignSetupConfig = {
         duration: 86400,
         from: this.campaignOwner,
