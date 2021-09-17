@@ -26,14 +26,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Verify Changed Files
-        uses: tj-actions/verify-changed-files@v7.2
-        id: verify-changed-files
-        with:
-          files: |
-            test
       - name: Update Test Coverage
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           npm ci
           npm run ganache
