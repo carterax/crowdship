@@ -26,10 +26,16 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Update Test Coverage
+      - name: Install Npm Dependencies
         run: |
           npm ci
+      - name: Start Ganache
+        run: |
           npm run ganache
+      - name: Contract Migrations
+        run: |
           npm run migrate
+      - name: Update Test Coverage
+        run: |
           npm run coverage
           bash <(curl -s https://codecov.io/bash) -t 10300c39-4ccc-419e-9b5b-4849de32d025
