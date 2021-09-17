@@ -233,7 +233,7 @@ contract(
     /* -------------------------------------------------------------------------- */
     /*                         addFactoryTransactionConfig                        */
     /* -------------------------------------------------------------------------- */
-    it.only('should add a transaction config key to factory settings', async function () {
+    it('should add a transaction config key to factory settings', async function () {
       await this.factory.addFactoryTransactionConfig('testConfig', {
         from: this.owner,
       });
@@ -244,7 +244,7 @@ contract(
         await this.factory.approvedCampaignTransactionConfig('testConfig')
       ).to.be.equal(true);
     });
-    it.only('adding a factory transaction config should fail if it has already been added', async function () {
+    it('adding a factory transaction config should fail if it has already been added', async function () {
       await expectRevert.unspecified(
         this.factory.addFactoryTransactionConfig('reportThresholdMark', {
           from: this.owner,
@@ -255,7 +255,7 @@ contract(
     /* -------------------------------------------------------------------------- */
     /*                                 removeToken                                */
     /* -------------------------------------------------------------------------- */
-    it.only('should remove a token from list of accepted tokens', async function () {
+    it('should remove a token from list of accepted tokens', async function () {
       const receipt = await this.factory.removeToken(
         0,
         this.testToken.address,
