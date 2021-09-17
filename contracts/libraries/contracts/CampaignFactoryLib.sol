@@ -96,7 +96,7 @@ library CampaignFactoryLib {
 
         require(userAddress == _userAddress, "user does not exist");
 
-        return (userAddress, false);
+        return (userAddress, verified);
     }
 
     /**
