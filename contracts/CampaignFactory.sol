@@ -108,7 +108,7 @@ contract CampaignFactory is
     address public campaignRewardsImplementation;
     address[] public tokenList;
     string[] public campaignTransactionConfigList;
-    mapping(string => bool) public approvedcampaignTransactionConfig;
+    mapping(string => bool) public approvedCampaignTransactionConfig;
     mapping(string => uint256) public campaignTransactionConfig;
     mapping(uint256 => uint256) public categoryCommission;
     mapping(address => bool) public tokenInList;
@@ -161,7 +161,6 @@ contract CampaignFactory is
     User[] public users;
     uint256 public userCount;
     mapping(address => uint256) public userID;
-    mapping(address => uint256) public approverTransferRequestCount;
 
     /// @dev `Featured`
     struct Featured {
@@ -210,6 +209,7 @@ contract CampaignFactory is
 
     /// @dev Ensures user is verifed
     modifier userIsVerified(address _user) {
+        require(users[userID[_user]].userAddress == _user, "user does not exist");
         require(users[userID[_user]].verified, "unverified user");
         _;
     }
@@ -226,7 +226,7 @@ contract CampaignFactory is
         root = msg.sender;
         factoryWallet = _wallet;
 
-        string[14] memory transactionConfigs = [
+        string[15] memory transactionConfigs = [
             "defaultCommission",
             "deadlineStrikesAllowed",
             "minimumContributionAllowed",
@@ -240,12 +240,13 @@ contract CampaignFactory is
             "minRequestDuration",
             "maxRequestDuration",
             "reviewThresholdMark",
-            "requestFinalizationThreshold"
+            "requestFinalizationThreshold",
+            "reportThresholdMark"
         ];
 
         for (uint256 index = 0; index < transactionConfigs.length; index++) {
             campaignTransactionConfigList.push(transactionConfigs[index]);
-            approvedcampaignTransactionConfig[transactionConfigs[index]] = true;
+            approvedCampaignTransactionConfig[transactionConfigs[index]] = true;
         }
 
         campaignTransactionConfig["defaultCommission"] = 0;
@@ -291,9 +292,9 @@ contract CampaignFactory is
         external
         onlyAdmin
     {
-        require(!approvedcampaignTransactionConfig[_prop]);
+        require(!approvedCampaignTransactionConfig[_prop]);
         campaignTransactionConfigList.push(_prop);
-        approvedcampaignTransactionConfig[_prop] = true;
+        approvedCampaignTransactionConfig[_prop] = true;
     }
 
     /**
@@ -305,7 +306,7 @@ contract CampaignFactory is
         external
         onlyAdmin
     {
-        require(approvedcampaignTransactionConfig[_prop]);
+        require(approvedCampaignTransactionConfig[_prop]);
         campaignTransactionConfig[_prop] = _value;
     }
 
@@ -361,7 +362,7 @@ contract CampaignFactory is
     /**
      * @dev        Removes a token from the list of accepted tokens and tokens in list
      * @param      _tokenId      ID of the token
-     * @param      _token   Address of the token
+     * @param      _token        Address of the token
      */
     function removeToken(uint256 _tokenId, address _token) external onlyAdmin {
         require(tokenInList[_token]);

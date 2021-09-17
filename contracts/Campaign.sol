@@ -167,6 +167,9 @@ contract Campaign is
     address public root;
     address public acceptedToken;
     bool public allowContributionAfterTargetIsMet;
+    bool public withdrawalsPaused;
+    uint8 private percentBase;
+    uint256 private percent;
     uint256 public campaignID;
     uint256 public totalCampaignContribution;
     uint256 public campaignBalance;
@@ -177,13 +180,11 @@ contract Campaign is
     uint256 public deadlineSetTimes;
     uint256 public finalizedRequestCount;
     uint256 public currentRunningRequest;
-    bool public withdrawalsPaused;
+    uint256 public reportCount;
     mapping(address => bool) public approvers;
     mapping(address => uint256) public userTotalContribution;
     mapping(address => bool) public userContributionWithdrawn;
-
-    uint8 private percentBase;
-    uint256 private percent;
+    mapping(address => bool) public reported;
 
     /// @dev Ensures caller is only factory
     modifier onlyFactory() {
@@ -233,7 +234,7 @@ contract Campaign is
                 campaignFactoryContract,
                 msg.sender
             )
-        ) require(!campaignIsApproved, "campaign approved");
+        ) require(!campaignIsApproved, "approved");
 
         _;
     }
@@ -245,7 +246,7 @@ contract Campaign is
             campaignFactoryContract,
             _user
         );
-        require(verified, "user not verified");
+        require(verified, "unverified");
         _;
     }
 
@@ -293,10 +294,9 @@ contract Campaign is
         whenNotPaused
         userIsVerified(_newRoot)
     {
-        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(DEFAULT_ADMIN_ROLE, _newRoot);
-
         root = _newRoot;
+        _setupRole(DEFAULT_ADMIN_ROLE, _newRoot);
+        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         emit CampaignOwnershipTransferred(campaignID, _newRoot, msg.sender);
     }
@@ -315,27 +315,25 @@ contract Campaign is
     {
         require(
             campaignState == CAMPAIGN_STATE.COLLECTION ||
-                campaignState == CAMPAIGN_STATE.LIVE,
-            "campaign must be in collection or live state"
+                campaignState == CAMPAIGN_STATE.LIVE
         );
+        require(approvers[_oldAddress]);
 
-        if (approvers[_oldAddress]) {
-            // transfer balance
-            userTotalContribution[_newAddress] = userTotalContribution[
-                _oldAddress
-            ];
-            userTotalContribution[_oldAddress] = 0;
+        // transfer balance
+        userTotalContribution[_newAddress] = userTotalContribution[
+            _oldAddress
+        ];
+        userTotalContribution[_oldAddress] = 0;
 
-            // transfer approver account
-            approvers[_oldAddress] = false;
-            approvers[_newAddress] = true;
+        // transfer approver account
+        approvers[_oldAddress] = false;
+        approvers[_newAddress] = true;
 
-            CampaignRewardLib._transferRewards(
-                campaignRewardContract,
-                _oldAddress,
-                _newAddress
-            );
-        }
+        CampaignRewardLib._transferRewards(
+            campaignRewardContract,
+            _oldAddress,
+            _newAddress
+        );
 
         emit CampaignUserDataTransferred(
             campaignID,
@@ -373,11 +371,11 @@ contract Campaign is
                     campaignFactoryContract,
                     "maximumContributionAllowed"
                 ),
-            "contribution too high or low"
+            "contribution deficit"
         );
         require(
             campaignFactoryContract.tokensApproved(_token),
-            "token not accepted"
+            "invalid token"
         );
         require(
             _target >=
@@ -390,7 +388,7 @@ contract Campaign is
                     campaignFactoryContract,
                     "maximumCampaignTarget"
                 ),
-            "target too high or low"
+            "target deficit"
         );
 
         target = _target;
@@ -442,7 +440,7 @@ contract Campaign is
                     campaignFactoryContract,
                     "minDeadlineExtension"
                 ),
-            "time too low or high"
+            "time deficit"
         ); // ensure time exceeds 7 days and less than a day
 
         deadline = block.timestamp.add(_time);
@@ -489,7 +487,7 @@ contract Campaign is
         // contrubution amount must be less than or equal to allowed value from factory
         require(block.timestamp <= deadline, "deadline expired");
         require(msg.sender != root, "root owner");
-        require(_token == acceptedToken, "token not accepted");
+        require(_token == acceptedToken, "invalid token");
         require(msg.value >= minimumContribution, "value too low");
         require(
             msg.value <=
@@ -554,7 +552,7 @@ contract Campaign is
         userIsVerified(msg.sender)
         nonReentrant
     {
-        require(!withdrawalsPaused, "withdrawals paused");
+        require(!withdrawalsPaused);
         _withdrawContribution(msg.sender, _wallet);
     }
 
@@ -569,7 +567,7 @@ contract Campaign is
         onlyFactory
         nonReentrant
     {
-        require(!withdrawalsPaused, "withdrawals paused");
+        require(!withdrawalsPaused);
         _withdrawContribution(_user, _wallet);
     }
 
@@ -578,7 +576,7 @@ contract Campaign is
      * @param      _user    Address of user check is carried out on
      */
     function userContributionLoss(address _user) public view returns (uint256) {
-        require(!userContributionWithdrawn[_user], "Already withdrawn balance");
+        require(!userContributionWithdrawn[_user], "balance withdrawn");
 
         // calculate % loss between totalCampaginContribution and campaginBalance
         DecimalMath.UFixed memory percentTakenSoFar = DecimalMath.muld(
@@ -605,9 +603,9 @@ contract Campaign is
     function _withdrawContribution(address _user, address _wallet) private {
         // if the campaign state is neither unsuccessful and in review and there are reviews
         // allow withdrawls
-        require(address(_wallet) != address(0), "zero address not allowed");
-        require(!userContributionWithdrawn[_user], "Already withdrawn balance");
-        require(approvers[_user], "not an approver");
+        require(address(_wallet) != address(0));
+        require(!userContributionWithdrawn[_user], "balance withdrawn");
+        require(approvers[_user], "non approver");
 
         if (
             campaignState != CAMPAIGN_STATE.UNSUCCESSFUL &&
@@ -681,10 +679,11 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(address(_recipient) != address(0), "zero address");
-        if (totalCampaignContribution < target) {
+        require(address(_recipient) != address(0));
+
+        if (totalCampaignContribution < target)
             require(block.timestamp >= deadline, "deadline not expired");
-        }
+        
         if (goalType == GOALTYPE.FIXED) {
             require(
                 totalCampaignContribution >= target &&
@@ -697,17 +696,13 @@ contract Campaign is
                 CampaignFactoryLib.getCampaignFactoryConfig(
                     campaignFactoryContract,
                     "minimumRequestAmountAllowed"
-                ),
-            "amount too low"
-        );
-        require(
-            _value <=
+                ) && _value <=
                 CampaignFactoryLib.getCampaignFactoryConfig(
                     campaignFactoryContract,
                     "maximumRequestAmountAllowed"
                 ),
-            "amount too high"
-        ); // ensure request above minimum
+            "amount deficit"
+        );
         require(
             _value <= campaignBalance,
             "request amount cannot be higher than campaign balance"
@@ -717,17 +712,13 @@ contract Campaign is
                 CampaignFactoryLib.getCampaignFactoryConfig(
                     campaignFactoryContract,
                     "minRequestDuration"
-                ),
-            "duration too low"
-        );
-        require(
-            _duration <=
+                ) && _duration <=
                 CampaignFactoryLib.getCampaignFactoryConfig(
                     campaignFactoryContract,
                     "maxRequestDuration"
                 ),
-            "duration too high"
-        ); // request duration should be within factory's specs
+            "duration deficit"
+        );
 
         // before creating a new request last request should be complete
         // applies if there's a request before
@@ -796,8 +787,8 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(approvers[msg.sender], "not an approver");
-        require(!hasVoted[_requestId][msg.sender], "already voted");
+        require(approvers[msg.sender], "non approver");
+        require(!hasVoted[_requestId][msg.sender], "voted");
         require(
             block.timestamp <= requests[_requestId].duration,
             "request expired"
@@ -835,12 +826,12 @@ contract Campaign is
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(approvers[msg.sender], "not an approver");
+        require(approvers[msg.sender], "non approver");
         require(
             block.timestamp <= requests[_requestId].duration,
             "request expired"
         );
-        require(hasVoted[_requestId][msg.sender], "not voted before");
+        require(hasVoted[_requestId][msg.sender], "vote first");
 
         hasVoted[_requestId][msg.sender] = false;
 
@@ -891,9 +882,9 @@ contract Campaign is
         require(
             percentOfRequestApprovals.value >=
                 requestFinalizationThreshold.mul(DecimalMath.UNIT),
-            "approvals too low"
+            "approval deficit"
         );
-        require(!request.complete, "already finalized");
+        require(!request.complete, "finalized");
 
         DecimalMath.UFixed memory factoryFee = DecimalMath.muld(
             DecimalMath.divd(
@@ -952,7 +943,7 @@ contract Campaign is
                 campaignState == CAMPAIGN_STATE.COLLECTION,
             "campaign not ongoing"
         );
-        require(finalizedRequestCount >= 1, "no finalized requests yet");
+        require(finalizedRequestCount >= 1, "no finalized requests");
         require(requests[currentRunningRequest].complete, "request ongoing");
 
         campaignState = CAMPAIGN_STATE.REVIEW;
@@ -970,10 +961,10 @@ contract Campaign is
     {
         require(
             campaignState == CAMPAIGN_STATE.REVIEW,
-            "campaign not in review"
+            "not in review"
         );
-        require(!reviewed[msg.sender], "already reviewed");
-        require(approvers[msg.sender], "not an approver");
+        require(!reviewed[msg.sender], "reviewed");
+        require(approvers[msg.sender], "non approver");
 
         reviewed[msg.sender] = true;
 
@@ -1000,7 +991,7 @@ contract Campaign is
         );
         require(
             campaignState == CAMPAIGN_STATE.REVIEW,
-            "campaign not in review"
+            "not in review"
         );
         require(
             percentOfApprovals.value >=
@@ -1010,7 +1001,7 @@ contract Campaign is
                         "reviewThresholdMark"
                     )
                     .mul(DecimalMath.UNIT),
-            "not enough reviews"
+            "review deficit"
         );
         campaignState = CAMPAIGN_STATE.COMPLETE;
 
@@ -1020,7 +1011,7 @@ contract Campaign is
             msg.sender
         );
     }
-
+    
     /// @dev Called by an approver to report a campaign to factory. Campaign must be in collection or live state
     function reportCampaign()
         external
@@ -1028,12 +1019,33 @@ contract Campaign is
         campaignIsActive
         whenNotPaused
     {
-        require(approvers[msg.sender], "not an approver");
+        require(requestCount >= 1, "no requests");
+        require(approvers[msg.sender], "non approver");
         require(
             campaignState == CAMPAIGN_STATE.COLLECTION ||
                 campaignState == CAMPAIGN_STATE.LIVE,
-            "campaign not in collection or live state"
+            "not in collection or live state"
         );
+        require(!reported[msg.sender], "reported");
+
+        reported[msg.sender] = true;
+        reportCount = reportCount.add(1);
+
+        DecimalMath.UFixed memory percentOfReports = DecimalMath.muld(
+            DecimalMath.divd(
+                DecimalMath.toUFixed(reportCount),
+                DecimalMath.toUFixed(approversCount)
+            ),
+            percent
+        );
+        
+        if (percentOfReports.value 
+            >= CampaignFactoryLib.getCampaignFactoryConfig(campaignFactoryContract, "reportThresholdMark").mul(DecimalMath.UNIT)
+        ) {
+            campaignState = CAMPAIGN_STATE.UNSUCCESSFUL;
+            _pause();
+        }
+
         emit CampaignReported(campaignID, msg.sender);
     }
 

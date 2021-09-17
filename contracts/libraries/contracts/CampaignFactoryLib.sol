@@ -94,7 +94,9 @@ library CampaignFactoryLib {
             _factory.userID(_userAddress)
         );
 
-        return (userAddress, verified);
+        require(userAddress == _userAddress, "user does not exist");
+
+        return (userAddress, false);
     }
 
     /**
