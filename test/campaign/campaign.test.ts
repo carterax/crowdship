@@ -1463,7 +1463,7 @@ contract(
       };
       await this.approvedCampaignSetup(config);
       await this.campaignInstance.contribute(this.testToken.address, 0, false, {
-        from: this.addr1,
+        from: this.root,
         value: 20000,
       });
       await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
@@ -1471,7 +1471,7 @@ contract(
       });
       await expectRevert(
         this.campaignInstance.voteOnRequest(0, 1, {
-          from: this.addr3,
+          from: this.addr1,
         }),
         'non approver'
       );
@@ -1540,7 +1540,7 @@ contract(
       };
       await this.approvedCampaignSetup(config);
       await this.campaignInstance.contribute(this.testToken.address, 0, false, {
-        from: this.addr1,
+        from: this.root,
         value: 20000,
       });
       await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
@@ -1548,7 +1548,7 @@ contract(
       });
       await expectRevert(
         this.campaignInstance.cancelVote(0, {
-          from: this.addr3,
+          from: this.addr1,
         }),
         'non approver'
       );
@@ -1888,14 +1888,14 @@ contract(
       };
       await this.approvedCampaignSetup(config);
       await this.campaignInstance.contribute(this.testToken.address, 0, false, {
-        from: this.addr1,
+        from: this.root,
         value: 20000,
       });
       await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
         from: this.campaignOwner,
       });
       await this.campaignInstance.voteOnRequest(0, 1, {
-        from: this.addr1,
+        from: this.root,
       });
       await this.campaignInstance.finalizeRequest(0, {
         from: this.campaignOwner,
@@ -1904,7 +1904,7 @@ contract(
 
       await expectRevert(
         this.campaignInstance.reviewCampaignPerformance({
-          from: this.addr3,
+          from: this.addr1,
         }),
         'non approver'
       );
