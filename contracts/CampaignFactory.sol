@@ -218,7 +218,11 @@ contract CampaignFactory is
      * @dev        Contructor
      * @param      _wallet     Address where all revenue gets deposited
      */
-    function __CampaignFactory_init(address payable _wallet, Campaign _campaignImplementation, CampaignRewards _campaignRewardsImplementation)
+    function __CampaignFactory_init(
+        address payable _wallet, 
+        Campaign _campaignImplementation, 
+        CampaignRewards _campaignRewardsImplementation
+    )
         public
         initializer
     {
