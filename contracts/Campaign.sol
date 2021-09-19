@@ -255,7 +255,12 @@ contract Campaign is
      * @param      _campaignFactory     Address of factory
      * @param      _root                Address of campaign owner
      */
-    function __Campaign_init(CampaignFactory _campaignFactory, address _root)
+    function __Campaign_init(
+        CampaignFactory _campaignFactory,
+        CampaignRewards _camaignRewards, 
+        address _root,
+        uint256 _campaignId
+    )
         public
         initializer
     {
@@ -265,17 +270,11 @@ contract Campaign is
         campaignFactoryContract = CampaignFactoryInterface(
             address(_campaignFactory)
         );
-
-        address campaignRewardAddress;
-        (, campaignRewardAddress, , , ) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            campaignID
-        );
-        campaignRewardContract = CampaignRewardInterface(campaignRewardAddress);
-
+        campaignRewardContract = CampaignRewardInterface(address(_camaignRewards));
+        
         root = _root;
         campaignState = CAMPAIGN_STATE.GENESIS;
-        campaignID = campaignFactoryContract.campaignToID(address(this));
+        campaignID = _campaignId;
         percentBase = 100;
         percent = percentBase.mul(DecimalMath.UNIT);
 

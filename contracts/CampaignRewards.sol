@@ -157,6 +157,7 @@ contract CampaignRewards is Initializable, AccessControl {
      */
     function __CampaignRewards_init(
         CampaignFactory _campaignFactory,
+        Campaign _campaign,
         address _campaignOwner,
         uint256 _campaignId
     ) public initializer {
@@ -164,16 +165,11 @@ contract CampaignRewards is Initializable, AccessControl {
 
         _setupRole(DEFAULT_ADMIN_ROLE, _campaignOwner);
 
-        address campaignAddress;
-
         campaignFactoryContract = CampaignFactoryInterface(
             address(_campaignFactory)
         );
-        (campaignAddress, , , , ) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            _campaignId
-        );
-        campaignContract = CampaignInterface(address(campaignAddress));
+        campaignContract = CampaignInterface(address(_campaign));
+
         campaignID = _campaignId;
         root = _campaignOwner;
 

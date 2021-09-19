@@ -14,6 +14,7 @@
     "ganache": "ganache-cli -d > /dev/null &"
   },
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.5.0",
     "ganache-cli": "^6.12.2",
     "solidity-docgen": "^0.5.13",
     "truffle": "^5.3.9",

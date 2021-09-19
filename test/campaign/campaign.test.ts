@@ -40,9 +40,14 @@ contract(
 
       // factory setup
       this.factory = await Factory.new();
-      await this.factory.__CampaignFactory_init(this.factoryWallet, {
-        from: this.root,
-      });
+      await this.factory.__CampaignFactory_init(
+        this.factoryWallet,
+        this.campaignImplementation.address,
+        this.campaignRewardsImplementation.address,
+        {
+          from: this.root,
+        }
+      );
 
       this.factorySettings = {
         deadlineStrikesAllowed: 3,

@@ -1,3 +1,6 @@
+require('ts-node').register({
+  files: true,
+});
 /**
  * Use this file to configure your truffle project. It's seeded with some
  * common settings for different networks and features like migrations,
@@ -18,15 +21,12 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-// const infuraKey = "fj4jll3k.....";
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const infuraKey =
+  'https://rinkeby.infura.io/v3/7cee4db403f04a00bd932c078238b09d';
 //
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
-
-require('ts-node').register({
-  files: true,
-});
+const fs = require('fs');
+const mnemonic = fs.readFileSync('.secret').toString().trim();
 
 module.exports = {
   /**
@@ -50,6 +50,12 @@ module.exports = {
       host: '127.0.0.1', // Localhost (default: none)
       port: 8545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
+    },
+    rinkeby: {
+      provider: function () {
+        return new HDWalletProvider(mnemonic, infuraKey);
+      },
+      network_id: 4,
     },
     // bsc: {
     //   provider: () =>

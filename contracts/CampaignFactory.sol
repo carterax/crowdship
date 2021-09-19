@@ -218,7 +218,7 @@ contract CampaignFactory is
      * @dev        Contructor
      * @param      _wallet     Address where all revenue gets deposited
      */
-    function __CampaignFactory_init(address payable _wallet)
+    function __CampaignFactory_init(address payable _wallet, Campaign _campaignImplementation, CampaignRewards _campaignRewardsImplementation)
         public
         initializer
     {
@@ -244,12 +244,32 @@ contract CampaignFactory is
             "reportThresholdMark"
         ];
 
+        uint24[15] memory defaultTransactionConfigValues = [
+            2, // defaultCommission
+            3, // deadlineStrikesAllowed
+            1, // minimumContributionAllowed
+            10000, // maximumContributionAllowed
+            1000, // minimumRequestAmountAllowed
+            5000, // maximumRequestAmountAllowed
+            5000, // minimumCampaignTarget
+            1000000, // maximumCampaignTarget
+            604800, // maxDeadlineExtension
+            86400, // minDeadlineExtension
+            86400, // minRequestDuration
+            604800, // maxRequestDuration
+            80, // reviewThresholdMark
+            51, // requestFinalizationThreshold
+            51 // reportThresholdMark
+        ];
+
         for (uint256 index = 0; index < transactionConfigs.length; index++) {
             campaignTransactionConfigList.push(transactionConfigs[index]);
             approvedCampaignTransactionConfig[transactionConfigs[index]] = true;
+            campaignTransactionConfig[transactionConfigs[index]] = defaultTransactionConfigValues[index];
         }
 
-        campaignTransactionConfig["defaultCommission"] = 0;
+        campaignImplementation = address(_campaignImplementation);
+        campaignRewardsImplementation = address(_campaignRewardsImplementation);
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
         _setupRole(MANAGE_CATEGORIES, root);
@@ -527,9 +547,15 @@ contract CampaignFactory is
         ].campaignCount.add(1);
         campaignCount = campaignCount.add(1);
 
-        Campaign(campaign).__Campaign_init(CampaignFactory(this), msg.sender);
+        Campaign(campaign).__Campaign_init(
+            CampaignFactory(this), 
+            CampaignRewards(campaignRewards), 
+            msg.sender, 
+            campaignId
+        );
         CampaignRewards(campaignRewards).__CampaignRewards_init(
             CampaignFactory(this),
+            Campaign(campaign),
             msg.sender,
             campaignId
         );

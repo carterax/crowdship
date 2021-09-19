@@ -321,15 +321,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   MANAGE_USERS(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-  approvedcampaignTransactionConfig(
+  approvedCampaignTransactionConfig(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
-
-  approverTransferRequestCount(
-    arg0: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
 
   campaignCategories(
     arg0: number | BN | string,
@@ -559,19 +554,28 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * @param _wallet Address where all revenue gets deposited
    */
   __CampaignFactory_init: {
-    (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
-      Truffle.TransactionResponse<AllEvents>
-    >;
+    (
+      _wallet: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _wallet: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _wallet: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _wallet: string,
+      _campaignImplementation: string,
+      _campaignRewardsImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1312,15 +1316,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     MANAGE_USERS(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-    approvedcampaignTransactionConfig(
+    approvedCampaignTransactionConfig(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
-
-    approverTransferRequestCount(
-      arg0: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
 
     campaignCategories(
       arg0: number | BN | string,
@@ -1550,19 +1549,28 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * @param _wallet Address where all revenue gets deposited
      */
     __CampaignFactory_init: {
-      (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
-        Truffle.TransactionResponse<AllEvents>
-      >;
+      (
+        _wallet: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _wallet: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _wallet: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _wallet: string,
+        _campaignImplementation: string,
+        _campaignRewardsImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

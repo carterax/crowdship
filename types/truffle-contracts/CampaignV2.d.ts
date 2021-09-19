@@ -5,8 +5,9 @@
 import BN from "bn.js";
 import { EventData, PastEventOptions } from "web3-eth-contract";
 
-export interface CampaignContract extends Truffle.Contract<CampaignInstance> {
-  "new"(meta?: Truffle.TransactionDetails): Promise<CampaignInstance>;
+export interface CampaignV2Contract
+  extends Truffle.Contract<CampaignV2Instance> {
+  "new"(meta?: Truffle.TransactionDetails): Promise<CampaignV2Instance>;
 }
 
 export interface CampaignDeadlineExtended {
@@ -292,7 +293,7 @@ type AllEvents =
   | VoteCancelled
   | Voted;
 
-export interface CampaignInstance extends Truffle.ContractInstance {
+export interface CampaignV2Instance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
   acceptedToken(txDetails?: Truffle.TransactionDetails): Promise<string>;

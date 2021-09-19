@@ -1,4 +1,3 @@
-// migrations/2_deploy_upgradeable_campaign_factory.js
 export {};
 const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
@@ -7,10 +6,17 @@ const Campaign = artifacts.require('Campaign');
 const CampaignRewards = artifacts.require('CampaignRewards');
 const TestToken = artifacts.require('TestToken');
 
-module.exports = async function(deployer) {
+module.exports = async function (deployer) {
+  const campaignImplementation = await Campaign.new();
+  const campaignRewardsImplementation = await CampaignRewards.new();
+
   const factory = await deployProxy(
     CampaignFactory,
-    ['0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1'],
+    [
+      '0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1',
+      campaignImplementation.address,
+      campaignRewardsImplementation.address,
+    ],
     { deployer, initializer: '__CampaignFactory_init' }
   );
 
@@ -21,7 +27,12 @@ module.exports = async function(deployer) {
 
   await deployProxy(
     Campaign,
-    [factory.address, '0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e'],
+    [
+      factory.address,
+      campaignRewardsImplementation.address,
+      '0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e',
+      0,
+    ],
     {
       deployer,
       initializer: '__Campaign_init',
@@ -30,7 +41,12 @@ module.exports = async function(deployer) {
 
   await deployProxy(
     CampaignRewards,
-    [factory.address, '0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e', 0],
+    [
+      factory.address,
+      campaignImplementation.address,
+      '0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e',
+      0,
+    ],
     { deployer, initializer: '__CampaignRewards_init' }
   );
 };

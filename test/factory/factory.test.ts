@@ -29,6 +29,7 @@ contract(
       this.factory = await Factory.new();
       this.testToken = await TestToken.new();
       this.campaign = await Campaign.new();
+      this.campaignRewards = await CampaignRewards.new();
       this.owner = owner;
       this.factoryWallet = factoryWallet;
       this.addr1 = addr1;
@@ -36,9 +37,14 @@ contract(
       this.addr3 = addr3;
       this.addr4 = addr4;
 
-      await this.factory.__CampaignFactory_init(this.factoryWallet, {
-        from: this.owner,
-      });
+      await this.factory.__CampaignFactory_init(
+        this.factoryWallet,
+        this.campaign.address,
+        this.campaignRewards.address,
+        {
+          from: this.owner,
+        }
+      );
 
       await this.testToken.__TestToken_init('Test Token', 'TT', {
         from: this.owner,

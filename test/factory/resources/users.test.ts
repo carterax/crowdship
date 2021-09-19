@@ -3,11 +3,11 @@ const { expect } = require('chai');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { web3 } = require('@openzeppelin/test-helpers/src/setup');
 
-module.exports = function() {
+module.exports = function () {
   /* -------------------------------------------------------------------------- */
   /*                                   signUp                                   */
   /* -------------------------------------------------------------------------- */
-  it('user can signup', async function() {
+  it('user can signup', async function () {
     const receipt = await this.factory.signUp({
       from: this.addr3,
     });
@@ -24,13 +24,14 @@ module.exports = function() {
 
     expectEvent(receipt, 'UserAdded', {
       userId: new BN(userId),
+      sender: this.addr3,
     });
   });
-  it('sign up should fail if factory is paused', async function() {
+  it('sign up should fail if factory is paused', async function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.signUp({ from: this.addr3 }));
   });
-  it('sign up should work if factory is unpaused', async function() {
+  it('sign up should work if factory is unpaused', async function () {
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
     await this.factory.signUp({ from: this.addr3 });
@@ -42,7 +43,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                                  userCount                                 */
   /* -------------------------------------------------------------------------- */
-  it('should return total amount of users', async function() {
+  it('should return total amount of users', async function () {
     const users = await this.factory.userCount();
     expect(new BN(users)).to.be.bignumber.equal(new BN('3'));
   });
@@ -50,7 +51,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                             toggleUserApproval                             */
   /* -------------------------------------------------------------------------- */
-  it('address with role can approve and disapprove user', async function() {
+  it('address with role can approve and disapprove user', async function () {
     const MANAGE_USERS = await this.factory.MANAGE_USERS();
     const userId = await this.factory.userID(this.addr2);
     let receipt;
@@ -63,6 +64,7 @@ module.exports = function() {
     expectEvent(receipt, 'UserApproval', {
       userId: new BN(userId),
       approval: true,
+      sender: this.addr1,
     });
     expect((await this.factory.users(userId)).verified).to.equal(true);
 
@@ -72,21 +74,22 @@ module.exports = function() {
     expectEvent(receipt, 'UserApproval', {
       userId: new BN(userId),
       approval: false,
+      sender: this.addr1,
     });
     expect((await this.factory.users(userId)).verified).to.equal(false);
   });
-  it('address without role cannot approve user', async function() {
+  it('address without role cannot approve user', async function () {
     const userId = await this.factory.userID(this.addr2);
 
     await expectRevert.unspecified(
       this.factory.toggleUserApproval(userId, true, { from: this.addr1 })
     );
   });
-  it('user approval should fail if factory is paused', async function() {
+  it('user approval should fail if factory is paused', async function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.toggleUserApproval(1, true));
   });
-  it('user approval should work if factory is unpaused', async function() {
+  it('user approval should work if factory is unpaused', async function () {
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
     await this.factory.toggleUserApproval(1, true);
@@ -96,27 +99,30 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                                 destroyUser                                */
   /* -------------------------------------------------------------------------- */
-  it('manager with role can delete user', async function() {
+  it('manager with role can delete user', async function () {
     const receipt = await this.factory.destroyUser(2),
       user = await this.factory.users(2);
 
     expect((await this.factory.users(2)).exists).to.equal(false);
     expect((await this.factory.users(2)).verified).to.equal(false);
 
-    expectEvent(receipt, 'UserRemoved', { userId: new BN('2') });
+    expectEvent(receipt, 'UserRemoved', {
+      userId: new BN('2'),
+      sender: this.owner,
+    });
   });
-  it('user without role cannot delete user', async function() {
+  it('user without role cannot delete user', async function () {
     await expectRevert.unspecified(
       this.factory.destroyUser(0, { from: this.addr3 })
     );
     expect((await this.factory.users(0)).exists).to.equal(true);
     expect((await this.factory.users(0)).verified).to.equal(true);
   });
-  it('user destruction should fail if factory is paused', async function() {
+  it('user destruction should fail if factory is paused', async function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.destroyUser(0));
   });
-  it('user destruction should work if factory is unpaused', async function() {
+  it('user destruction should work if factory is unpaused', async function () {
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
     await this.factory.destroyUser(1);
