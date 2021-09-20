@@ -24,4 +24,3 @@ coverageEnv
 # sidelined
 campaign-ignore.sol
 factory-ignore.sol
-.secret

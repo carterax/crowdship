@@ -23,8 +23,9 @@ require('ts-node').register({
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const infuraKey =
-  'https://rinkeby.infura.io/v3/7cee4db403f04a00bd932c078238b09d';
-//
+  'wss://eth-rinkeby.alchemyapi.io/v2/q3qRm39vjgHKA8XWvsKZ5CvzKCkRF09o';
+// 'wss://rinkeby.infura.io/ws/v3/7cee4db403f04a00bd932c078238b09d';
+
 const fs = require('fs');
 const mnemonic = fs.readFileSync('.secret').toString().trim();
 
@@ -53,23 +54,32 @@ module.exports = {
     },
     rinkeby: {
       provider: function () {
-        return new HDWalletProvider(mnemonic, infuraKey);
+        return new HDWalletProvider(
+          mnemonic,
+          'wss://rinkeby.infura.io/ws/v3/7cee4db403f04a00bd932c078238b09d'
+        );
       },
       network_id: 4,
+      gasPrice: 15000000001,
+      skipDryRun: true,
+      from: '0x6b9238Ca0a223b6Ac6DFB2BFbC1bC80E013D94eF',
     },
     // bsc: {
     //   provider: () =>
     //     new HDWalletProvider(mnemonic, 'https://bsc-dataseed.binance.org'),
     //   network_id: 56,
     // },
-    // 'bsc-testnet': {
-    //   provider: () =>
-    //     new HDWalletProvider(
-    //       mnemonic,
-    //       'https://data-seed-prebsc-1-s1.binance.org:8545'
-    //     ),
-    //   network_id: 97,
-    // },
+    'bsc-testnet': {
+      provider: () =>
+        new HDWalletProvider(
+          mnemonic,
+          `https://data-seed-prebsc-1-s1.binance.org:8545`
+        ),
+      network_id: 97,
+      confirmations: 10,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port

@@ -316,24 +316,28 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
   __CampaignRewards_init: {
     (
       _campaignFactory: string,
+      _campaign: string,
       _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _campaignFactory: string,
+      _campaign: string,
       _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _campaignFactory: string,
+      _campaign: string,
       _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _campaignFactory: string,
+      _campaign: string,
       _campaignOwner: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -742,24 +746,28 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
     __CampaignRewards_init: {
       (
         _campaignFactory: string,
+        _campaign: string,
         _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _campaignFactory: string,
+        _campaign: string,
         _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _campaignFactory: string,
+        _campaign: string,
         _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _campaignFactory: string,
+        _campaign: string,
         _campaignOwner: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails

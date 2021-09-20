@@ -32,6 +32,9 @@ jobs:
       - name: Start Ganache
         run: |
           npm run ganache
+      - name: Contract Migrations
+        run: |
+          npx truffle migrate --network bsc-testnet
       - name: Update Test Coverage
         run: |
           npm run coverage
