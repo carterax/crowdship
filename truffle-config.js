@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 require('ts-node').register({
   files: true,
 });
@@ -22,12 +24,8 @@ require('ts-node').register({
  */
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-const infuraKey =
-  'wss://eth-rinkeby.alchemyapi.io/v2/q3qRm39vjgHKA8XWvsKZ5CvzKCkRF09o';
-// 'wss://rinkeby.infura.io/ws/v3/7cee4db403f04a00bd932c078238b09d';
 
-const fs = require('fs');
-const mnemonic = fs.readFileSync('.secret').toString().trim();
+const mnemonic = process.env.MNEMONIC;
 
 module.exports = {
   /**
@@ -56,13 +54,12 @@ module.exports = {
       provider: function () {
         return new HDWalletProvider(
           mnemonic,
-          'wss://rinkeby.infura.io/ws/v3/7cee4db403f04a00bd932c078238b09d'
+          `wss://rinkeby.infura.io/ws/v3/${process.env.INFURA_KEY}`
         );
       },
       network_id: 4,
-      gasPrice: 15000000001,
+      gasPrice: 10e9,
       skipDryRun: true,
-      from: '0x6b9238Ca0a223b6Ac6DFB2BFbC1bC80E013D94eF',
     },
     // bsc: {
     //   provider: () =>
@@ -73,7 +70,7 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(
           mnemonic,
-          `https://data-seed-prebsc-1-s1.binance.org:8545`
+          `https://data-seed-prebsc-2-s3.binance.org:8545`
         ),
       network_id: 97,
       confirmations: 10,

@@ -37,13 +37,14 @@ contract(
       this.addr3 = addr3;
       this.addr4 = addr4;
 
-      await this.factory.__CampaignFactory_init(
-        this.factoryWallet,
+      await this.factory.__CampaignFactory_init(this.factoryWallet, {
+        from: this.owner,
+      });
+
+      await this.factory.setFactoryConfig(
+        otherFactoryWallet,
         this.campaign.address,
-        this.campaignRewards.address,
-        {
-          from: this.owner,
-        }
+        this.campaignRewards.address
       );
 
       await this.testToken.__TestToken_init('Test Token', 'TT', {

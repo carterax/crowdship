@@ -40,13 +40,14 @@ contract(
 
       // factory setup
       this.factory = await Factory.new();
-      await this.factory.__CampaignFactory_init(
+      await this.factory.__CampaignFactory_init(this.factoryWallet, {
+        from: this.root,
+      });
+
+      await this.factory.setFactoryConfig(
         this.factoryWallet,
         this.campaignImplementation.address,
-        this.campaignRewardsImplementation.address,
-        {
-          from: this.root,
-        }
+        this.campaignRewardsImplementation.address
       );
 
       this.factorySettings = {

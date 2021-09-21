@@ -9,6 +9,31 @@
       "address": "0x5aa8097225d2D18f295106D85FD1A17Dfb240C21",
       "txHash": "0x203ec8102992a37ab4882fe7b683af68dd9829d06ea3cd4ac4898a564a827e44",
       "kind": "transparent"
+    },
+    {
+      "address": "0xaa54BdFBA18B392711C230dD7b321D515d7E802A",
+      "txHash": "0xd0042323eb809210b821607a1b0064508c4df0c98b5c83af306ddbaeeeb7e191",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x800B0A45c570b30959e57217A875A14003c70Ace",
+      "txHash": "0x2eb7189bb853f27d3d2550fc50527976fe4436f7685ad74fac25fa9428610b72",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xcEab0945b9c99c5d8F86085392d0009c7650537a",
+      "txHash": "0x4916d922b2dcdd4539272af75f57debb954cfbd0566a5797d854e276846cb24e",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x0F4D109f5d61CA45660c1EF024edCC750eb96F3e",
+      "txHash": "0x34727af5dcbc65ce6bdf615db37b117fe93cd415f19a0c56d6663318d2309c13",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x176C79eFB80f6E4618a2E6E2F5b82AA13F3f9543",
+      "txHash": "0x73efd81020d38f891dc522b99d91e3b50d79c2b35bd90edd873adfd3c14abacf",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -425,6 +450,1007 @@
             "label": "bytes32"
           },
           "t_struct(RoleData)6795_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "ab17760281dd02453f72134e87a581de7a9a9f5e9fa6b8088bb1a13bd9f47291": {
+      "address": "0xB00B993218d5484dF767C2C8a2BbbDdbB131Deca",
+      "txHash": "0x31d475b6f6197a11b71847528c820ff0eb299bb8b5168f8c98b4bbab592ed3e8",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:35"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)6795_storage)",
+            "src": "../@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:73"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:252"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:28"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:96"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "../@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:37"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:67"
+          },
+          {
+            "contract": "Campaign",
+            "label": "goalType",
+            "type": "t_enum(GOALTYPE)37",
+            "src": "Campaign.sol:38"
+          },
+          {
+            "contract": "Campaign",
+            "label": "campaignState",
+            "type": "t_enum(CAMPAIGN_STATE)47",
+            "src": "Campaign.sol:48"
+          },
+          {
+            "contract": "Campaign",
+            "label": "campaignFactoryContract",
+            "type": "t_contract(CampaignFactoryInterface)5453",
+            "src": "Campaign.sol:144"
+          },
+          {
+            "contract": "Campaign",
+            "label": "campaignRewardContract",
+            "type": "t_contract(CampaignRewardInterface)5352",
+            "src": "Campaign.sol:145"
+          },
+          {
+            "contract": "Campaign",
+            "label": "requestSupport",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint8))",
+            "src": "Campaign.sol:158"
+          },
+          {
+            "contract": "Campaign",
+            "label": "hasVoted",
+            "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
+            "src": "Campaign.sol:159"
+          },
+          {
+            "contract": "Campaign",
+            "label": "requests",
+            "type": "t_array(t_struct(Request)226_storage)dyn_storage",
+            "src": "Campaign.sol:160"
+          },
+          {
+            "contract": "Campaign",
+            "label": "requestCount",
+            "type": "t_uint256",
+            "src": "Campaign.sol:161"
+          },
+          {
+            "contract": "Campaign",
+            "label": "reviewCount",
+            "type": "t_uint256",
+            "src": "Campaign.sol:164"
+          },
+          {
+            "contract": "Campaign",
+            "label": "reviewed",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "Campaign.sol:165"
+          },
+          {
+            "contract": "Campaign",
+            "label": "root",
+            "type": "t_address",
+            "src": "Campaign.sol:167"
+          },
+          {
+            "contract": "Campaign",
+            "label": "acceptedToken",
+            "type": "t_address",
+            "src": "Campaign.sol:168"
+          },
+          {
+            "contract": "Campaign",
+            "label": "allowContributionAfterTargetIsMet",
+            "type": "t_bool",
+            "src": "Campaign.sol:169"
+          },
+          {
+            "contract": "Campaign",
+            "label": "withdrawalsPaused",
+            "type": "t_bool",
+            "src": "Campaign.sol:170"
+          },
+          {
+            "contract": "Campaign",
+            "label": "percentBase",
+            "type": "t_uint8",
+            "src": "Campaign.sol:171"
+          },
+          {
+            "contract": "Campaign",
+            "label": "percent",
+            "type": "t_uint256",
+            "src": "Campaign.sol:172"
+          },
+          {
+            "contract": "Campaign",
+            "label": "campaignID",
+            "type": "t_uint256",
+            "src": "Campaign.sol:173"
+          },
+          {
+            "contract": "Campaign",
+            "label": "totalCampaignContribution",
+            "type": "t_uint256",
+            "src": "Campaign.sol:174"
+          },
+          {
+            "contract": "Campaign",
+            "label": "campaignBalance",
+            "type": "t_uint256",
+            "src": "Campaign.sol:175"
+          },
+          {
+            "contract": "Campaign",
+            "label": "minimumContribution",
+            "type": "t_uint256",
+            "src": "Campaign.sol:176"
+          },
+          {
+            "contract": "Campaign",
+            "label": "approversCount",
+            "type": "t_uint256",
+            "src": "Campaign.sol:177"
+          },
+          {
+            "contract": "Campaign",
+            "label": "target",
+            "type": "t_uint256",
+            "src": "Campaign.sol:178"
+          },
+          {
+            "contract": "Campaign",
+            "label": "deadline",
+            "type": "t_uint256",
+            "src": "Campaign.sol:179"
+          },
+          {
+            "contract": "Campaign",
+            "label": "deadlineSetTimes",
+            "type": "t_uint256",
+            "src": "Campaign.sol:180"
+          },
+          {
+            "contract": "Campaign",
+            "label": "finalizedRequestCount",
+            "type": "t_uint256",
+            "src": "Campaign.sol:181"
+          },
+          {
+            "contract": "Campaign",
+            "label": "currentRunningRequest",
+            "type": "t_uint256",
+            "src": "Campaign.sol:182"
+          },
+          {
+            "contract": "Campaign",
+            "label": "reportCount",
+            "type": "t_uint256",
+            "src": "Campaign.sol:183"
+          },
+          {
+            "contract": "Campaign",
+            "label": "approvers",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "Campaign.sol:184"
+          },
+          {
+            "contract": "Campaign",
+            "label": "userTotalContribution",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "Campaign.sol:185"
+          },
+          {
+            "contract": "Campaign",
+            "label": "userContributionWithdrawn",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "Campaign.sol:186"
+          },
+          {
+            "contract": "Campaign",
+            "label": "reported",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "Campaign.sol:187"
+          }
+        ],
+        "types": {
+          "t_enum(GOALTYPE)37": {
+            "label": "enum Campaign.GOALTYPE",
+            "members": [
+              "FIXED",
+              "FLEXIBLE"
+            ]
+          },
+          "t_enum(CAMPAIGN_STATE)47": {
+            "label": "enum Campaign.CAMPAIGN_STATE",
+            "members": [
+              "GENESIS",
+              "COLLECTION",
+              "LIVE",
+              "REVIEW",
+              "COMPLETE",
+              "UNSUCCESSFUL"
+            ]
+          },
+          "t_contract(CampaignFactoryInterface)5453": {
+            "label": "contract CampaignFactoryInterface"
+          },
+          "t_contract(CampaignRewardInterface)5352": {
+            "label": "contract CampaignRewardInterface"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_uint8))": {
+            "label": "mapping(uint256 => mapping(address => uint8))"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_uint8)": {
+            "label": "mapping(address => uint8)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_bool))": {
+            "label": "mapping(uint256 => mapping(address => bool))"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_struct(Request)226_storage)dyn_storage": {
+            "label": "struct Campaign.Request[]"
+          },
+          "t_struct(Request)226_storage": {
+            "label": "struct Campaign.Request",
+            "members": [
+              {
+                "label": "recipient",
+                "type": "t_address_payable"
+              },
+              {
+                "label": "complete",
+                "type": "t_bool"
+              },
+              {
+                "label": "value",
+                "type": "t_uint256"
+              },
+              {
+                "label": "approvalCount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "againstCount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "abstainedCount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "duration",
+                "type": "t_uint256"
+              },
+              {
+                "label": "void",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_address_payable": {
+            "label": "address payable"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)6795_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)6795_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "e5903337f4bf4e28e534ff9a2e18c60a51cb073d209b646965a5e8c29b087cc6": {
+      "address": "0x7Ce38a2318a666004400F319EC6462a7A22900e9",
+      "txHash": "0x0f0cdc1b435e323e6649fb6b53409be19cb3fa376977e41019d952144aa65da2",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:35"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)6795_storage)",
+            "src": "../@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:73"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:252"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "campaignFactoryContract",
+            "type": "t_contract(CampaignFactoryInterface)5453",
+            "src": "CampaignRewards.sol:78"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "campaignContract",
+            "type": "t_contract(CampaignInterface)5328",
+            "src": "CampaignRewards.sol:79"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "root",
+            "type": "t_address",
+            "src": "CampaignRewards.sol:81"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "campaignID",
+            "type": "t_uint256",
+            "src": "CampaignRewards.sol:82"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "rewards",
+            "type": "t_array(t_struct(Reward)4458_storage)dyn_storage",
+            "src": "CampaignRewards.sol:92"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "rewardToRewardRecipientCount",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "CampaignRewards.sol:93"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "rewardRecipients",
+            "type": "t_array(t_struct(RewardRecipient)4475_storage)dyn_storage",
+            "src": "CampaignRewards.sol:102"
+          },
+          {
+            "contract": "CampaignRewards",
+            "label": "userRewardCount",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "CampaignRewards.sol:103"
+          }
+        ],
+        "types": {
+          "t_contract(CampaignFactoryInterface)5453": {
+            "label": "contract CampaignFactoryInterface"
+          },
+          "t_contract(CampaignInterface)5328": {
+            "label": "contract CampaignInterface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_struct(Reward)4458_storage)dyn_storage": {
+            "label": "struct CampaignRewards.Reward[]"
+          },
+          "t_struct(Reward)4458_storage": {
+            "label": "struct CampaignRewards.Reward",
+            "members": [
+              {
+                "label": "value",
+                "type": "t_uint256"
+              },
+              {
+                "label": "deliveryDate",
+                "type": "t_uint256"
+              },
+              {
+                "label": "stock",
+                "type": "t_uint256"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool"
+              },
+              {
+                "label": "active",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_struct(RewardRecipient)4475_storage)dyn_storage": {
+            "label": "struct CampaignRewards.RewardRecipient[]"
+          },
+          "t_struct(RewardRecipient)4475_storage": {
+            "label": "struct CampaignRewards.RewardRecipient",
+            "members": [
+              {
+                "label": "rewardId",
+                "type": "t_uint256"
+              },
+              {
+                "label": "user",
+                "type": "t_address"
+              },
+              {
+                "label": "deliveryConfirmedByCampaign",
+                "type": "t_bool"
+              },
+              {
+                "label": "deliveryConfirmedByUser",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)6795_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)6795_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "8f98f20c1eeab37743a2fd5eb758fd2606ae106b5ba170006c69d5fc5ee87e5f": {
+      "address": "0x7968e425beDF3A2ca128EF0617DEF078ff7E1677",
+      "txHash": "0x8e8995f1d9c739669b52ec0df498411feb7b4758c0be430924c163cdff5fbdb3",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:35"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)6775_storage)",
+            "src": "../@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:73"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:252"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:28"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:96"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "../@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:37"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:67"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "root",
+            "type": "t_address",
+            "src": "CampaignFactory.sol:105"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "factoryWallet",
+            "type": "t_address_payable",
+            "src": "CampaignFactory.sol:106"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignImplementation",
+            "type": "t_address",
+            "src": "CampaignFactory.sol:107"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignRewardsImplementation",
+            "type": "t_address",
+            "src": "CampaignFactory.sol:108"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "tokenList",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "CampaignFactory.sol:109"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignTransactionConfigList",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "src": "CampaignFactory.sol:110"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "approvedCampaignTransactionConfig",
+            "type": "t_mapping(t_string_memory_ptr,t_bool)",
+            "src": "CampaignFactory.sol:111"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignTransactionConfig",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "CampaignFactory.sol:112"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "categoryCommission",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "CampaignFactory.sol:113"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "tokenInList",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "CampaignFactory.sol:114"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "tokensApproved",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "CampaignFactory.sol:115"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "factoryRevenue",
+            "type": "t_uint256",
+            "src": "CampaignFactory.sol:118"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignRevenueFromCommissions",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "CampaignFactory.sol:119"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignRevenueFromFeatures",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "CampaignFactory.sol:120"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "deployedCampaigns",
+            "type": "t_array(t_struct(CampaignInfo)2565_storage)dyn_storage",
+            "src": "CampaignFactory.sol:135"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignCount",
+            "type": "t_uint256",
+            "src": "CampaignFactory.sol:136"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignToOwner",
+            "type": "t_mapping(t_address,t_address)",
+            "src": "CampaignFactory.sol:137"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignToID",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "CampaignFactory.sol:138"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "featuredCampaignIsPaused",
+            "type": "t_mapping(t_uint256,t_bool)",
+            "src": "CampaignFactory.sol:139"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "pausedFeaturedCampaignTimeLeft",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "CampaignFactory.sol:140"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "campaignCategories",
+            "type": "t_array(t_struct(CampaignCategory)2598_storage)dyn_storage",
+            "src": "CampaignFactory.sol:150"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "categoryCount",
+            "type": "t_uint256",
+            "src": "CampaignFactory.sol:151"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "users",
+            "type": "t_array(t_struct(User)2615_storage)dyn_storage",
+            "src": "CampaignFactory.sol:161"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "userCount",
+            "type": "t_uint256",
+            "src": "CampaignFactory.sol:162"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "userID",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "CampaignFactory.sol:163"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "featurePackages",
+            "type": "t_array(t_struct(Featured)2636_storage)dyn_storage",
+            "src": "CampaignFactory.sol:173"
+          },
+          {
+            "contract": "CampaignFactory",
+            "label": "featurePackageCount",
+            "type": "t_uint256",
+            "src": "CampaignFactory.sol:174"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_address_payable": {
+            "label": "address payable"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_array(t_string_storage)dyn_storage": {
+            "label": "string[]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_mapping(t_string_memory_ptr,t_bool)": {
+            "label": "mapping(string => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_array(t_struct(CampaignInfo)2565_storage)dyn_storage": {
+            "label": "struct CampaignFactory.CampaignInfo[]"
+          },
+          "t_struct(CampaignInfo)2565_storage": {
+            "label": "struct CampaignFactory.CampaignInfo",
+            "members": [
+              {
+                "label": "campaign",
+                "type": "t_address"
+              },
+              {
+                "label": "campaignRewards",
+                "type": "t_address"
+              },
+              {
+                "label": "owner",
+                "type": "t_address"
+              },
+              {
+                "label": "createdAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "updatedAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "category",
+                "type": "t_uint256"
+              },
+              {
+                "label": "featureFor",
+                "type": "t_uint256"
+              },
+              {
+                "label": "active",
+                "type": "t_bool"
+              },
+              {
+                "label": "approved",
+                "type": "t_bool"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)"
+          },
+          "t_array(t_struct(CampaignCategory)2598_storage)dyn_storage": {
+            "label": "struct CampaignFactory.CampaignCategory[]"
+          },
+          "t_struct(CampaignCategory)2598_storage": {
+            "label": "struct CampaignFactory.CampaignCategory",
+            "members": [
+              {
+                "label": "campaignCount",
+                "type": "t_uint256"
+              },
+              {
+                "label": "createdAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "updatedAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "active",
+                "type": "t_bool"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_array(t_struct(User)2615_storage)dyn_storage": {
+            "label": "struct CampaignFactory.User[]"
+          },
+          "t_struct(User)2615_storage": {
+            "label": "struct CampaignFactory.User",
+            "members": [
+              {
+                "label": "userAddress",
+                "type": "t_address"
+              },
+              {
+                "label": "joined",
+                "type": "t_uint256"
+              },
+              {
+                "label": "updatedAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "verified",
+                "type": "t_bool"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_array(t_struct(Featured)2636_storage)dyn_storage": {
+            "label": "struct CampaignFactory.Featured[]"
+          },
+          "t_struct(Featured)2636_storage": {
+            "label": "struct CampaignFactory.Featured",
+            "members": [
+              {
+                "label": "createdAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "updatedAt",
+                "type": "t_uint256"
+              },
+              {
+                "label": "time",
+                "type": "t_uint256"
+              },
+              {
+                "label": "cost",
+                "type": "t_uint256"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool"
+              }
+            ]
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)6775_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)6775_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",
             "members": [
               {

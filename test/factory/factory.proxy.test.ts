@@ -13,17 +13,9 @@ contract('Factory (proxy)', function ([root, factoryWallet]) {
     this.campaignImplementation = await Campaign.new();
     this.campaignRewardsImplementation = await CampaignRewards.new();
 
-    this.factory = await deployProxy(
-      Factory,
-      [
-        factoryWallet,
-        this.campaignImplementation.address,
-        this.campaignRewardsImplementation.address,
-      ],
-      {
-        initializer: '__CampaignFactory_init',
-      }
-    );
+    this.factory = await deployProxy(Factory, [factoryWallet], {
+      initializer: '__CampaignFactory_init',
+    });
   });
 
   it('root and factory wallet should be initialized', async function () {
@@ -85,14 +77,14 @@ contract('Factory (proxy)', function ([root, factoryWallet]) {
     ).to.be.bignumber.equal(new BN('51'));
   });
 
-  it('implementation address for Campaign and CampaignRewards should be initialized', async function () {
-    expect(await this.factory.campaignImplementation()).to.equal(
-      this.campaignImplementation.address
-    );
-    expect(await this.factory.campaignRewardsImplementation()).to.equal(
-      this.campaignRewardsImplementation.address
-    );
-  });
+  // it('implementation address for Campaign and CampaignRewards should be initialized', async function () {
+  //   expect(await this.factory.campaignImplementation()).to.equal(
+  //     this.campaignImplementation.address
+  //   );
+  //   expect(await this.factory.campaignRewardsImplementation()).to.equal(
+  //     this.campaignRewardsImplementation.address
+  //   );
+  // });
 
   it('should initialize default roles', async function () {
     const DEFAULT_ADMIN_ROLE = await this.factory.DEFAULT_ADMIN_ROLE();

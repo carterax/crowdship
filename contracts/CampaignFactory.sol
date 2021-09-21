@@ -209,7 +209,10 @@ contract CampaignFactory is
 
     /// @dev Ensures user is verifed
     modifier userIsVerified(address _user) {
-        require(users[userID[_user]].userAddress == _user, "user does not exist");
+        require(
+            users[userID[_user]].userAddress == _user,
+            "user does not exist"
+        );
         require(users[userID[_user]].verified, "unverified user");
         _;
     }
@@ -218,11 +221,7 @@ contract CampaignFactory is
      * @dev        Contructor
      * @param      _wallet     Address where all revenue gets deposited
      */
-    function __CampaignFactory_init(
-        address payable _wallet, 
-        Campaign _campaignImplementation, 
-        CampaignRewards _campaignRewardsImplementation
-    )
+    function __CampaignFactory_init(address payable _wallet)
         public
         initializer
     {
@@ -269,11 +268,10 @@ contract CampaignFactory is
         for (uint256 index = 0; index < transactionConfigs.length; index++) {
             campaignTransactionConfigList.push(transactionConfigs[index]);
             approvedCampaignTransactionConfig[transactionConfigs[index]] = true;
-            campaignTransactionConfig[transactionConfigs[index]] = defaultTransactionConfigValues[index];
+            campaignTransactionConfig[
+                transactionConfigs[index]
+            ] = defaultTransactionConfigValues[index];
         }
-
-        campaignImplementation = address(_campaignImplementation);
-        campaignRewardsImplementation = address(_campaignRewardsImplementation);
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
         _setupRole(MANAGE_CATEGORIES, root);
@@ -552,9 +550,9 @@ contract CampaignFactory is
         campaignCount = campaignCount.add(1);
 
         Campaign(campaign).__Campaign_init(
-            CampaignFactory(this), 
-            CampaignRewards(campaignRewards), 
-            msg.sender, 
+            CampaignFactory(this),
+            CampaignRewards(campaignRewards),
+            msg.sender,
             campaignId
         );
         CampaignRewards(campaignRewards).__CampaignRewards_init(
