@@ -69,7 +69,7 @@ contract CampaignFactory is
     event TokenRemoved(uint256 indexed tokenId, address token, address sender);
 
     /// @dev `User Events`
-    event UserAdded(uint256 indexed userId, address userAddress);
+    event UserAdded(uint256 indexed userId, address sender);
     event UserModified(uint256 indexed userId, address sender);
     event UserApproval(uint256 indexed userId, bool approval, address sender);
     event UserRemoved(uint256 indexed userId, address sender);

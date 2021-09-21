@@ -44,12 +44,6 @@ contract(
         from: this.root,
       });
 
-      await this.factory.setFactoryConfig(
-        this.factoryWallet,
-        this.campaignImplementation.address,
-        this.campaignRewardsImplementation.address
-      );
-
       this.factorySettings = {
         deadlineStrikesAllowed: 3,
         maxDeadlineExtension: 604800,

@@ -132,7 +132,7 @@ contract(
       );
       expect(
         await this.factory.campaignTransactionConfig('defaultCommission')
-      ).to.be.bignumber.equal(new BN('0'));
+      ).to.be.bignumber.equal(new BN('2'));
       expect(
         await this.factory.campaignTransactionConfig('minimumCampaignTarget')
       ).to.be.bignumber.equal(new BN('5000'));
