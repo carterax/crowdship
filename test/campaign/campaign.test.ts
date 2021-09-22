@@ -21,7 +21,7 @@ interface CampaignSetupConfig {
 
 contract(
   'Campaign',
-  function ([campaignOwner, root, factoryWallet, addr1, addr2, addr3]) {
+  function ([campaignOwner, root, factoryWallet, addr1, addr2, addr3, addr4]) {
     beforeEach(async function () {
       this.root = root;
       this.campaignOwner = campaignOwner;
@@ -29,6 +29,7 @@ contract(
       this.addr1 = addr1;
       this.addr2 = addr2;
       this.addr3 = addr3;
+      this.addr4 = addr4;
       this.campaignImplementation = await Campaign.new();
       this.campaignRewardsImplementation = await CampaignRewards.new();
 
@@ -92,10 +93,18 @@ contract(
       await this.factory.signUp({
         from: this.addr2,
       });
+      await this.factory.signUp({
+        from: this.addr3,
+      });
+      await this.factory.signUp({
+        from: this.addr4,
+      });
       await this.factory.toggleUserApproval(0, true, { from: this.root });
       await this.factory.toggleUserApproval(1, true, { from: this.root });
       await this.factory.toggleUserApproval(2, true, { from: this.root });
       await this.factory.toggleUserApproval(3, true, { from: this.root });
+      await this.factory.toggleUserApproval(4, true, { from: this.root });
+      await this.factory.toggleUserApproval(5, true, { from: this.root });
       await this.factory.createCampaign(0, {
         from: this.campaignOwner,
       });
@@ -126,6 +135,22 @@ contract(
         { from: this.addr2 }
       );
       await this.testToken.transfer(this.addr2, 100000, {
+        from: this.root,
+      });
+      await this.testToken.increaseAllowance(
+        this.campaignInstance.address,
+        100000,
+        { from: this.addr3 }
+      );
+      await this.testToken.transfer(this.addr3, 100000, {
+        from: this.root,
+      });
+      await this.testToken.increaseAllowance(
+        this.campaignInstance.address,
+        100000,
+        { from: this.addr4 }
+      );
+      await this.testToken.transfer(this.addr4, 100000, {
         from: this.root,
       });
       await this.testToken.increaseAllowance(
@@ -1590,7 +1615,23 @@ contract(
       await this.approvedCampaignSetup(config);
       await this.campaignInstance.contribute(this.testToken.address, 0, false, {
         from: this.addr1,
-        value: 20000,
+        value: 7000,
+      });
+      await this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.addr2,
+        value: 7000,
+      });
+      await this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.addr3,
+        value: 7000,
+      });
+      await this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.addr4,
+        value: 7000,
+      });
+      await this.campaignInstance.contribute(this.testToken.address, 0, false, {
+        from: this.root,
+        value: 7000,
       });
       await this.campaignInstance.createRequest(this.addr3, 500, 86400, {
         from: this.campaignOwner,
@@ -1598,22 +1639,37 @@ contract(
       await this.campaignInstance.voteOnRequest(0, 1, {
         from: this.addr1,
       });
+      await this.campaignInstance.voteOnRequest(0, 1, {
+        from: this.addr2,
+      });
+      await this.campaignInstance.voteOnRequest(0, 2, {
+        from: this.addr3,
+      });
+      await this.campaignInstance.voteOnRequest(0, 0, {
+        from: this.root,
+      });
+      await this.campaignInstance.voteOnRequest(0, 1, {
+        from: this.addr4,
+      });
 
       const receipt = await this.campaignInstance.finalizeRequest(0, {
         from: this.campaignOwner,
       });
       const request = await this.campaignInstance.requests(0);
 
+      expect(request.approvalCount).to.be.bignumber.equal(new BN('3'));
+      expect(request.abstainedCount).to.be.bignumber.equal(new BN('1'));
+      expect(request.againstCount).to.be.bignumber.equal(new BN('1'));
       expect(request.complete).to.be.equal(true);
       expect(
         await this.campaignInstance.finalizedRequestCount()
       ).to.be.bignumber.equal(new BN('1'));
       expect(
         await this.campaignInstance.campaignBalance()
-      ).to.be.bignumber.equal(new BN('19500'));
+      ).to.be.bignumber.equal(new BN('34500'));
       expect(
         await this.campaignInstance.totalCampaignContribution()
-      ).to.be.bignumber.equal(new BN('20000'));
+      ).to.be.bignumber.equal(new BN('35000'));
       expectEvent(receipt, 'RequestComplete', {
         requestId: new BN('0'),
         campaignId: new BN(this.campaignID),
