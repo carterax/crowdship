@@ -21,7 +21,16 @@ interface CampaignSetupConfig {
 
 contract(
   'Campaign',
-  function ([campaignOwner, root, factoryWallet, addr1, addr2, addr3, addr4]) {
+  function ([
+    campaignOwner,
+    root,
+    factoryWallet,
+    addr1,
+    addr2,
+    addr3,
+    addr4,
+    addr5,
+  ]) {
     beforeEach(async function () {
       this.root = root;
       this.campaignOwner = campaignOwner;
@@ -30,6 +39,7 @@ contract(
       this.addr2 = addr2;
       this.addr3 = addr3;
       this.addr4 = addr4;
+      this.addr5 = addr5;
       this.campaignImplementation = await Campaign.new();
       this.campaignRewardsImplementation = await CampaignRewards.new();
 
@@ -254,7 +264,7 @@ contract(
     it('campaign ownership transfer should fail if the new address does not exist', async function () {
       await this.campaignInstance.unpauseCampaign({ from: this.root });
       await expectRevert(
-        this.campaignInstance.transferCampaignOwnership(this.addr3, {
+        this.campaignInstance.transferCampaignOwnership(this.addr5, {
           from: this.campaignOwner,
         }),
         'user does not exist'
