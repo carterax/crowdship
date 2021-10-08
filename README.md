@@ -29,8 +29,6 @@ To work on the contracts locally there are a few requirements
 - [Node.js v12+](https://nodejs.org/en/)
 - [Ganache](https://www.npmjs.com/package/ganache-cli)
 
-## Installation 🚀
-
 In the terminal, clone https://github.com/carterax/crowdship and install dependencies
 
 ```sh
@@ -45,7 +43,7 @@ Compile and generate the contracts
 npm run postinstall
 ```
 
-## Deploying to Ganache
+#### Deploying to Ganache
 
 After `npm run migrate` take note of the contract addresses returned in the terminal
 
@@ -54,9 +52,9 @@ ganache-cli --deterministic
 npm run migrate
 ```
 
-### Interacting with the contracts on ganache
+#### Interacting with the contracts on ganache
 
-This opens up truffle console on the default development network; Open the console on rinkeby [scroll to scripts](https://github.com/carterax/crowdship#scripts).
+This opens up truffle console on the default development network; Open the console on rinkeby [scroll to scripts](https://github.com/carterax/crowdship#scripts-).
 
 ```sh
 npm run truffle-console
@@ -64,7 +62,7 @@ factory = await Factory.at("0x00") //replace 0x00 with your contract address
 deployedCampaignCount = await factory.deployedCampaignCount()
 ```
 
-## Deploying to [Remix](http://remix.ethereum.org/)
+### Deploying to [Remix](http://remix.ethereum.org/)
 
 Make sure you have [Metamask](https://metamask.io/) installed and setup
 
