@@ -1,9 +1,10 @@
-// contracts/interfaces/FactoryInterface.sol
+// contracts/interfaces/CampaignFactoryInterface.sol
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
 abstract contract CampaignFactoryInterface {
     address public root;
+    address public campaignFactoryAddress;
     address payable public factoryWallet;
 
     mapping(string => uint256) public campaignTransactionConfig;

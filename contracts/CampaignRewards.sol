@@ -1,5 +1,5 @@
 // contracts/CampaignRewards.sol
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -10,7 +10,7 @@ import "./CampaignFactory.sol";
 import "./Campaign.sol";
 
 import "./utils/AccessControl.sol";
-import "./interfaces/FactoryInterface.sol";
+import "./interfaces/CampaignFactoryInterface.sol";
 import "./libraries/contracts/CampaignFactoryLib.sol";
 import "./interfaces/CampaignInterface.sol";
 import "./libraries/contracts/CampaignLib.sol";
@@ -20,7 +20,7 @@ contract CampaignRewards is Initializable, AccessControl {
 
     /// @dev `Initializer Event`
     event CampaignRewardOwnerSet(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         address owner,
         address sender
     );
@@ -28,7 +28,7 @@ contract CampaignRewards is Initializable, AccessControl {
     /// @dev `Reward Events`
     event RewardCreated(
         uint256 indexed rewardId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         uint256 value,
         uint256 deliveryDate,
         uint256 stock,
@@ -37,7 +37,7 @@ contract CampaignRewards is Initializable, AccessControl {
     );
     event RewardModified(
         uint256 indexed rewardId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         uint256 value,
         uint256 deliveryDate,
         uint256 stock,
@@ -46,39 +46,41 @@ contract CampaignRewards is Initializable, AccessControl {
     );
     event RewardStockIncreased(
         uint256 indexed rewardId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         uint256 count,
         address sender
     );
     event RewardDestroyed(
         uint256 indexed rewardId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         address sender
     );
 
     /// @dev `Rward Recipient Events`
     event RewardRecipientAdded(
         uint256 indexed rewardId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         uint256 amount,
         address sender
     );
     event RewarderApproval(
         uint256 indexed rewardRecipientId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         bool status,
         address sender
     );
     event RewardRecipientApproval(
         uint256 indexed rewardRecipientId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         address sender
     );
 
-    CampaignFactoryInterface private campaignFactoryContract;
-    CampaignInterface private campaignContract;
+    CampaignFactoryInterface public campaignFactoryContract;
+    CampaignInterface public campaignContract;
 
     address public root;
+    address public campaignRewardAddress;
+    Campaign public campaign;
     uint256 public campaignID;
 
     /// @dev `Reward`
@@ -101,29 +103,6 @@ contract CampaignRewards is Initializable, AccessControl {
     }
     RewardRecipient[] public rewardRecipients;
     mapping(address => uint256) public userRewardCount; // number of rewards owned by a user
-
-    /// @dev Ensures caller is factory or campaign owner
-    modifier adminOrFactory() {
-        require(
-            CampaignFactoryLib.canManageCampaigns(
-                campaignFactoryContract,
-                msg.sender
-            ) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "admin or factory"
-        );
-        _;
-    }
-
-    /// @dev Ensures the campaign is set to active by campaign owner and approved by factory
-    modifier campaignIsActive() {
-        bool campaignIsApproved;
-        bool campaignIsEnabled;
-        (, , , campaignIsApproved, campaignIsEnabled) = CampaignFactoryLib
-            .campaignInfo(campaignFactoryContract, campaignID);
-
-        require(campaignIsApproved && campaignIsEnabled, "campaign active");
-        _;
-    }
 
     /// @dev Ensures a user is verified
     modifier userIsVerified(address _user) {
@@ -171,9 +150,11 @@ contract CampaignRewards is Initializable, AccessControl {
         campaignContract = CampaignInterface(address(_campaign));
 
         campaignID = _campaignId;
+        campaign = _campaign;
         root = _campaignOwner;
+        campaignRewardAddress = address(this);
 
-        emit CampaignRewardOwnerSet(_campaignId, root, msg.sender);
+        emit CampaignRewardOwnerSet(_campaign, root, msg.sender);
     }
 
     /**
@@ -188,7 +169,7 @@ contract CampaignRewards is Initializable, AccessControl {
         uint256 _deliveryDate,
         uint256 _stock,
         bool _active
-    ) external adminOrFactory userIsVerified(msg.sender) {
+    ) external onlyAdmin userIsVerified(msg.sender) {
         require(
             _value >
                 CampaignFactoryLib.getCampaignFactoryConfig(
@@ -209,7 +190,7 @@ contract CampaignRewards is Initializable, AccessControl {
 
         emit RewardCreated(
             rewards.length.sub(1),
-            campaignID,
+            campaign,
             _value,
             _deliveryDate,
             _stock,
@@ -240,7 +221,7 @@ contract CampaignRewards is Initializable, AccessControl {
             _rewardId
         ].add(1);
 
-        emit RewardRecipientAdded(_rewardId, campaignID, _amount, _user);
+        emit RewardRecipientAdded(_rewardId, campaign, _amount, _user);
     }
 
     /**
@@ -257,7 +238,7 @@ contract CampaignRewards is Initializable, AccessControl {
         uint256 _deliveryDate,
         uint256 _stock,
         bool _active
-    ) external adminOrFactory userIsVerified(msg.sender) {
+    ) external onlyAdmin userIsVerified(msg.sender) {
         /**
          * To modify a reward:
          * check reward has no backers
@@ -289,7 +270,7 @@ contract CampaignRewards is Initializable, AccessControl {
 
         emit RewardModified(
             _rewardId,
-            campaignID,
+            campaign,
             _value,
             _deliveryDate,
             _stock,
@@ -305,13 +286,13 @@ contract CampaignRewards is Initializable, AccessControl {
      */
     function increaseRewardStock(uint256 _rewardId, uint256 _count)
         external
-        adminOrFactory
+        onlyAdmin
         userIsVerified(msg.sender)
     {
         require(rewards[_rewardId].exists, "not found");
         rewards[_rewardId].stock = rewards[_rewardId].stock.add(_count);
 
-        emit RewardStockIncreased(_rewardId, campaignID, _count, msg.sender);
+        emit RewardStockIncreased(_rewardId, campaign, _count, msg.sender);
     }
 
     /**
@@ -320,7 +301,7 @@ contract CampaignRewards is Initializable, AccessControl {
      */
     function destroyReward(uint256 _rewardId)
         external
-        adminOrFactory
+        onlyAdmin
         userIsVerified(msg.sender)
     {
         // check reward has no backers
@@ -329,7 +310,7 @@ contract CampaignRewards is Initializable, AccessControl {
 
         delete rewards[_rewardId];
 
-        emit RewardDestroyed(_rewardId, campaignID, msg.sender);
+        emit RewardDestroyed(_rewardId, campaign, msg.sender);
     }
 
     /**
@@ -339,9 +320,8 @@ contract CampaignRewards is Initializable, AccessControl {
      */
     function campaignSentReward(uint256 _rewardRecipientId, bool _status)
         external
-        campaignIsActive
         userIsVerified(msg.sender)
-        adminOrFactory
+        onlyAdmin
     {
         require(
             rewardToRewardRecipientCount[
@@ -353,7 +333,7 @@ contract CampaignRewards is Initializable, AccessControl {
             .deliveryConfirmedByCampaign = _status;
         emit RewarderApproval(
             _rewardRecipientId,
-            campaignID,
+            campaign,
             _status,
             msg.sender
         );
@@ -365,7 +345,6 @@ contract CampaignRewards is Initializable, AccessControl {
      */
     function userReceivedCampaignReward(uint256 _rewardRecipientId)
         external
-        campaignIsActive
         userIsVerified(msg.sender)
     {
         require(
@@ -390,7 +369,7 @@ contract CampaignRewards is Initializable, AccessControl {
         rewardRecipients[_rewardRecipientId].deliveryConfirmedByUser = true;
         emit RewardRecipientApproval(
             _rewardRecipientId,
-            campaignID,
+            campaign,
             msg.sender
         );
     }

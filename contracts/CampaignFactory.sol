@@ -1,5 +1,5 @@
 // contracts/CampaignFactory.sol
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -27,10 +27,20 @@ contract CampaignFactory is
     bytes32 public constant MANAGE_CATEGORIES = keccak256("MANAGE CATEGORIES");
     bytes32 public constant MANAGE_CAMPAIGNS = keccak256("MANAGE CAMPAIGNS");
     bytes32 public constant MANAGE_USERS = keccak256("MANAGE USERS");
+    
+    /// @dev `Factory Config Events`
+    event CampaignFactoryCreated(address indexed campaignFactory, address owner, address factoryWallet);
+    event FactoryConfigUpdated(address factoryWallet, address campaignImplementation, address campaignRewardsImplementation);
+    event CategoryCommissionUpdated(uint256 indexed categoryId, uint256 commission);
+    event CampaignDefaultCommissionUpdated(uint256 commission);
+    event CampaignTransactionConfigUpdated(string prop, uint256 value);
 
     /// @dev `Campaign Events`
     event CampaignDeployed(
         uint256 indexed campaignId,
+        address factory,
+        address campaign,
+        address campaignRewards,
         uint256 userId,
         uint256 category,
         address sender
@@ -70,7 +80,6 @@ contract CampaignFactory is
 
     /// @dev `User Events`
     event UserAdded(uint256 indexed userId, address sender);
-    event UserModified(uint256 indexed userId, address sender);
     event UserApproval(uint256 indexed userId, bool approval, address sender);
     event UserRemoved(uint256 indexed userId, address sender);
 
@@ -103,6 +112,7 @@ contract CampaignFactory is
 
     /// @dev Settings
     address public root;
+    address public campaignFactoryAddress;
     address payable public factoryWallet;
     address public campaignImplementation;
     address public campaignRewardsImplementation;
@@ -173,13 +183,9 @@ contract CampaignFactory is
     Featured[] public featurePackages;
     uint256 public featurePackageCount;
 
-    /// @dev Ensures caller is campaign owner or campaign manager
-    modifier campaignOwnerOrManager(uint256 _campaignId) {
-        require(
-            deployedCampaigns[_campaignId].owner == msg.sender ||
-                hasRole(MANAGE_CAMPAIGNS, msg.sender),
-            "campaign owner or manager"
-        );
+    /// @dev Ensures caller is campaign owner alone
+    modifier campaignOwner(uint256 _campaignId) {
+        require(deployedCampaigns[_campaignId].owner == msg.sender, "only campaign owner");
         _;
     }
 
@@ -221,13 +227,14 @@ contract CampaignFactory is
      * @dev        Contructor
      * @param      _wallet     Address where all revenue gets deposited
      */
-    function __CampaignFactory_init(address payable _wallet)
+    function __CampaignFactory_init(address payable _wallet, address _root)
         public
         initializer
     {
         require(address(_wallet) != address(0));
-        root = msg.sender;
+        root = _root;
         factoryWallet = _wallet;
+        campaignFactoryAddress = address(this);
 
         string[15] memory transactionConfigs = [
             "defaultCommission",
@@ -304,6 +311,8 @@ contract CampaignFactory is
         factoryWallet = _wallet;
         campaignImplementation = address(_campaignImplementation);
         campaignRewardsImplementation = address(_campaignRewardsImplementation);
+
+        emit FactoryConfigUpdated(_wallet, address(_campaignImplementation), address(_campaignRewardsImplementation));
     }
 
     /**
@@ -330,6 +339,8 @@ contract CampaignFactory is
     {
         require(approvedCampaignTransactionConfig[_prop]);
         campaignTransactionConfig[_prop] = _value;
+
+        emit CampaignTransactionConfigUpdated(_prop, _value);
     }
 
     /**
@@ -346,6 +357,8 @@ contract CampaignFactory is
             DecimalMath.toUFixed(_denominator)
         );
         campaignTransactionConfig["defaultCommission"] = _commission.value;
+        
+        emit CampaignDefaultCommissionUpdated(_commission.value);
     }
 
     /**
@@ -366,6 +379,8 @@ contract CampaignFactory is
             DecimalMath.toUFixed(_denominator)
         );
         categoryCommission[_categoryId] = _commission.value;
+
+        emit CategoryCommissionUpdated(_categoryId, _commission.value);
     }
 
     /**
@@ -409,33 +424,6 @@ contract CampaignFactory is
         tokensApproved[_token] = _state;
 
         emit TokenApproval(_token, _state, msg.sender);
-    }
-
-    /**
-     * @dev        Add an account to the role. Restricted to admins.
-     * @param      _account Address of user being assigned role
-     * @param      _role   Role being assigned
-     */
-    function addRole(address _account, bytes32 _role) public virtual onlyAdmin {
-        grantRole(_role, _account);
-    }
-
-    /**
-     * @dev        Remove an account from the role. Restricted to admins.
-     * @param      _account Address of user whose role is being removed
-     * @param      _role   Role being removed
-     */
-    function removeRole(address _account, bytes32 _role)
-        public
-        virtual
-        onlyAdmin
-    {
-        revokeRole(_role, _account);
-    }
-
-    /// @dev Remove oneself from the admin role.
-    function renounceAdmin() public virtual {
-        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /**
@@ -564,6 +552,9 @@ contract CampaignFactory is
 
         emit CampaignDeployed(
             campaignId,
+            address(this),
+            address(campaign),
+            address(campaignRewards),
             userID[msg.sender],
             _categoryId,
             msg.sender
@@ -588,6 +579,19 @@ contract CampaignFactory is
     }
 
     /**
+     * @dev        Disables an approved campaign. Restricted to campaign owners
+     * @param      _campaignId    ID of the campaign
+     */
+    function disableCampaignApproval(uint _campaignId) external campaignOwner(_campaignId) {
+        require(deployedCampaigns[_campaignId].approved, "campaign not approved");
+
+        deployedCampaigns[_campaignId].approved = false;
+        deployedCampaigns[_campaignId].updatedAt = block.timestamp;
+
+        emit CampaignApproval(_campaignId, false, msg.sender);
+    }
+
+    /**
      * @dev        Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory
      * @param      _campaignId    ID of the campaign
      * @param      _active      Indicates if the campaign will be active or not.  Affects campaign listing and transactions
@@ -595,7 +599,7 @@ contract CampaignFactory is
     function toggleCampaignActive(uint256 _campaignId, bool _active)
         external
         userIsVerified(msg.sender)
-        campaignOwnerOrManager(_campaignId)
+        campaignOwner(_campaignId)
         campaignExists(_campaignId)
         whenNotPaused
     {
@@ -626,7 +630,7 @@ contract CampaignFactory is
     function modifyCampaignCategory(uint256 _campaignId, uint256 _newCategoryId)
         external
         userIsVerified(msg.sender)
-        campaignOwnerOrManager(_campaignId)
+        campaignOwner(_campaignId)
         campaignExists(_campaignId)
         whenNotPaused
     {
@@ -656,7 +660,7 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Purchases time for which the specified campaign will be featured. Restricted to
+     * @dev        Purchases time for which the specified campaign will be featured.
      * @param      _campaignId    ID of the campaign
      * @param      _token         Address of token used to purchase feature package
      */
@@ -667,13 +671,14 @@ contract CampaignFactory is
     )
         external
         payable
-        campaignOwnerOrManager(_campaignId)
+        campaignOwner(_campaignId)
         campaignExists(_campaignId)
         campaignIsEnabled(_campaignId)
         userIsVerified(msg.sender)
         whenNotPaused
         nonReentrant
     {
+        require(deployedCampaigns[_campaignId].approved, "campaign not approved");
         require(tokensApproved[_token], "disapproved token");
         require(featurePackages[_featurePackageId].exists, "package not found");
         require(
@@ -720,14 +725,14 @@ contract CampaignFactory is
      */
     function pauseCampaignFeatured(uint256 _campaignId)
         external
-        campaignOwnerOrManager(_campaignId)
+        campaignOwner(_campaignId)
         campaignExists(_campaignId)
         userIsVerified(msg.sender)
         whenNotPaused
     {
         require(
             deployedCampaigns[_campaignId].featureFor >= block.timestamp,
-            "campaign feature expired"
+            "campaign feature expired or not eligible"
         ); // check time in campaign feature hasn't expired
         require(
             !featuredCampaignIsPaused[_campaignId],
@@ -750,7 +755,7 @@ contract CampaignFactory is
      */
     function unpauseCampaignFeatured(uint256 _campaignId)
         external
-        campaignOwnerOrManager(_campaignId)
+        campaignOwner(_campaignId)
         campaignExists(_campaignId)
         userIsVerified(msg.sender)
         whenNotPaused

@@ -114,10 +114,14 @@ export interface ContributionMade {
   args: {
     campaignId: BN;
     amount: BN;
+    rewardId: BN;
+    withReward: boolean;
     sender: string;
     0: BN;
     1: BN;
-    2: string;
+    2: BN;
+    3: boolean;
+    4: string;
   };
 }
 

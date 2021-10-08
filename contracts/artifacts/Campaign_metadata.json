@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.4+commit.c7e474f2"
+		"version": "0.8.0+commit.c7dfd78e"
 	},
 	"language": "Solidity",
 	"output": {
@@ -10,15 +10,21 @@
 				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
 						"name": "time",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignDeadlineExtended",
@@ -29,9 +35,97 @@
 				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "CampaignOwnerSet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "newUser",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "CampaignOwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "CampaignReported",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "CampaignReviewed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
@@ -56,76 +150,37 @@
 						"internalType": "address",
 						"name": "token",
 						"type": "address"
-					}
-				],
-				"name": "CampaignDetailsModified",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "goalType",
-						"type": "uint256"
-					}
-				],
-				"name": "CampaignGoalTypeChange",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					}
-				],
-				"name": "CampaignIDset",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
 					},
 					{
 						"indexed": false,
 						"internalType": "address",
-						"name": "user",
+						"name": "sender",
 						"type": "address"
 					}
 				],
-				"name": "CampaignReported",
+				"name": "CampaignSettingsUpdated",
 				"type": "event"
 			},
 			{
 				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "enum Campaign.CAMPAIGN_STATE",
 						"name": "state",
 						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignStateChange",
@@ -136,21 +191,64 @@
 				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
-						"name": "userId",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "oldAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "newAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "CampaignUserDataTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
 						"name": "amount",
 						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "rewardId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "withReward",
+						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "ContributionMade",
@@ -161,21 +259,27 @@
 				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "userId",
-						"type": "uint256"
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
 						"name": "amount",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "ContributionWithdrawn",
@@ -204,15 +308,21 @@
 						"type": "uint256"
 					},
 					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
 						"name": "duration",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
 						"type": "uint256"
 					},
 					{
@@ -223,9 +333,9 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
-						"name": "value",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "RequestAdded",
@@ -241,10 +351,16 @@
 						"type": "uint256"
 					},
 					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
 						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "RequestComplete",
@@ -256,153 +372,23 @@
 					{
 						"indexed": true,
 						"internalType": "uint256",
-						"name": "rewardId",
+						"name": "requestId",
 						"type": "uint256"
 					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "value",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "deliveryDate",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "stock",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "bool",
-						"name": "active",
-						"type": "bool"
-					}
-				],
-				"name": "RewardCreated",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "rewardId",
-						"type": "uint256"
-					}
-				],
-				"name": "RewardDestroyed",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "rewardId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "value",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "deliveryDate",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "stock",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "bool",
-						"name": "active",
-						"type": "bool"
-					}
-				],
-				"name": "RewardModified",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "rewardId",
-						"type": "uint256"
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "user",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
-				"name": "RewardeeAdded",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "uint256",
-						"name": "rewardeeId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "bool",
-						"name": "status",
-						"type": "bool"
-					}
-				],
-				"name": "RewardeeApproval",
+				"name": "RequestVoided",
 				"type": "event"
 			},
 			{
@@ -485,15 +471,21 @@
 				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
 					},
 					{
 						"indexed": false,
 						"internalType": "uint256",
 						"name": "amount",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "TargetMet",
@@ -516,10 +508,28 @@
 				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": false,
+						"indexed": true,
 						"internalType": "uint256",
 						"name": "requestId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "support",
+						"type": "uint8"
+					},
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "VoteCancelled",
@@ -529,10 +539,28 @@
 				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": false,
+						"indexed": true,
 						"internalType": "uint256",
 						"name": "requestId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "support",
+						"type": "uint8"
+					},
+					{
+						"indexed": true,
+						"internalType": "contract Campaign",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "Voted",
@@ -554,14 +582,24 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
+						"internalType": "contract CampaignFactory",
 						"name": "_campaignFactory",
+						"type": "address"
+					},
+					{
+						"internalType": "contract CampaignRewards",
+						"name": "_camaignRewards",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
 						"name": "_root",
 						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_campaignId",
+						"type": "uint256"
 					}
 				],
 				"name": "__Campaign_init",
@@ -580,6 +618,24 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_role",
+						"type": "bytes32"
+					}
+				],
+				"name": "addRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -629,6 +685,19 @@
 			},
 			{
 				"inputs": [],
+				"name": "campaignBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "campaignFactoryContract",
 				"outputs": [
 					{
@@ -651,24 +720,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_rewardeeId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "_status",
-						"type": "bool"
-					}
-				],
-				"name": "campaignSentReward",
-				"outputs": [],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -716,13 +767,7 @@
 					}
 				],
 				"name": "contribute",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "targetCompletionValue",
-						"type": "uint256"
-					}
-				],
+				"outputs": [],
 				"stateMutability": "payable",
 				"type": "function"
 			},
@@ -745,34 +790,6 @@
 					}
 				],
 				"name": "createRequest",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_deliveryDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_stock",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "_active",
-						"type": "bool"
-					}
-				],
-				"name": "createReward",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -814,19 +831,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_rewardId",
-						"type": "uint256"
-					}
-				],
-				"name": "destroyReward",
-				"outputs": [],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -943,23 +947,34 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "markCampaignComplete",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "maximumContribution",
-				"outputs": [
+				"inputs": [
 					{
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "hasVoted",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "markCampaignComplete",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -973,39 +988,6 @@
 					}
 				],
 				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_id",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_value",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_deliveryDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_stock",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "_active",
-						"type": "bool"
-					}
-				],
-				"name": "modifyReward",
-				"outputs": [],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -1029,16 +1011,28 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "positiveReviewCount",
-				"outputs": [
+				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_role",
+						"type": "bytes32"
 					}
 				],
-				"stateMutability": "view",
+				"name": "removeRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceAdmin",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -1068,6 +1062,38 @@
 			},
 			{
 				"inputs": [],
+				"name": "reportCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "reported",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "requestCount",
 				"outputs": [
 					{
@@ -1085,13 +1111,37 @@
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "requestSupport",
+				"outputs": [
+					{
+						"internalType": "uint8",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
 					}
 				],
 				"name": "requests",
 				"outputs": [
 					{
 						"internalType": "address payable",
-						"name": "recepient",
+						"name": "recipient",
 						"type": "address"
 					},
 					{
@@ -1111,39 +1161,30 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "disapprovalCount",
+						"name": "againstCount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "abstainedCount",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
 						"name": "duration",
 						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "void",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_count",
-						"type": "uint256"
-					}
-				],
-				"name": "resetDeadlineSetTimes",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "bool",
-						"name": "_approval",
-						"type": "bool"
-					}
-				],
+				"inputs": [],
 				"name": "reviewCampaignPerformance",
 				"outputs": [],
 				"stateMutability": "nonpayable",
@@ -1191,35 +1232,6 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"name": "reviews",
-				"outputs": [
-					{
-						"internalType": "address",
-						"name": "user",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "rating",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "createdAt",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
 						"internalType": "bytes32",
 						"name": "role",
 						"type": "bytes32"
@@ -1233,79 +1245,6 @@
 				"name": "revokeRole",
 				"outputs": [],
 				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"name": "rewardees",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "rewardId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "user",
-						"type": "address"
-					},
-					{
-						"internalType": "bool",
-						"name": "deliveryConfirmedByCampaign",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "deliveryConfirmedByUser",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"name": "rewards",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "value",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "deliveryDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "stock",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "exists",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "active",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -1375,12 +1314,12 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "_type",
-						"type": "uint256"
+						"internalType": "uint8",
+						"name": "_count",
+						"type": "uint8"
 					}
 				],
-				"name": "setGoalType",
+				"name": "setDeadlineSetTimes",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1418,6 +1357,19 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "bool",
+						"name": "_state",
+						"type": "bool"
+					}
+				],
+				"name": "toggleWithdrawalState",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "totalCampaignContribution",
 				"outputs": [
@@ -1434,11 +1386,29 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_newOwner",
+						"name": "_newRoot",
 						"type": "address"
 					}
 				],
 				"name": "transferCampaignOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_oldAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_newAddress",
+						"type": "address"
+					}
+				],
+				"name": "transferCampaignUserData",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1454,16 +1424,16 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "",
+						"name": "_user",
 						"type": "address"
 					}
 				],
-				"name": "userHasReward",
+				"name": "userContributionLoss",
 				"outputs": [
 					{
-						"internalType": "bool",
+						"internalType": "uint256",
 						"name": "",
-						"type": "bool"
+						"type": "uint256"
 					}
 				],
 				"stateMutability": "view",
@@ -1472,19 +1442,20 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "_rewardeeId",
-						"type": "uint256"
-					},
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "userContributionWithdrawn",
+				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "_status",
+						"name": "",
 						"type": "bool"
 					}
 				],
-				"name": "userReceivedCampaignReward",
-				"outputs": [],
-				"stateMutability": "nonpayable",
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -1514,6 +1485,24 @@
 						"type": "uint256"
 					}
 				],
+				"name": "voidRequest",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_requestId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "_support",
+						"type": "uint8"
+					}
+				],
 				"name": "voteOnRequest",
 				"outputs": [],
 				"stateMutability": "nonpayable",
@@ -1525,11 +1514,6 @@
 						"internalType": "address",
 						"name": "_user",
 						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
 					},
 					{
 						"internalType": "address payable",
@@ -1545,11 +1529,6 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
-					},
-					{
 						"internalType": "address payable",
 						"name": "_wallet",
 						"type": "address"
@@ -1559,46 +1538,62 @@
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "withdrawalsPaused",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
 			}
 		],
 		"devdoc": {
 			"events": {
-				"CampaignIDset(uint256)": {
-					"details": "`Campaign`"
+				"CampaignOwnerSet(address,address,address)": {
+					"details": "`Initializer Event`"
 				},
-				"CampaignStateChange(uint256,uint8)": {
+				"CampaignOwnershipTransferred(address,address,address)": {
+					"details": "`Campaign Config Events`"
+				},
+				"CampaignReviewed(address,address)": {
+					"details": "`Review Events`"
+				},
+				"CampaignStateChange(address,uint8,address)": {
 					"details": "`Campaign State Events`"
 				},
-				"ContributionMade(uint256,uint256,uint256)": {
+				"CampaignUserDataTransferred(address,address,address,address)": {
+					"details": "`Approval Transfer`"
+				},
+				"ContributionMade(address,uint256,uint256,bool,address)": {
 					"details": "`Contribution Events`"
 				},
-				"RequestAdded(uint256,uint256,uint256,address,uint256)": {
+				"RequestAdded(uint256,address,uint256,uint256,address,address)": {
 					"details": "`Request Events`"
 				},
-				"RewardCreated(uint256,uint256,uint256,uint256,uint256,bool)": {
-					"details": "`Reward Events`"
-				},
-				"RewardeeAdded(uint256,uint256,uint256,uint256)": {
-					"details": "`Rwardee Events`"
-				},
-				"Voted(uint256)": {
+				"Voted(uint256,uint8,address,address)": {
 					"details": "`Vote Events`"
 				}
 			},
 			"kind": "dev",
 			"methods": {
-				"__Campaign_init(address,address)": {
+				"__Campaign_init(address,address,address,uint256)": {
 					"details": "Constructor",
 					"params": {
 						"_campaignFactory": "Address of factory",
 						"_root": "Address of campaign owner"
 					}
 				},
-				"campaignSentReward(uint256,bool)": {
-					"details": "Used by the campaign owner to indicate they delivered the reward to the rewardee",
+				"addRole(address,bytes32)": {
+					"details": "Add an account to the role. Restricted to admins.",
 					"params": {
-						"_rewardeeId": "ID to struct containing reward and user to be rewarded",
-						"_status": "Indicates if the delivery was successful or not"
+						"_account": "Address of user being assigned role",
+						"_role": "Role being assigned"
 					}
 				},
 				"cancelVote(uint256)": {
@@ -1621,21 +1616,6 @@
 						"_duration": "Duration until users aren't able to vote on the request",
 						"_recipient": "Address where requested funds are deposited",
 						"_value": "Amount being requested by the campaign manager"
-					}
-				},
-				"createReward(uint256,uint256,uint256,bool)": {
-					"details": "Creates rewards contributors can attain",
-					"params": {
-						"_active": "Indicates if contributors can attain the reward",
-						"_deliveryDate": "Time in which reward will be deliverd to contriutors",
-						"_stock": "Quantity available for dispatch",
-						"_value": "Reward cost"
-					}
-				},
-				"destroyReward(uint256)": {
-					"details": "Deletes a reward by id",
-					"params": {
-						"_rewardId": "Reward unique id"
 					}
 				},
 				"extendDeadline(uint256)": {
@@ -1662,21 +1642,21 @@
 				"markCampaignComplete()": {
 					"details": "Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users"
 				},
-				"modifyReward(uint256,uint256,uint256,uint256,bool)": {
-					"details": "Modifies a reward by id",
-					"params": {
-						"_active": "Indicates if contributors can attain the reward",
-						"_deliveryDate": "Time in which reward will be deliverd to contriutors",
-						"_id": "Reward unique id",
-						"_stock": "Quantity available for dispatch",
-						"_value": "Reward cost"
-					}
-				},
 				"pauseCampaign()": {
 					"details": "Pauses the campaign, it halts all transactions in the campaign"
 				},
 				"paused()": {
 					"details": "Returns true if the contract is paused, and false otherwise."
+				},
+				"removeRole(address,bytes32)": {
+					"details": "Remove an account from the role. Restricted to admins.",
+					"params": {
+						"_account": "Address of user whose role is being removed",
+						"_role": "Role being removed"
+					}
+				},
+				"renounceAdmin()": {
+					"details": "Remove oneself from the admin role."
 				},
 				"renounceRole(bytes32,address)": {
 					"details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`."
@@ -1684,17 +1664,8 @@
 				"reportCampaign()": {
 					"details": "Called by an approver to report a campaign to factory. Campaign must be in collection or live state"
 				},
-				"resetDeadlineSetTimes(uint256)": {
-					"details": "Sets the number of times the campaign owner can extended deadlines. Restricted to factory",
-					"params": {
-						"_count": "Number of times a campaign owner can extend the deadline"
-					}
-				},
-				"reviewCampaignPerformance(bool)": {
-					"details": "User acknowledgement of review state enabled by the campaign owner",
-					"params": {
-						"_approval": "Indicates user approval of the campaign"
-					}
+				"reviewCampaignPerformance()": {
+					"details": "User acknowledgement of review state enabled by the campaign owner"
 				},
 				"reviewMode()": {
 					"details": "Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over"
@@ -1707,7 +1678,7 @@
 					"params": {
 						"_allowContributionAfterTargetIsMet": "Indicates if the campaign can receive contributions after duration expires",
 						"_duration": "How long until the campaign stops receiving contributions",
-						"_goalType": "Indicates if campaign is fixed or flexible with contributions",
+						"_goalType": "If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite",
 						"_minimumContribution": "The minimum amout required to be an approver",
 						"_target": "Contribution target of the campaign",
 						"_token": "Address of token to be used for transactions by default"
@@ -1716,51 +1687,73 @@
 				"setCampaignState(uint256)": {
 					"details": "Changes campaign state"
 				},
-				"setGoalType(uint256)": {
-					"details": "Changes campaign's goal type between `FLEXIBLE` or `FIXED`",
+				"setDeadlineSetTimes(uint8)": {
+					"details": "Sets the number of times the campaign owner can extended deadlines.",
 					"params": {
-						"_type": "Indicates if campaign is fixed or flexible with contributions"
+						"_count": "Number of times a campaign owner can extend the deadline"
 					}
 				},
 				"supportsInterface(bytes4)": {
 					"details": "See {IERC165-supportsInterface}."
 				},
+				"toggleWithdrawalState(bool)": {
+					"details": "Pauses or Unpauses withdrawals depending on state passed in argument",
+					"params": {
+						"_state": "Indicates pause or unpause state"
+					}
+				},
 				"transferCampaignOwnership(address)": {
 					"details": "Transfers campaign ownership from one user to another.",
 					"params": {
-						"_newOwner": "Address of the user campaign ownership is being transfered to"
+						"_newRoot": "Address of the user campaign ownership is being transfered to"
+					}
+				},
+				"transferCampaignUserData(address,address)": {
+					"details": "Transfers user data in the campaign to another verifed user",
+					"params": {
+						"_newAddress": "Address of the user being transferred to",
+						"_oldAddress": "Address of the user transferring"
 					}
 				},
 				"unpauseCampaign()": {
 					"details": "Unpauses the campaign, transactions in the campaign resume per usual"
 				},
-				"userReceivedCampaignReward(uint256,bool)": {
-					"details": "Used by a user eligible for rewards to indicate they received their reward",
+				"userContributionLoss(address)": {
+					"details": "Used to measure user funds left after request finalizations",
 					"params": {
-						"_rewardeeId": "ID to struct containing reward and user to be rewarded",
-						"_status": "Indicates if the delivery was successful or not"
+						"_user": "Address of user check is carried out on"
 					}
 				},
-				"voteOnRequest(uint256)": {
+				"voidRequest(uint256)": {
+					"details": "Renders a request void and useless",
+					"params": {
+						"_requestId": "ID of request being voided"
+					}
+				},
+				"voteOnRequest(uint256,uint8)": {
 					"details": "Approvers only method which approves spending request issued by the campaign manager or factory",
 					"params": {
-						"_requestId": "ID of request being voted on"
+						"_requestId": "ID of request being voted on",
+						"_support": "An integer of 0 for against, 1 for in-favor, and 2 for abstain"
 					}
 				},
-				"withdrawContributionForUser(address,uint256,address)": {
+				"withdrawContributionForUser(address,address)": {
 					"details": "Allows withdrawal of balance by factory on behalf of a user.  Cases where users wallet is compromised",
 					"params": {
-						"_amount": "Amount requested to be withdrawn from contributions",
 						"_user": "User whose funds are being requested",
 						"_wallet": "Address where amount is delivered"
 					}
 				},
-				"withdrawOwnContribution(uint256,address)": {
-					"details": "Allows withdrawal of contribution for a user, works if campaign target isn't met",
+				"withdrawOwnContribution(address)": {
+					"details": "Allows withdrawal of contribution by a user, works if campaign target isn't met",
 					"params": {
-						"_amount": "Amount requested to be withdrawn from contributions",
 						"_wallet": "Address where amount is delivered"
 					}
+				}
+			},
+			"stateVariables": {
+				"reviewCount": {
+					"details": "`Review`"
 				}
 			},
 			"version": 1
@@ -1782,7 +1775,7 @@
 		},
 		"optimizer": {
 			"enabled": true,
-			"runs": 200
+			"runs": 1
 		},
 		"remappings": []
 	},
@@ -1793,6 +1786,14 @@
 			"urls": [
 				"bzz-raw://eada89c17578d8ffbadd76c7247397d37ccae1f8e0e2b6d26057117d3de2dbed",
 				"dweb:/ipfs/QmS3zjZ5SdridEYWAaS7RXtRB9YnKVmN3T5Lq2Q7rjz2oT"
+			]
+		},
+		"@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol": {
+			"keccak256": "0x4dc6dad1fc53f05013cffc92c2c39ec795bfca13776488d68b9f8cedd1464dd3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6b99ea341e4def5725e5bef05f24358380a3570a2bc62e25308f83817434bf27",
+				"dweb:/ipfs/QmbKqHkLx8iPfQZVML5vb27FH1HYhfSammy7hP5Qfjzsta"
 			]
 		},
 		"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
@@ -1884,38 +1885,78 @@
 			]
 		},
 		"contracts/Campaign.sol": {
-			"keccak256": "0x083d7e256198442252684c47dcf8a90ed24a1f7e06cd7c671c299a376f57c3db",
-			"license": "UNLICENSED",
-			"urls": [
-				"bzz-raw://4db24bca5a481858ab20d03f4aaafc44a772c5c1095f11e272490cb8186ec15c",
-				"dweb:/ipfs/QmWCgrvShEoEHh1DcyLN3cNAPwzumHdspQDJMnhVF9YeP2"
-			]
-		},
-		"contracts/utils/AccessControl.sol": {
-			"keccak256": "0x06f0e816e0c11451a0565d398b09cf61034b2b0a1103359d40754d2f6320253d",
+			"keccak256": "0x3deb330e78fec4288ea6e357ecf07131e50909597ef1bed573a5019af428c7ec",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://44f2a62af9c5f6fdd1da19b83a7553aed35224e35fa94d1d48efb6dbfe015513",
-				"dweb:/ipfs/QmWDRHR9obNL8aSDV8oUiMTH54y2Czy8LQmMAw42kEiyzK"
+				"bzz-raw://b9b5f39c2949268e381865a19485e5c6ad6e177da5bf677c7d4daeded75e962d",
+				"dweb:/ipfs/QmYLpg7NNxU4CBapUSiqgKVJ3d42r1w9Gjk3Pi1H9wgGwv"
 			]
 		},
-		"contracts/utils/CampaignFactoryLib.sol": {
-			"keccak256": "0x246a80dcf41cd6c525bf33b4dc894c2b2703845d59b54e061bfae23b4185259a",
+		"contracts/CampaignFactory.sol": {
+			"keccak256": "0x3acc11b45e0980ac9f5f887e83363f6ae5ef05eb21304c59ff36f0bc78f5566b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://eafb9484cd359ff23a0e76cfe1e7c8a08742708f87276a21b59427fee7e46758",
-				"dweb:/ipfs/QmSB8KBiGDFTpJ7SbakMmv59r86hUoefMQn4DWg4o4ZG3U"
+				"bzz-raw://e868bd7e708903c548313c0e2bb0365349907d2b203c2776c08608e6445590dc",
+				"dweb:/ipfs/QmNgtGCJEf2xu1EpJ6PwSmwsVS9XTiXFJ8y35NBC2ECDmE"
 			]
 		},
-		"contracts/utils/FactoryInterface.sol": {
-			"keccak256": "0x060db98ba333ffe2b1d5d3f2e8eea760273861093572a25f7e3ff551d30d3d42",
+		"contracts/CampaignRewards.sol": {
+			"keccak256": "0x6a8abc3fa1446af3feea855192873e5fd4d6f3753997ef34c145cf59a5a24ca3",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://82885788abd26b4ad14d5f52bca287b2c6d7cb8ae28c8594a3addf58f445f1b3",
-				"dweb:/ipfs/QmY9UF64nQTSwmtmwJ76LnmWWT9eQAZsvcqeCsQwywJLwD"
+				"bzz-raw://372e38614171fdf5f40253db1a0d49df34fa7e9afbc0e9b00f47f2bea115c79a",
+				"dweb:/ipfs/QmdhVcuDLG3yx8vLt6cK7Keu4PjN5gD9bydESpurXedmQ3"
 			]
 		},
-		"contracts/utils/math/DecimalMath.sol": {
+		"contracts/interfaces/CampaignFactoryInterface.sol": {
+			"keccak256": "0xbdaf8433f1f28c2a7cc4766155b9e5f04b3490948f1d73c79763355e2bc127c4",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://10b0143fccafc024da304f372aeadc82a9b58f3dde7f753f115c62a8c5dd7bfb",
+				"dweb:/ipfs/QmQcHaWmUbps9rx2dYeoisTAPx9bxe29po1WPN4gJ4rBH3"
+			]
+		},
+		"contracts/interfaces/CampaignInterface.sol": {
+			"keccak256": "0x4476473c8d361308937baa313435c15ff2c523fa3d6e4b5fcfeb00b0d7da73ed",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://86ed2fbac532f4238df21b193f1f6a5d5db14d457a0cea558e822bd9792316f2",
+				"dweb:/ipfs/QmUDVcyrFrEuBp1Hu6UnREf2EJCohVt4JKaqQ8zVuDh9iL"
+			]
+		},
+		"contracts/interfaces/CampaignRewardInterface.sol": {
+			"keccak256": "0xe778daa81d86c1aeaddc3b384ca1f78ee8c0843048a87dcb9f89633784925c36",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://781c3d8b18d433e76cab45894b6e468e68bd9232639af11767e90f39bd6b8352",
+				"dweb:/ipfs/QmTPhfnPcM4FsPHKVhwhiQ2V49578jGtbtQ94LU6rmLLzu"
+			]
+		},
+		"contracts/libraries/contracts/CampaignFactoryLib.sol": {
+			"keccak256": "0x7a105fbe9dc3f573d0cf7f2864e13389d33b71f5175718a9609a08767a8e06d3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f41a6ac2e6e2c806d43082ee826838ff12097aeca608059bf3a86bf4904c7e99",
+				"dweb:/ipfs/QmVbVHTMws7WCZJjRWnV9vVkJzCwAbDzDqJ1exFB7suzLZ"
+			]
+		},
+		"contracts/libraries/contracts/CampaignLib.sol": {
+			"keccak256": "0x28fc29b10a711901c1f64e50bbfae8b3fd82acb9496789b181b0f122789e173b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://4ccaf0277de1856df3c9cfbf3452714430eb620687141adb6b03d71029ba0221",
+				"dweb:/ipfs/QmX6HQx5z9Q6P2rC78h1iMvZkgveCfEE3XociW6eFgDidU"
+			]
+		},
+		"contracts/libraries/contracts/CampaignRewardLib.sol": {
+			"keccak256": "0xde34d704dfb8c7990a1a487a64e738887b80e8470a52c982504dc63d929438b4",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c77cf3e007cf39320566a1985e0eace153bf9c5e26b165c3f494875d175d65c4",
+				"dweb:/ipfs/QmU6gX5w7QXVjQTz4NtTm4HzrJHi9ucoPDJ6eEchnKempu"
+			]
+		},
+		"contracts/libraries/math/DecimalMath.sol": {
 			"keccak256": "0xbac3aadeefd906571615eb9fb409479be0940222ea8f0c9a299cf650a2dcf91f",
 			"license": "GPL-3.0-or-later",
 			"urls": [
@@ -1923,12 +1964,20 @@
 				"dweb:/ipfs/QmW9KHqNgWf6u9DKy4gPowXERzdjGUiPWCKvxKT4bhitP8"
 			]
 		},
-		"contracts/utils/math/SafeMath.sol": {
+		"contracts/libraries/math/SafeMath.sol": {
 			"keccak256": "0x1f57bd3142cc0da02eb241be0311efe3d6827f7874e22dd97a36c80122b819e1",
 			"license": "MIT",
 			"urls": [
 				"bzz-raw://36b01f76eb4fbf013f8042dfd95b96d4ca40c9742958a2dea651d914bcde3d19",
 				"dweb:/ipfs/QmTr2VYuvQSdYqwbRjyeiJ1hASFcCf7511AJen1jbU94oa"
+			]
+		},
+		"contracts/utils/AccessControl.sol": {
+			"keccak256": "0xdcf6e6aaa666a5b9419a1d6810e66d54e375c2cf9b480ec056c34f7f758bbfd1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://db458bdfeb2089e4feec73b9807febb20c07f74c74349ce6d4a3825724d5cd40",
+				"dweb:/ipfs/QmXuzit1ZAeqGAiqNsprDZ4XLnZDuTekkwXQH3cj4LJRqx"
 			]
 		}
 	},

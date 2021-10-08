@@ -9,7 +9,10 @@ module.exports = async function (deployer, network) {
 
   await deployProxy(
     CampaignFactory,
-    [network === 'development' ? ganacheAccount : gnosisAccount],
+    [
+      network === 'development' ? ganacheAccount : gnosisAccount,
+      network === 'development' ? ganacheAccount : gnosisAccount,
+    ],
     { deployer, initializer: '__CampaignFactory_init' }
   );
 };

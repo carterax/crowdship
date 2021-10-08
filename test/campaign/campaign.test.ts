@@ -689,6 +689,8 @@ contract(
       expectEvent(receipt, 'ContributionMade', {
         campaignId: new BN(this.campaignID),
         amount: new BN('600'),
+        rewardId: new BN('0'),
+        withReward: false,
         sender: this.root,
       });
     });
@@ -787,7 +789,7 @@ contract(
         'exceeds target'
       );
     });
-    it('should mark a contributor eligible for a reward', async function () {
+    it('should mark a contributor as eligible for a reward', async function () {
       let config: CampaignSetupConfig = {
         duration: 184000,
         from: this.campaignOwner,
@@ -796,10 +798,15 @@ contract(
       await this.rewardsInstance.createReward(500, 86400, 3, true, {
         from: this.campaignOwner,
       });
-      await this.campaignInstance.contribute(this.testToken.address, 0, true, {
-        from: this.root,
-        value: 1000,
-      });
+      const receipt = await this.campaignInstance.contribute(
+        this.testToken.address,
+        0,
+        true,
+        {
+          from: this.root,
+          value: 1000,
+        }
+      );
 
       expect(
         (await this.rewardsInstance.rewardRecipients(0)).rewardId
@@ -820,6 +827,13 @@ contract(
       expect(
         await this.rewardsInstance.rewardToRewardRecipientCount(0)
       ).to.be.bignumber.equal(new BN('1'));
+      expectEvent(receipt, 'ContributionMade', {
+        campaignId: new BN(this.campaignID),
+        amount: new BN('1000'),
+        rewardId: new BN('0'),
+        withReward: true,
+        sender: this.root,
+      });
     });
 
     /* -------------------------------------------------------------------------- */

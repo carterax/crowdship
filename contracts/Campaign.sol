@@ -1,5 +1,5 @@
 // contracts/Campaign.sol
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "./CampaignFactory.sol";
 import "./utils/AccessControl.sol";
 
-import "./interfaces/FactoryInterface.sol";
+import "./interfaces/CampaignFactoryInterface.sol";
 import "./interfaces/CampaignRewardInterface.sol";
 
 import "./libraries/contracts/CampaignFactoryLib.sol";
@@ -38,7 +38,6 @@ contract Campaign is
     GOALTYPE public goalType;
 
     enum CAMPAIGN_STATE {
-        GENESIS,
         COLLECTION,
         LIVE,
         REVIEW,
@@ -49,19 +48,19 @@ contract Campaign is
 
     /// @dev `Initializer Event`
     event CampaignOwnerSet(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         address user,
         address sender
     );
 
     /// @dev `Campaign Config Events`
     event CampaignOwnershipTransferred(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         address newUser,
         address sender
     );
     event CampaignSettingsUpdated(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         uint256 minimumContribution,
         uint256 deadline,
         uint256 goalType,
@@ -69,15 +68,15 @@ contract Campaign is
         address sender
     );
     event CampaignDeadlineExtended(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         uint256 time,
         address sender
     );
-    event CampaignReported(uint256 indexed campaignId, address sender);
+    event CampaignReported(Campaign indexed campaign, address sender);
 
     /// @dev `Approval Transfer`
     event CampaignUserDataTransferred(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         address oldAddress,
         address newAddress,
         address sender
@@ -85,22 +84,24 @@ contract Campaign is
 
     /// @dev `Contribution Events`
     event ContributionMade(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         uint256 amount,
+        uint256 indexed rewardId,
+        bool withReward,
         address sender
     );
     event ContributionWithdrawn(
-        uint256 indexed campaignId,
+        Campaign indexed campaign,
         uint256 amount,
         address user,
         address sender
     );
-    event TargetMet(uint256 indexed campaignId, uint256 amount, address sender);
+    event TargetMet(Campaign indexed campaign, uint256 amount, address sender);
 
     /// @dev `Request Events`
     event RequestAdded(
         uint256 indexed requestId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         uint256 duration,
         uint256 value,
         address recipient,
@@ -108,40 +109,40 @@ contract Campaign is
     );
     event RequestVoided(
         uint256 indexed requestId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         address sender
     );
     event RequestComplete(
         uint256 indexed requestId,
-        uint256 campaignId,
+        Campaign indexed campaign,
         address sender
     );
 
     /// @dev `Vote Events`
     event Voted(
-        uint256 requestId,
+        uint256 indexed requestId,
         uint8 support,
-        uint256 campaignId,
+        Campaign indexed campaign,
         address sender
     );
     event VoteCancelled(
-        uint256 requestId,
+        uint256 indexed requestId,
         uint8 support,
-        uint256 campaignId,
+        Campaign indexed campaign,
         address sender
     );
 
     /// @dev `Review Events`
-    event CampaignReviewed(uint256 campaignId, address sender);
+    event CampaignReviewed(Campaign indexed campaign, address sender);
 
     /// @dev `Campaign State Events`
     event CampaignStateChange(
-        uint256 campaignId,
+        Campaign indexed campaign,
         CAMPAIGN_STATE state,
         address sender
     );
 
-    CampaignFactoryInterface private campaignFactoryContract;
+    CampaignFactoryInterface public campaignFactoryContract;
     CampaignRewardInterface private campaignRewardContract;
 
     /// @dev `Request`
@@ -186,56 +187,42 @@ contract Campaign is
     mapping(address => bool) public userContributionWithdrawn;
     mapping(address => bool) public reported;
 
-    /// @dev Ensures caller is only factory
+    /// @dev Ensures caller is only factory, works only if campaign is approved
     modifier onlyFactory() {
-        require(
-            CampaignFactoryLib.canManageCampaigns(
-                campaignFactoryContract,
-                msg.sender
-            ),
-            "only factory"
-        );
-        _;
-    }
-
-    /// @dev Ensures caller is factory or campaign owner
-    modifier adminOrFactory() {
-        require(
-            CampaignFactoryLib.canManageCampaigns(
-                campaignFactoryContract,
-                msg.sender
-            ) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "admin or factory"
-        );
-        _;
-    }
-
-    /// @dev Ensures the campaign is set to active by campaign owner and approved by factory
-    modifier campaignIsActive() {
         bool campaignIsApproved;
-        bool campaignIsEnabled;
-        (, , , campaignIsApproved, campaignIsEnabled) = CampaignFactoryLib
+        (, , , campaignIsApproved,) = CampaignFactoryLib
+            .campaignInfo(campaignFactoryContract, campaignID);
+        
+        if (campaignIsApproved) {
+            require(
+                CampaignFactoryLib.canManageCampaigns(
+                    campaignFactoryContract,
+                    msg.sender
+                ),
+                "only factory"
+            );
+        }
+        _;
+    }
+
+    /// @dev Ensures caller is factory if campaign is approved or campaign owner
+    modifier adminOrFactory() {
+        bool campaignIsApproved;
+        (, , , campaignIsApproved,) = CampaignFactoryLib
             .campaignInfo(campaignFactoryContract, campaignID);
 
-        require(campaignIsApproved && campaignIsEnabled, "campaign active");
-        _;
-    }
+        if (campaignIsApproved) {
+            require(
+                CampaignFactoryLib.canManageCampaigns(
+                    campaignFactoryContract,
+                    msg.sender
+                ), "only admin"
+            );
+        }
 
-    /// @dev Ensures campaign isn't approved by factory. Applies unless caller is a campaign manager from factory
-    modifier campaignIsNotApproved() {
-        bool campaignIsApproved;
-        (, , , campaignIsApproved, ) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            campaignID
-        );
-
-        if (
-            !CampaignFactoryLib.canManageCampaigns(
-                campaignFactoryContract,
-                msg.sender
-            )
-        ) require(!campaignIsApproved, "approved");
-
+        if (!campaignIsApproved) {
+            require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only admin");
+        }
         _;
     }
 
@@ -273,14 +260,13 @@ contract Campaign is
         campaignRewardContract = CampaignRewardInterface(address(_camaignRewards));
         
         root = _root;
-        campaignState = CAMPAIGN_STATE.GENESIS;
+        campaignState = CAMPAIGN_STATE.COLLECTION;
         campaignID = _campaignId;
         percentBase = 100;
         percent = percentBase.mul(DecimalMath.UNIT);
+        withdrawalsPaused = false;
 
-        _pause();
-
-        emit CampaignOwnerSet(campaignID, root, msg.sender);
+        emit CampaignOwnerSet(this, root, msg.sender);
     }
 
     /**
@@ -297,7 +283,7 @@ contract Campaign is
         _setupRole(DEFAULT_ADMIN_ROLE, _newRoot);
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        emit CampaignOwnershipTransferred(campaignID, _newRoot, msg.sender);
+        emit CampaignOwnershipTransferred(this, _newRoot, msg.sender);
     }
 
     /**
@@ -335,7 +321,7 @@ contract Campaign is
         );
 
         emit CampaignUserDataTransferred(
-            campaignID,
+            this,
             _oldAddress,
             _newAddress,
             msg.sender
@@ -358,7 +344,8 @@ contract Campaign is
         uint256 _goalType,
         address _token,
         bool _allowContributionAfterTargetIsMet
-    ) external adminOrFactory campaignIsNotApproved userIsVerified(msg.sender) {
+    ) external onlyAdmin userIsVerified(msg.sender) {
+        require(approversCount < 1, "campaign has approvers");
         require(
             _minimumContribution >=
                 CampaignFactoryLib.getCampaignFactoryConfig(
@@ -398,7 +385,7 @@ contract Campaign is
         goalType = GOALTYPE(_goalType);
 
         emit CampaignSettingsUpdated(
-            campaignID,
+            this,
             _minimumContribution,
             _duration,
             _goalType,
@@ -413,9 +400,8 @@ contract Campaign is
      */
     function extendDeadline(uint256 _time)
         external
-        adminOrFactory
+        onlyAdmin
         userIsVerified(msg.sender)
-        campaignIsActive
         nonReentrant
         whenNotPaused
     {
@@ -426,7 +412,7 @@ contract Campaign is
                     campaignFactoryContract,
                     "deadlineStrikesAllowed"
                 ),
-            "exhausted deadline strikes"
+            "exhausted strikes"
         );
         require(
             _time <=
@@ -447,17 +433,16 @@ contract Campaign is
         // limit ability to increase deadlines
         deadlineSetTimes = deadlineSetTimes.add(1);
 
-        emit CampaignDeadlineExtended(campaignID, _time, msg.sender);
+        emit CampaignDeadlineExtended(this, _time, msg.sender);
     }
 
     /**
-     * @dev        Sets the number of times the campaign owner can extended deadlines. Restricted to factory
+     * @dev        Sets the number of times the campaign owner can extended deadlines.
      * @param      _count   Number of times a campaign owner can extend the deadline
      */
     function setDeadlineSetTimes(uint8 _count)
         external
-        onlyFactory
-        campaignIsActive
+        adminOrFactory
         whenNotPaused
     {
         deadlineSetTimes = _count;
@@ -476,7 +461,6 @@ contract Campaign is
     )
         external
         payable
-        campaignIsActive
         userIsVerified(msg.sender)
         whenNotPaused
         nonReentrant
@@ -529,7 +513,7 @@ contract Campaign is
         // keep track of when target is met
         if (totalCampaignContribution >= target) {
             campaignState = CAMPAIGN_STATE.LIVE;
-            emit TargetMet(campaignID, totalCampaignContribution, msg.sender);
+            emit TargetMet(this, totalCampaignContribution, msg.sender);
         }
 
         SafeERC20Upgradeable.safeTransferFrom(
@@ -539,7 +523,7 @@ contract Campaign is
             msg.value
         );
 
-        emit ContributionMade(campaignID, msg.value, msg.sender);
+        emit ContributionMade(this, msg.value, _rewardId, _withReward, msg.sender);
     }
 
     /**
@@ -614,9 +598,9 @@ contract Campaign is
             // pledge collection ongoing and no request was successful
             require(
                 campaignState == CAMPAIGN_STATE.COLLECTION,
-                "campaign no longer in collection stage"
+                "no longer in collection stage"
             );
-            require(finalizedRequestCount < 1, "requests have been finalized");
+            require(finalizedRequestCount < 1, "request(s) finalized");
         }
         uint256 maxBalance = userTotalContribution[_user].sub(
             userContributionLoss(_user)
@@ -657,7 +641,7 @@ contract Campaign is
             maxBalance
         );
 
-        emit ContributionWithdrawn(campaignID, maxBalance, _user, msg.sender);
+        emit ContributionWithdrawn(this, maxBalance, _user, msg.sender);
     }
 
     /**
@@ -673,8 +657,7 @@ contract Campaign is
         uint256 _duration
     )
         external
-        adminOrFactory
-        campaignIsActive
+        onlyAdmin
         userIsVerified(msg.sender)
         whenNotPaused
     {
@@ -704,7 +687,7 @@ contract Campaign is
         );
         require(
             _value <= campaignBalance,
-            "request amount cannot be higher than campaign balance"
+            "amount higher than balance"
         );
         require(
             _duration >=
@@ -744,7 +727,7 @@ contract Campaign is
 
         emit RequestAdded(
             requests.length.sub(1),
-            campaignID,
+            this,
             _duration,
             _value,
             _recipient,
@@ -758,8 +741,7 @@ contract Campaign is
      */
     function voidRequest(uint256 _requestId)
         external
-        adminOrFactory
-        campaignIsActive
+        onlyAdmin
         userIsVerified(msg.sender)
         whenNotPaused
     {
@@ -772,7 +754,7 @@ contract Campaign is
 
         requests[_requestId].void = true;
 
-        emit RequestVoided(_requestId, campaignID, msg.sender);
+        emit RequestVoided(_requestId, this, msg.sender);
     }
 
     /**
@@ -782,7 +764,6 @@ contract Campaign is
      */
     function voteOnRequest(uint256 _requestId, uint8 _support)
         external
-        campaignIsActive
         userIsVerified(msg.sender)
         whenNotPaused
     {
@@ -812,7 +793,7 @@ contract Campaign is
                 .add(1);
         }
 
-        emit Voted(_requestId, _support, campaignID, msg.sender);
+        emit Voted(_requestId, _support, this, msg.sender);
     }
 
     /**
@@ -821,7 +802,6 @@ contract Campaign is
      */
     function cancelVote(uint256 _requestId)
         external
-        campaignIsActive
         userIsVerified(msg.sender)
         whenNotPaused
     {
@@ -851,7 +831,7 @@ contract Campaign is
         emit VoteCancelled(
             _requestId,
             requestSupport[_requestId][msg.sender],
-            campaignID,
+            this,
             msg.sender
         );
     }
@@ -862,8 +842,7 @@ contract Campaign is
      */
     function finalizeRequest(uint256 _requestId)
         external
-        adminOrFactory
-        campaignIsActive
+        onlyAdmin
         userIsVerified(msg.sender)
         whenNotPaused
         nonReentrant
@@ -877,10 +856,12 @@ contract Campaign is
             ),
             percent
         );
-        uint256 requestFinalizationThreshold = 51;
         require(
             percentOfRequestApprovals.value >=
-                requestFinalizationThreshold.mul(DecimalMath.UNIT),
+                CampaignFactoryLib.getCampaignFactoryConfig(
+                    campaignFactoryContract,
+                    "requestFinalizationThreshold"
+                ).mul(DecimalMath.UNIT),
             "approval deficit"
         );
         require(!request.complete, "finalized");
@@ -914,7 +895,7 @@ contract Campaign is
             address(this),
             factoryFee.value
         );
-
+        
         for (uint256 i = 0; i < addresses.length; i++) {
             SafeERC20Upgradeable.safeTransfer(
                 IERC20Upgradeable(acceptedToken),
@@ -923,14 +904,13 @@ contract Campaign is
             );
         }
 
-        emit RequestComplete(_requestId, campaignID, msg.sender);
+        emit RequestComplete(_requestId, this, msg.sender);
     }
 
     /// @dev Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over
     function reviewMode()
         external
-        adminOrFactory
-        campaignIsActive
+        onlyAdmin
         userIsVerified(msg.sender)
         whenNotPaused
     {
@@ -940,7 +920,7 @@ contract Campaign is
         require(
             campaignState == CAMPAIGN_STATE.LIVE ||
                 campaignState == CAMPAIGN_STATE.COLLECTION,
-            "campaign not ongoing"
+            "not ongoing"
         );
         require(finalizedRequestCount >= 1, "no finalized requests");
         require(requests[currentRunningRequest].complete, "request ongoing");
@@ -948,14 +928,13 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE.REVIEW;
         _pause();
 
-        emit CampaignStateChange(campaignID, CAMPAIGN_STATE.REVIEW, msg.sender);
+        emit CampaignStateChange(this, CAMPAIGN_STATE.REVIEW, msg.sender);
     }
 
     /// @dev User acknowledgement of review state enabled by the campaign owner
     function reviewCampaignPerformance()
         external
         userIsVerified(msg.sender)
-        campaignIsActive
         whenPaused
     {
         require(
@@ -969,15 +948,14 @@ contract Campaign is
 
         reviewCount = reviewCount.add(1);
 
-        emit CampaignReviewed(campaignID, msg.sender);
+        emit CampaignReviewed(this, msg.sender);
     }
 
     /// @dev Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
     function markCampaignComplete()
         external
         userIsVerified(msg.sender)
-        adminOrFactory
-        campaignIsActive
+        onlyAdmin
         whenPaused
     {
         // check if reviewers count > 80% of approvers set campaign state to complete
@@ -1005,7 +983,7 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE.COMPLETE;
 
         emit CampaignStateChange(
-            campaignID,
+            this,
             CAMPAIGN_STATE.COMPLETE,
             msg.sender
         );
@@ -1015,7 +993,6 @@ contract Campaign is
     function reportCampaign()
         external
         userIsVerified(msg.sender)
-        campaignIsActive
         whenNotPaused
     {
         require(requestCount >= 1, "no requests");
@@ -1045,7 +1022,7 @@ contract Campaign is
             _pause();
         }
 
-        emit CampaignReported(campaignID, msg.sender);
+        emit CampaignReported(this, msg.sender);
     }
 
     /// @dev Changes campaign state
@@ -1053,7 +1030,7 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE(_state);
 
         emit CampaignStateChange(
-            campaignID,
+            this,
             CAMPAIGN_STATE(_state),
             msg.sender
         );

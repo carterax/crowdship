@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.4+commit.c7e474f2"
+		"version": "0.8.0+commit.c7dfd78e"
 	},
 	"language": "Solidity",
 	"output": {
@@ -19,6 +19,12 @@
 						"internalType": "bool",
 						"name": "active",
 						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignActiveToggle",
@@ -38,22 +44,15 @@
 						"internalType": "bool",
 						"name": "approval",
 						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignApproval",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
-					}
-				],
-				"name": "CampaignApprovalRequest",
 				"type": "event"
 			},
 			{
@@ -70,9 +69,28 @@
 						"internalType": "uint256",
 						"name": "newCategory",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignCategoryChange",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "commission",
+						"type": "uint256"
+					}
+				],
+				"name": "CampaignDefaultCommissionUpdated",
 				"type": "event"
 			},
 			{
@@ -83,6 +101,24 @@
 						"internalType": "uint256",
 						"name": "campaignId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "factory",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "campaignRewards",
+						"type": "address"
 					},
 					{
 						"indexed": false,
@@ -95,6 +131,12 @@
 						"internalType": "uint256",
 						"name": "category",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignDeployed",
@@ -105,12 +147,24 @@
 				"inputs": [
 					{
 						"indexed": true,
-						"internalType": "uint256",
-						"name": "campaignId",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "campaignFactory",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "factoryWallet",
+						"type": "address"
 					}
 				],
-				"name": "CampaignDestroyed",
+				"name": "CampaignFactoryCreated",
 				"type": "event"
 			},
 			{
@@ -121,6 +175,12 @@
 						"internalType": "uint256",
 						"name": "campaignId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignFeaturePaused",
@@ -140,6 +200,12 @@
 						"internalType": "uint256",
 						"name": "timeLeft",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignFeatureUnpaused",
@@ -165,6 +231,12 @@
 						"internalType": "uint256",
 						"name": "amount",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CampaignFeatured",
@@ -174,13 +246,19 @@
 				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "newOwner",
-						"type": "address"
+						"indexed": false,
+						"internalType": "string",
+						"name": "prop",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
 					}
 				],
-				"name": "CampaignOwnershipTransferred",
+				"name": "CampaignTransactionConfigUpdated",
 				"type": "event"
 			},
 			{
@@ -197,6 +275,12 @@
 						"internalType": "bool",
 						"name": "active",
 						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CategoryAdded",
@@ -210,9 +294,15 @@
 						"internalType": "uint256",
 						"name": "categoryId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "commission",
+						"type": "uint256"
 					}
 				],
-				"name": "CategoryDestroyed",
+				"name": "CategoryCommissionUpdated",
 				"type": "event"
 			},
 			{
@@ -229,9 +319,40 @@
 						"internalType": "bool",
 						"name": "active",
 						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "CategoryModified",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "factoryWallet",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "campaignImplementation",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "campaignRewardsImplementation",
+						"type": "address"
+					}
+				],
+				"name": "FactoryConfigUpdated",
 				"type": "event"
 			},
 			{
@@ -254,6 +375,12 @@
 						"internalType": "uint256",
 						"name": "time",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "FeaturePackageAdded",
@@ -267,6 +394,12 @@
 						"internalType": "uint256",
 						"name": "packageId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "FeaturePackageDestroyed",
@@ -292,6 +425,12 @@
 						"internalType": "uint256",
 						"name": "time",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "FeaturePackageModified",
@@ -389,6 +528,75 @@
 				"anonymous": false,
 				"inputs": [
 					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "TokenAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "state",
+						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "TokenApproval",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "tokenId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "TokenRemoved",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
 						"indexed": false,
 						"internalType": "address",
 						"name": "account",
@@ -406,6 +614,12 @@
 						"internalType": "uint256",
 						"name": "userId",
 						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "UserAdded",
@@ -425,6 +639,12 @@
 						"internalType": "bool",
 						"name": "approval",
 						"type": "bool"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "UserApproval",
@@ -438,19 +658,12 @@
 						"internalType": "uint256",
 						"name": "userId",
 						"type": "uint256"
-					}
-				],
-				"name": "UserModified",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
+					},
 					{
-						"indexed": true,
-						"internalType": "uint256",
-						"name": "userId",
-						"type": "uint256"
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
 					}
 				],
 				"name": "UserRemoved",
@@ -514,9 +727,27 @@
 						"internalType": "address payable",
 						"name": "_wallet",
 						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_root",
+						"type": "address"
 					}
 				],
 				"name": "__CampaignFactory_init",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_prop",
+						"type": "string"
+					}
+				],
+				"name": "addFactoryTransactionConfig",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -555,14 +786,20 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "_campaign",
-						"type": "address"
+						"internalType": "string",
+						"name": "",
+						"type": "string"
 					}
 				],
-				"name": "campaignApprovalRequest",
-				"outputs": [],
-				"stateMutability": "nonpayable",
+				"name": "approvedCampaignTransactionConfig",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -612,6 +849,19 @@
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "campaignFactoryAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
 					}
 				],
 				"stateMutability": "view",
@@ -669,6 +919,19 @@
 				"type": "function"
 			},
 			{
+				"inputs": [],
+				"name": "campaignRewardsImplementation",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -701,6 +964,44 @@
 						"internalType": "address",
 						"name": "",
 						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "campaignTransactionConfig",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "campaignTransactionConfigList",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
 					}
 				],
 				"stateMutability": "view",
@@ -802,32 +1103,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "deadlineStrikesAllowed",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "defaultCommission",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [
 					{
 						"internalType": "uint256",
@@ -840,6 +1115,11 @@
 					{
 						"internalType": "address",
 						"name": "campaign",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "campaignRewards",
 						"type": "address"
 					},
 					{
@@ -890,32 +1170,6 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "_campaignId",
-						"type": "uint256"
-					}
-				],
-				"name": "destroyCampaign",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_categoryId",
-						"type": "uint256"
-					}
-				],
-				"name": "destroyCategory",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
 						"name": "_packageId",
 						"type": "uint256"
 					}
@@ -934,6 +1188,19 @@
 					}
 				],
 				"name": "destroyUser",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_campaignId",
+						"type": "uint256"
+					}
+				],
+				"name": "disableCampaignApproval",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1120,84 +1387,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "maxDeadline",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "maxRequestDuration",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "maximumContributionAllowed",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "minDeadline",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "minRequestDuration",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "minimumContributionAllowed",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [
 					{
 						"internalType": "uint256",
@@ -1311,14 +1500,14 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "_amount",
-						"type": "uint256"
-					},
-					{
 						"internalType": "contract Campaign",
 						"name": "_campaign",
 						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
 					}
 				],
 				"name": "receiveCampaignCommission",
@@ -1340,6 +1529,24 @@
 					}
 				],
 				"name": "removeRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_tokenId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_token",
+						"type": "address"
+					}
+				],
+				"name": "removeToken",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1403,17 +1610,58 @@
 			{
 				"inputs": [
 					{
+						"internalType": "string",
+						"name": "_prop",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "setCampaignTransactionConfig",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "uint256",
 						"name": "_categoryId",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "_commission",
+						"name": "_numerator",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_denominator",
 						"type": "uint256"
 					}
 				],
 				"name": "setCategoryCommission",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_numerator",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_denominator",
+						"type": "uint256"
+					}
+				],
+				"name": "setDefaultCommission",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1427,51 +1675,16 @@
 					},
 					{
 						"internalType": "contract Campaign",
-						"name": "_implementation",
+						"name": "_campaignImplementation",
 						"type": "address"
 					},
 					{
-						"internalType": "uint256",
-						"name": "_commission",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_deadlineStrikesAllowed",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_maxDeadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_minDeadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_minimumContributionAllowed",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_maximumContributionAllowed",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_minRequestDuration",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_maxRequestDuration",
-						"type": "uint256"
+						"internalType": "contract CampaignRewards",
+						"name": "_campaignRewardsImplementation",
+						"type": "address"
 					}
 				],
-				"name": "setFactorySettings",
+				"name": "setFactoryConfig",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1632,24 +1845,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_newOwner",
-						"type": "address"
-					},
-					{
-						"internalType": "contract Campaign",
-						"name": "_campaign",
-						"type": "address"
-					}
-				],
-				"name": "transferCampaignOwnership",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "unpauseCampaign",
 				"outputs": [],
@@ -1743,25 +1938,37 @@
 		],
 		"devdoc": {
 			"events": {
-				"CampaignDeployed(uint256,uint256,uint256)": {
+				"CampaignDeployed(uint256,address,address,address,uint256,uint256,address)": {
 					"details": "`Campaign Events`"
 				},
-				"CategoryAdded(uint256,bool)": {
+				"CampaignFactoryCreated(address,address,address)": {
+					"details": "`Factory Config Events`"
+				},
+				"CategoryAdded(uint256,bool,address)": {
 					"details": "`Category Events`"
 				},
-				"FeaturePackageAdded(uint256,uint256,uint256)": {
+				"FeaturePackageAdded(uint256,uint256,uint256,address)": {
 					"details": "`Feature Package Events`"
 				},
-				"UserAdded(uint256)": {
+				"TokenAdded(address,address)": {
+					"details": "`Token Events`"
+				},
+				"UserAdded(uint256,address)": {
 					"details": "`User Events`"
 				}
 			},
 			"kind": "dev",
 			"methods": {
-				"__CampaignFactory_init(address)": {
+				"__CampaignFactory_init(address,address)": {
 					"details": "Contructor",
 					"params": {
 						"_wallet": "Address where all revenue gets deposited"
+					}
+				},
+				"addFactoryTransactionConfig(string)": {
+					"details": "Adds a new transaction setting",
+					"params": {
+						"_prop": "Setting Key"
 					}
 				},
 				"addRole(address,bytes32)": {
@@ -1775,12 +1982,6 @@
 					"details": "Adds a token that needs approval before being accepted",
 					"params": {
 						"_token": "Address of the token"
-					}
-				},
-				"campaignApprovalRequest(address)": {
-					"details": "Called by a campaign owner seeking to be approved and ready to receive contributions",
-					"params": {
-						"_campaign": "Address of campaign instance"
 					}
 				},
 				"canManageCampaigns(address)": {
@@ -1808,18 +2009,6 @@
 						"_time": "How long a campaign will be featured for"
 					}
 				},
-				"destroyCampaign(uint256)": {
-					"details": "Deletes a campaign",
-					"params": {
-						"_campaignId": "ID of campaign"
-					}
-				},
-				"destroyCategory(uint256)": {
-					"details": "Deletes a category",
-					"params": {
-						"_categoryId": "ID of category"
-					}
-				},
 				"destroyFeaturedPackage(uint256)": {
 					"details": "Deletes a feature package",
 					"params": {
@@ -1832,8 +2021,14 @@
 						"_userId": "ID of the user"
 					}
 				},
+				"disableCampaignApproval(uint256)": {
+					"details": "Disables an approved campaign. Restricted to campaign owners",
+					"params": {
+						"_campaignId": "ID of the campaign"
+					}
+				},
 				"featureCampaign(uint256,uint256,address)": {
-					"details": "Purchases time for which the specified campaign will be featured. Restricted to",
+					"details": "Purchases time for which the specified campaign will be featured.",
 					"params": {
 						"_campaignId": "ID of the campaign",
 						"_token": "Address of token used to purchase feature package"
@@ -1882,7 +2077,7 @@
 				"paused()": {
 					"details": "Returns true if the contract is paused, and false otherwise."
 				},
-				"receiveCampaignCommission(uint256,address)": {
+				"receiveCampaignCommission(address,uint256)": {
 					"details": "Retrieves campaign commission fees. Restricted to campaign owner.",
 					"params": {
 						"_amount": "Amount transfered and collected by factory from campaign request finalization",
@@ -1896,6 +2091,13 @@
 						"_role": "Role being removed"
 					}
 				},
+				"removeToken(uint256,address)": {
+					"details": "Removes a token from the list of accepted tokens and tokens in list",
+					"params": {
+						"_token": "Address of the token",
+						"_tokenId": "ID of the token"
+					}
+				},
 				"renounceAdmin()": {
 					"details": "Remove oneself from the admin role."
 				},
@@ -1905,25 +2107,33 @@
 				"revokeRole(bytes32,address)": {
 					"details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role."
 				},
-				"setCategoryCommission(uint256,uint256)": {
-					"details": "Adds commission per category basis",
+				"setCampaignTransactionConfig(string,uint256)": {
+					"details": "Set Factory controlled values dictating how campaign deployments should run",
 					"params": {
-						"_categoryId": "ID of category",
-						"_commission": "Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`"
+						"_prop": "Setting Key",
+						"_value": "Setting Value"
 					}
 				},
-				"setFactorySettings(address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)": {
-					"details": "Factory controlled values dictating how campaigns should run",
+				"setCategoryCommission(uint256,uint256,uint256)": {
+					"details": "Sets commission per category basis",
 					"params": {
-						"_commission": "Default fee percentage on request finalization in campaign",
-						"_deadlineStrikesAllowed": "Number of times campaign owner is allowed to extend deadline",
-						"_implementation": "Address of base contract to deploy minimal proxies to campaigns",
-						"_maxDeadline": "Maximum time allowed to extend the deadline by",
-						"_maxRequestDuration": "Maximum request duration allowed in campaigns",
-						"_maximumContributionAllowed": "Maximum contribution allowed in campaigns",
-						"_minDeadline": "Minimum time allowed to extend the deadline by",
-						"_minRequestDuration": "Minimum request duration allowed in campaigns",
-						"_minimumContributionAllowed": "Minimum contribution allowed in campaigns",
+						"_categoryId": "ID of category",
+						"_denominator": "Fraction Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`",
+						"_numerator": "Fraction Fee percentage on request finalization in campaign per category `defaultCommission` will be utilized if value is `0`"
+					}
+				},
+				"setDefaultCommission(uint256,uint256)": {
+					"details": "Sets default commission on all request finalization",
+					"params": {
+						"_denominator": "Fraction Fee percentage on request finalization",
+						"_numerator": "Fraction Fee percentage on request finalization"
+					}
+				},
+				"setFactoryConfig(address,address,address)": {
+					"details": "Set Factory controlled values dictating how campaigns should run",
+					"params": {
+						"_campaignImplementation": "Address of base contract to deploy minimal proxies to campaigns",
+						"_campaignRewardsImplementation": "Address of base contract to deploy minimal proxies to campaign rewards",
 						"_wallet": "Address where all revenue gets deposited"
 					}
 				},
@@ -1941,14 +2151,14 @@
 					}
 				},
 				"toggleCampaignActive(uint256,bool)": {
-					"details": "Approves or disapproves a campaign. Restricted to campaign managers",
+					"details": "Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory",
 					"params": {
 						"_active": "Indicates if the campaign will be active or not.  Affects campaign listing and transactions",
 						"_campaignId": "ID of the campaign"
 					}
 				},
 				"toggleCampaignApproval(uint256,bool)": {
-					"details": "Approves or disapproves a campaign. Restricted to campaign managers",
+					"details": "Approves or disapproves a campaign. Restricted to campaign managers from factory",
 					"params": {
 						"_approval": "Indicates if the campaign will be approved or not. Affects campaign listing and transactions",
 						"_campaignId": "ID of the campaign"
@@ -1959,13 +2169,6 @@
 					"params": {
 						"_approval": "Indicates if the user will be approved or not",
 						"_userId": "ID of the user"
-					}
-				},
-				"transferCampaignOwnership(address,address)": {
-					"details": "Transfers campaign ownership from one user to another. Called only after ownership transfer occurs in the minimal campaign proxy",
-					"params": {
-						"_campaign": "Address of the campaign instance",
-						"_newOwner": "Address of the user campaign ownership is being transfered to"
 					}
 				},
 				"unpauseCampaign()": {
@@ -1981,6 +2184,9 @@
 			"stateVariables": {
 				"MANAGE_CATEGORIES": {
 					"details": "default role(s)"
+				},
+				"factoryRevenue": {
+					"details": "Revenue"
 				},
 				"root": {
 					"details": "Settings"
@@ -2005,7 +2211,7 @@
 		},
 		"optimizer": {
 			"enabled": true,
-			"runs": 200
+			"runs": 1
 		},
 		"remappings": []
 	},
@@ -2115,46 +2321,78 @@
 			]
 		},
 		"contracts/Campaign.sol": {
-			"keccak256": "0x083d7e256198442252684c47dcf8a90ed24a1f7e06cd7c671c299a376f57c3db",
+			"keccak256": "0xba1cca7a898d3f92e2f49bd62ea6bb3db45ac7523dd83ee7de3ccb9891b91762",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://4db24bca5a481858ab20d03f4aaafc44a772c5c1095f11e272490cb8186ec15c",
-				"dweb:/ipfs/QmWCgrvShEoEHh1DcyLN3cNAPwzumHdspQDJMnhVF9YeP2"
+				"bzz-raw://f2bb2e7a13a2e69e5c44f05c97c31b607a0008d7bd9ebe60dc27482a81aa0b33",
+				"dweb:/ipfs/QmdNnb5dvCjShJLskmprpvUGLxLmZnZZr4ox4R41ohcXuq"
 			]
 		},
 		"contracts/CampaignFactory.sol": {
-			"keccak256": "0x482cef9b2eefeca0a609503f81a2233e2c59c88e126db395db73921992c2212c",
+			"keccak256": "0x2ba93fbb67f1c316c99b775d26eeea2a4c49d4958e7dd5250db7eb6d0692f7c1",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://68b9d1b6748a37a7e9a9c5e072e3b9b3ab64691456f1299d09e9de542014aea5",
-				"dweb:/ipfs/QmUqfRBhADtHh7MBYdKQXtqZq24539P5hiaDsqbAUJau1T"
+				"bzz-raw://e784b7cb89779db21a70992e366b6064381f172a550d70990dd36eefab71683b",
+				"dweb:/ipfs/QmT5AZWtiMXj8dQLxnNJfvzysWdYyRvFxi8nNP1CXFwurv"
 			]
 		},
-		"contracts/utils/AccessControl.sol": {
-			"keccak256": "0x06f0e816e0c11451a0565d398b09cf61034b2b0a1103359d40754d2f6320253d",
+		"contracts/CampaignRewards.sol": {
+			"keccak256": "0x4c11271bd291e2f779278eadda9cb508d2fe3ac87cf571fa959a89f2cab22881",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://e698383eb2359f010ceae728a662e5af3af0f3fc5d9bba802692555b6f266b3d",
+				"dweb:/ipfs/QmeKQX74yNWKs6PxEdfv1Gyh68c6Rh1JkkWtyHXUVfGyYr"
+			]
+		},
+		"contracts/interfaces/CampaignFactoryInterface.sol": {
+			"keccak256": "0x5a950076a0ec80c24aaa46657246e01adbf43b09fb98288073c5de37fd3bf3a1",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://44f2a62af9c5f6fdd1da19b83a7553aed35224e35fa94d1d48efb6dbfe015513",
-				"dweb:/ipfs/QmWDRHR9obNL8aSDV8oUiMTH54y2Czy8LQmMAw42kEiyzK"
+				"bzz-raw://90c0a19ec1fc2d0e69fcab632f1b106f02e5eedd7590261b27416418a4d700bf",
+				"dweb:/ipfs/QmXGX616N5QP9EYgd1wqNdZxgMTHQuQ9GmCXig1grqop8o"
 			]
 		},
-		"contracts/utils/CampaignFactoryLib.sol": {
-			"keccak256": "0x246a80dcf41cd6c525bf33b4dc894c2b2703845d59b54e061bfae23b4185259a",
+		"contracts/interfaces/CampaignInterface.sol": {
+			"keccak256": "0x4476473c8d361308937baa313435c15ff2c523fa3d6e4b5fcfeb00b0d7da73ed",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://eafb9484cd359ff23a0e76cfe1e7c8a08742708f87276a21b59427fee7e46758",
-				"dweb:/ipfs/QmSB8KBiGDFTpJ7SbakMmv59r86hUoefMQn4DWg4o4ZG3U"
+				"bzz-raw://86ed2fbac532f4238df21b193f1f6a5d5db14d457a0cea558e822bd9792316f2",
+				"dweb:/ipfs/QmUDVcyrFrEuBp1Hu6UnREf2EJCohVt4JKaqQ8zVuDh9iL"
 			]
 		},
-		"contracts/utils/FactoryInterface.sol": {
-			"keccak256": "0x060db98ba333ffe2b1d5d3f2e8eea760273861093572a25f7e3ff551d30d3d42",
+		"contracts/interfaces/CampaignRewardInterface.sol": {
+			"keccak256": "0xe778daa81d86c1aeaddc3b384ca1f78ee8c0843048a87dcb9f89633784925c36",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://82885788abd26b4ad14d5f52bca287b2c6d7cb8ae28c8594a3addf58f445f1b3",
-				"dweb:/ipfs/QmY9UF64nQTSwmtmwJ76LnmWWT9eQAZsvcqeCsQwywJLwD"
+				"bzz-raw://781c3d8b18d433e76cab45894b6e468e68bd9232639af11767e90f39bd6b8352",
+				"dweb:/ipfs/QmTPhfnPcM4FsPHKVhwhiQ2V49578jGtbtQ94LU6rmLLzu"
 			]
 		},
-		"contracts/utils/math/DecimalMath.sol": {
+		"contracts/libraries/contracts/CampaignFactoryLib.sol": {
+			"keccak256": "0x7a105fbe9dc3f573d0cf7f2864e13389d33b71f5175718a9609a08767a8e06d3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f41a6ac2e6e2c806d43082ee826838ff12097aeca608059bf3a86bf4904c7e99",
+				"dweb:/ipfs/QmVbVHTMws7WCZJjRWnV9vVkJzCwAbDzDqJ1exFB7suzLZ"
+			]
+		},
+		"contracts/libraries/contracts/CampaignLib.sol": {
+			"keccak256": "0xd683dff6c80d79c899fbabe102f06b3509a665200f2d95d2c67896ec4cb9b2af",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b0a9db45941b1fd32a3eb9650fc33db8a8590933465de11ce7ae2f4c20a03da7",
+				"dweb:/ipfs/QmWsCqg9toCdHVmuAyGEB9ttfbzJaEHrEphxBki5YiyMRu"
+			]
+		},
+		"contracts/libraries/contracts/CampaignRewardLib.sol": {
+			"keccak256": "0xd2bb7c675e0e3ec1c5345c5d859ff54f205dcd1a7a7b42cf3efa02fb1e117484",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://feee59672566d5aa1491c458aa74b46eb9923819419d9db411498798dd2a3d5c",
+				"dweb:/ipfs/QmXnK2XavCU5URTzFdH6EbkbVZeoBmDozPEeuJaTMa92BT"
+			]
+		},
+		"contracts/libraries/math/DecimalMath.sol": {
 			"keccak256": "0xbac3aadeefd906571615eb9fb409479be0940222ea8f0c9a299cf650a2dcf91f",
 			"license": "GPL-3.0-or-later",
 			"urls": [
@@ -2162,12 +2400,20 @@
 				"dweb:/ipfs/QmW9KHqNgWf6u9DKy4gPowXERzdjGUiPWCKvxKT4bhitP8"
 			]
 		},
-		"contracts/utils/math/SafeMath.sol": {
+		"contracts/libraries/math/SafeMath.sol": {
 			"keccak256": "0x1f57bd3142cc0da02eb241be0311efe3d6827f7874e22dd97a36c80122b819e1",
 			"license": "MIT",
 			"urls": [
 				"bzz-raw://36b01f76eb4fbf013f8042dfd95b96d4ca40c9742958a2dea651d914bcde3d19",
 				"dweb:/ipfs/QmTr2VYuvQSdYqwbRjyeiJ1hASFcCf7511AJen1jbU94oa"
+			]
+		},
+		"contracts/utils/AccessControl.sol": {
+			"keccak256": "0xdcf6e6aaa666a5b9419a1d6810e66d54e375c2cf9b480ec056c34f7f758bbfd1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://db458bdfeb2089e4feec73b9807febb20c07f74c74349ce6d4a3825724d5cd40",
+				"dweb:/ipfs/QmXuzit1ZAeqGAiqNsprDZ4XLnZDuTekkwXQH3cj4LJRqx"
 			]
 		}
 	},

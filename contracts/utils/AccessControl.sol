@@ -17,4 +17,31 @@ contract AccessControl is AccessControlUpgradeable {
         require(hasRole(role, msg.sender));
         _;
     }
+
+    /**
+     * @dev        Add an account to the role. Restricted to admins.
+     * @param      _account Address of user being assigned role
+     * @param      _role   Role being assigned
+     */
+    function addRole(address _account, bytes32 _role) external virtual onlyAdmin {
+        grantRole(_role, _account);
+    }
+
+    /**
+     * @dev        Remove an account from the role. Restricted to admins.
+     * @param      _account Address of user whose role is being removed
+     * @param      _role   Role being removed
+     */
+    function removeRole(address _account, bytes32 _role)
+        external
+        virtual
+        onlyAdmin
+    {
+        revokeRole(_role, _account);
+    }
+
+    /// @dev Remove oneself from the admin role.
+    function renounceAdmin() external virtual {
+        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 }

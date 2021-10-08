@@ -27,11 +27,11 @@ async function featureCampaignSetup(
   await testToken.increaseAllowance(factory.address, 10000);
 }
 
-module.exports = function() {
+module.exports = function () {
   /* -------------------------------------------------------------------------- */
   /*                               createCampaign                               */
   /* -------------------------------------------------------------------------- */
-  it('can create campaign', async function() {
+  it('can create campaign', async function () {
     const category = 0;
     await this.factory.createCategory(true);
     const receipt = await this.factory.createCampaign(category);
@@ -59,19 +59,22 @@ module.exports = function() {
     ).to.be.bignumber.equal(new BN('0'));
     expectEvent(receipt, 'CampaignDeployed', {
       campaignId: new BN('0'),
+      factory: this.factory.address,
+      campaign: campaign.campaign,
+      campaignRewards: campaign.campaignRewards,
       userId: new BN('0'),
       category: new BN(category),
       sender: this.owner,
     });
   });
-  it("should not create campaign if category isn't active", async function() {
+  it("should not create campaign if category isn't active", async function () {
     await this.factory.createCategory(false);
     await expectRevert.unspecified(this.factory.createCampaign(0));
   });
-  it('should not create campaign if category does not exist', async function() {
+  it('should not create campaign if category does not exist', async function () {
     await expectRevert.unspecified(this.factory.createCampaign(0));
   });
-  it('cannot create campaign if user is not verified', async function() {
+  it('cannot create campaign if user is not verified', async function () {
     await this.factory.createCategory(true);
     await expectRevert(
       this.factory.createCampaign(0, {
@@ -80,11 +83,11 @@ module.exports = function() {
       'unverified user'
     );
   });
-  it('campaign creation should fail if factory is paused', async function() {
+  it('campaign creation should fail if factory is paused', async function () {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(campaignSetup(this.factory));
   });
-  it('campaign creation should work if factory is unpaused', async function() {
+  it('campaign creation should work if factory is unpaused', async function () {
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
     await campaignSetup(this.factory);
@@ -94,19 +97,19 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                           toggleCampaignApproval                           */
   /* -------------------------------------------------------------------------- */
-  it('address without role cannot approve campaigns', async function() {
+  it('address without role cannot approve campaigns', async function () {
     await this.factory.createCategory(true);
     await this.factory.createCampaign(0);
     await expectRevert.unspecified(
       this.factory.toggleCampaignApproval(0, true, { from: this.addr1 })
     );
   });
-  it('cannot approve campaign that does not exist', async function() {
+  it('cannot approve campaign that does not exist', async function () {
     await expectRevert.unspecified(
       this.factory.toggleCampaignApproval(0, true)
     );
   });
-  it('address with role can approve and disapprove campaigns', async function() {
+  it('address with role can approve and disapprove campaigns', async function () {
     const MANAGE_CAMPAIGNS = await this.factory.MANAGE_CAMPAIGNS();
     let approvalReceipt;
     await campaignSetup(this.factory);
@@ -131,7 +134,7 @@ module.exports = function() {
       approval: false,
     });
   });
-  it('should not toggle campaign approval if factory is paused', async function() {
+  it('should not toggle campaign approval if factory is paused', async function () {
     await campaignSetup(this.factory);
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(
@@ -141,7 +144,7 @@ module.exports = function() {
       this.factory.toggleCampaignApproval(0, false)
     );
   });
-  it('should toggle campaign approval if factory is unpaused', async function() {
+  it('should toggle campaign approval if factory is unpaused', async function () {
     await campaignSetup(this.factory);
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
@@ -154,7 +157,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                            toggleCampaignActive                            */
   /* -------------------------------------------------------------------------- */
-  it('campaign owner can disable their campaigns', async function() {
+  it('campaign owner can disable their campaigns', async function () {
     await campaignSetup(this.factory);
     const receipt = await this.factory.toggleCampaignActive(0, true);
     expect((await this.factory.deployedCampaigns(0)).active).to.equal(true);
@@ -164,10 +167,10 @@ module.exports = function() {
       sender: this.owner,
     });
   });
-  it('should not disable or enable a campaign that does not exist', async function() {
+  it('should not disable or enable a campaign that does not exist', async function () {
     await expectRevert.unspecified(this.factory.toggleCampaignActive(0, true));
   });
-  it('cannot disable or enable a campaign without role', async function() {
+  it('cannot disable or enable a campaign without role', async function () {
     const userId = await this.factory.userID(this.addr1);
     await this.factory.toggleUserApproval(userId, true);
     await this.factory.createCategory(true);
@@ -178,12 +181,12 @@ module.exports = function() {
       this.factory.toggleCampaignApproval(0, true, { from: this.addr2 })
     );
   });
-  it('should not enable or disable campaign if factory is paused', async function() {
+  it('should not enable or disable campaign if factory is paused', async function () {
     await campaignSetup(this.factory);
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.toggleCampaignActive(0, true));
   });
-  it('should enable or disable campaign if factory is unpaused', async function() {
+  it('should enable or disable campaign if factory is unpaused', async function () {
     await campaignSetup(this.factory);
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
@@ -194,7 +197,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                            modifyCampaignCategory                           */
   /* -------------------------------------------------------------------------- */
-  it('should modify campaign category with correct role', async function() {
+  it('should modify campaign category with correct role', async function () {
     let campaign;
     await this.factory.toggleUserApproval(1, true);
     await this.factory.createCategory(true);
@@ -218,25 +221,25 @@ module.exports = function() {
       newCategory: new BN('1'),
     });
   });
-  it('should not modify campaign category with incorrect role', async function() {
+  it('should not modify campaign category with incorrect role', async function () {
     await campaignSetup(this.factory);
     await expectRevert.unspecified(
       this.factory.modifyCampaignCategory(0, 0, { from: this.addr2 })
     );
   });
-  it('should not modify a campaign that does not exist', async function() {
+  it('should not modify a campaign that does not exist', async function () {
     await expectRevert.unspecified(this.factory.modifyCampaignCategory(0, 0));
   });
-  it('should not modify a campaign with category that does not exist', async function() {
+  it('should not modify a campaign with category that does not exist', async function () {
     await campaignSetup(this.factory);
     await expectRevert.unspecified(this.factory.modifyCampaignCategory(0, 1));
   });
-  it('should not modify campaign if factory is paused', async function() {
+  it('should not modify campaign if factory is paused', async function () {
     await campaignSetup(this.factory);
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.modifyCampaignCategory(0, 1));
   });
-  it('should modify campaign if factory is unpaused', async function() {
+  it('should modify campaign if factory is unpaused', async function () {
     await campaignSetup(this.factory);
     await this.factory.createCategory(true);
     await this.factory.pauseCampaign();
@@ -250,7 +253,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                                campaignCount                               */
   /* -------------------------------------------------------------------------- */
-  it('should return total count of campaigns', async function() {
+  it('should return total count of campaigns', async function () {
     await this.factory.createCategory(true);
     await this.factory.createCategory(true);
     await this.factory.createCampaign(0);
@@ -302,7 +305,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                               featureCampaign                              */
   /* -------------------------------------------------------------------------- */
-  it('should feature campaign', async function() {
+  it('should feature campaign', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     const receipt = await this.factory.featureCampaign(
       0,
@@ -330,7 +333,7 @@ module.exports = function() {
       amount: new BN('1000'),
     });
   });
-  it("campaign feature should fail if user isn't owner", async function() {
+  it("campaign feature should fail if user isn't owner", async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await expectRevert.unspecified(
       this.factory.featureCampaign(0, 0, this.testToken.address, {
@@ -339,7 +342,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should fail if campaign does not exist', async function() {
+  it('campaign feature should fail if campaign does not exist', async function () {
     await this.factory.createFeaturePackage(1000, 129600); // 24hr package
     await expectRevert.unspecified(
       this.factory.featureCampaign(0, 0, this.testToken.address, {
@@ -347,7 +350,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should fail if campaign is not active and not approved', async function() {
+  it('campaign feature should fail if campaign is not active and not approved', async function () {
     await featureCampaignSetup(this.factory, this.testToken, 86400, {
       approveCampaign: false,
       activateCampaign: false,
@@ -358,7 +361,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should fail if campaign owner is not verified', async function() {
+  it('campaign feature should fail if campaign owner is not verified', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.toggleUserApproval(0, false);
     await expectRevert.unspecified(
@@ -368,7 +371,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should fail if token is not approved', async function() {
+  it('campaign feature should fail if token is not approved', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.toggleAcceptedToken(this.testToken.address, false);
     await expectRevert.unspecified(
@@ -377,7 +380,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should fail if feature package does not exist', async function() {
+  it('campaign feature should fail if feature package does not exist', async function () {
     await featureCampaignSetup(this.factory, this.testToken, 86400);
     await this.factory.destroyFeaturedPackage(0);
     await expectRevert.unspecified(
@@ -386,7 +389,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should fail if payment is not enough', async function() {
+  it('campaign feature should fail if payment is not enough', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await expectRevert(
       this.factory.featureCampaign(0, 0, this.testToken.address, {
@@ -395,7 +398,7 @@ module.exports = function() {
       'price exceeds amount'
     );
   });
-  it('campaign feature should fail if factory is paused', async function() {
+  it('campaign feature should fail if factory is paused', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(
@@ -404,7 +407,7 @@ module.exports = function() {
       })
     );
   });
-  it('campaign feature should work if factory is unpaused', async function() {
+  it('campaign feature should work if factory is unpaused', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.pauseCampaign();
     await this.factory.unpauseCampaign();
@@ -425,7 +428,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                            pauseCampaignFeatured                           */
   /* -------------------------------------------------------------------------- */
-  it('should pause running campaign feature', async function() {
+  it('should pause running campaign feature', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -445,7 +448,7 @@ module.exports = function() {
       campaignId: new BN('0'),
     });
   });
-  it('campaign feature pause should fail if feature time is expired', async function() {
+  it('campaign feature pause should fail if feature time is expired', async function () {
     await featureCampaignSetup(this.factory, this.testToken, 5);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -462,7 +465,7 @@ module.exports = function() {
     );
     expect(await this.factory.featuredCampaignIsPaused(0)).to.equal(false);
   });
-  it('campaign feature pause should fail if campaign feature is paused', async function() {
+  it('campaign feature pause should fail if campaign feature is paused', async function () {
     await featureCampaignSetup(this.factory, this.testToken, 86400);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -472,7 +475,7 @@ module.exports = function() {
     expectRevert.unspecified(this.factory.pauseCampaignFeatured(0));
     expect(await this.factory.featuredCampaignIsPaused(0)).to.equal(true);
   });
-  it('campaign feature pause should fail if non owner tries to pause', async function() {
+  it('campaign feature pause should fail if non owner tries to pause', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -483,10 +486,10 @@ module.exports = function() {
     );
     expect(await this.factory.featuredCampaignIsPaused(0)).to.equal(false);
   });
-  it('campaign feature pause should fail if campaign does not exist', async function() {
+  it('campaign feature pause should fail if campaign does not exist', async function () {
     await expectRevert.unspecified(this.factory.pauseCampaignFeatured(0));
   });
-  it('campaign feature pause should fail if campaign owner is not verified', async function() {
+  it('campaign feature pause should fail if campaign owner is not verified', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -499,7 +502,7 @@ module.exports = function() {
     );
     expect(await this.factory.featuredCampaignIsPaused(0)).to.equal(false);
   });
-  it('campaign feature pause should fail if factory is paused', async function() {
+  it('campaign feature pause should fail if factory is paused', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -508,7 +511,7 @@ module.exports = function() {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.pauseCampaignFeatured(0));
   });
-  it('campaign feature pause should work if factory is unpaused', async function() {
+  it('campaign feature pause should work if factory is unpaused', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -522,7 +525,7 @@ module.exports = function() {
   /* -------------------------------------------------------------------------- */
   /*                           unpauseCampaignFeatured                          */
   /* -------------------------------------------------------------------------- */
-  it('should unpause paused campaign feature', async function() {
+  it('should unpause paused campaign feature', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -553,7 +556,7 @@ module.exports = function() {
       sender: this.owner,
     });
   });
-  it('campaign unpause feature should fail if not campaign owner', async function() {
+  it('campaign unpause feature should fail if not campaign owner', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -574,7 +577,7 @@ module.exports = function() {
 
   //   await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
   // });
-  it('campaign unpause feature should fail if user is not verified', async function() {
+  it('campaign unpause feature should fail if user is not verified', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -583,7 +586,7 @@ module.exports = function() {
     await this.factory.toggleUserApproval(0, false);
     await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
   });
-  it('campaign unpause feature should fail if factory is paused', async function() {
+  it('campaign unpause feature should fail if factory is paused', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,
@@ -592,7 +595,7 @@ module.exports = function() {
     await this.factory.pauseCampaign();
     await expectRevert.unspecified(this.factory.unpauseCampaignFeatured(0));
   });
-  it('campaign unpause feature should work if factory is unpaused', async function() {
+  it('campaign unpause feature should work if factory is unpaused', async function () {
     await featureCampaignSetup(this.factory, this.testToken);
     await this.factory.featureCampaign(0, 0, this.testToken.address, {
       value: 1000,

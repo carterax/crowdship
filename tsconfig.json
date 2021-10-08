@@ -13,7 +13,7 @@
   },
   "include": [
     "**/*.ts"
-, "migrations/5_transfer_ownership.js", "migrations/1_initial_migration.js", "migrations/2_campaign_factory_deploy.js"  ],
+, "migrations/6_transfer_ownership.js", "migrations/1_initial_migration.js", "migrations/3_campaign_factory_deploy.js"  ],
   "exclude": [
     "node_modules"
   ]

@@ -46,17 +46,43 @@ export interface CampaignCategoryChange {
   };
 }
 
+export interface CampaignDefaultCommissionUpdated {
+  name: "CampaignDefaultCommissionUpdated";
+  args: {
+    commission: BN;
+    0: BN;
+  };
+}
+
 export interface CampaignDeployed {
   name: "CampaignDeployed";
   args: {
     campaignId: BN;
+    factory: string;
+    campaign: string;
+    campaignRewards: string;
     userId: BN;
     category: BN;
     sender: string;
     0: BN;
-    1: BN;
-    2: BN;
+    1: string;
+    2: string;
     3: string;
+    4: BN;
+    5: BN;
+    6: string;
+  };
+}
+
+export interface CampaignFactoryCreated {
+  name: "CampaignFactoryCreated";
+  args: {
+    campaignFactory: string;
+    owner: string;
+    factoryWallet: string;
+    0: string;
+    1: string;
+    2: string;
   };
 }
 
@@ -96,6 +122,16 @@ export interface CampaignFeatured {
   };
 }
 
+export interface CampaignTransactionConfigUpdated {
+  name: "CampaignTransactionConfigUpdated";
+  args: {
+    prop: string;
+    value: BN;
+    0: string;
+    1: BN;
+  };
+}
+
 export interface CategoryAdded {
   name: "CategoryAdded";
   args: {
@@ -108,6 +144,16 @@ export interface CategoryAdded {
   };
 }
 
+export interface CategoryCommissionUpdated {
+  name: "CategoryCommissionUpdated";
+  args: {
+    categoryId: BN;
+    commission: BN;
+    0: BN;
+    1: BN;
+  };
+}
+
 export interface CategoryModified {
   name: "CategoryModified";
   args: {
@@ -116,6 +162,18 @@ export interface CategoryModified {
     sender: string;
     0: BN;
     1: boolean;
+    2: string;
+  };
+}
+
+export interface FactoryConfigUpdated {
+  name: "FactoryConfigUpdated";
+  args: {
+    factoryWallet: string;
+    campaignImplementation: string;
+    campaignRewardsImplementation: string;
+    0: string;
+    1: string;
     2: string;
   };
 }
@@ -248,7 +306,7 @@ export interface UserAdded {
   name: "UserAdded";
   args: {
     userId: BN;
-    userAddress: string;
+    sender: string;
     0: BN;
     1: string;
   };
@@ -266,16 +324,6 @@ export interface UserApproval {
   };
 }
 
-export interface UserModified {
-  name: "UserModified";
-  args: {
-    userId: BN;
-    sender: string;
-    0: BN;
-    1: string;
-  };
-}
-
 export interface UserRemoved {
   name: "UserRemoved";
   args: {
@@ -290,12 +338,17 @@ type AllEvents =
   | CampaignActiveToggle
   | CampaignApproval
   | CampaignCategoryChange
+  | CampaignDefaultCommissionUpdated
   | CampaignDeployed
+  | CampaignFactoryCreated
   | CampaignFeaturePaused
   | CampaignFeatureUnpaused
   | CampaignFeatured
+  | CampaignTransactionConfigUpdated
   | CategoryAdded
+  | CategoryCommissionUpdated
   | CategoryModified
+  | FactoryConfigUpdated
   | FeaturePackageAdded
   | FeaturePackageDestroyed
   | FeaturePackageModified
@@ -309,7 +362,6 @@ type AllEvents =
   | Unpaused
   | UserAdded
   | UserApproval
-  | UserModified
   | UserRemoved;
 
 export interface CampaignFactoryInstance extends Truffle.ContractInstance {
@@ -554,19 +606,24 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * @param _wallet Address where all revenue gets deposited
    */
   __CampaignFactory_init: {
-    (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
-      Truffle.TransactionResponse<AllEvents>
-    >;
+    (
+      _wallet: string,
+      _root: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _wallet: string,
+      _root: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _wallet: string,
+      _root: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _wallet: string,
+      _root: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1540,19 +1597,24 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * @param _wallet Address where all revenue gets deposited
      */
     __CampaignFactory_init: {
-      (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
-        Truffle.TransactionResponse<AllEvents>
-      >;
+      (
+        _wallet: string,
+        _root: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _wallet: string,
+        _root: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _wallet: string,
+        _root: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _wallet: string,
+        _root: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
