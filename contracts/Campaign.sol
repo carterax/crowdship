@@ -31,6 +31,8 @@ contract Campaign is
     using DecimalMath for int256;
     using DecimalMath for uint256;
 
+    bytes32 public constant MANAGER = keccak256("MANAGER");
+
     enum GOALTYPE {
         FIXED,
         FLEXIBLE
@@ -252,7 +254,6 @@ contract Campaign is
         initializer
     {
         require(address(_root) != address(0));
-        _setupRole(DEFAULT_ADMIN_ROLE, _root);
 
         campaignFactoryContract = CampaignFactoryInterface(
             address(_campaignFactory)
@@ -265,6 +266,11 @@ contract Campaign is
         percentBase = 100;
         percent = percentBase.mul(DecimalMath.UNIT);
         withdrawalsPaused = false;
+
+        _setupRole(DEFAULT_ADMIN_ROLE, root);
+        _setupRole(MANAGER, root);
+
+        _setRoleAdmin(MANAGER, DEFAULT_ADMIN_ROLE);
 
         emit CampaignOwnerSet(this, root, msg.sender);
     }

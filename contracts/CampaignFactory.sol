@@ -29,7 +29,6 @@ contract CampaignFactory is
     bytes32 public constant MANAGE_USERS = keccak256("MANAGE USERS");
     
     /// @dev `Factory Config Events`
-    event CampaignFactoryCreated(address indexed campaignFactory, address owner, address factoryWallet);
     event FactoryConfigUpdated(address factoryWallet, address campaignImplementation, address campaignRewardsImplementation);
     event CategoryCommissionUpdated(uint256 indexed categoryId, uint256 commission);
     event CampaignDefaultCommissionUpdated(uint256 commission);

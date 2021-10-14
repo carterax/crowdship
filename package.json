@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "npx truffle compile --all && npx truffle test",
+    "test": "npx truffle test",
     "migrate": "npx truffle migrate",
     "truffle-console": "npx truffle console",
     "truffle-console:rinkeby": "npx truffle console --network rinkeby",
