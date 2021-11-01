@@ -13,10 +13,10 @@ export interface CampaignRewardsContract
 export interface CampaignRewardOwnerSet {
   name: "CampaignRewardOwnerSet";
   args: {
-    campaignId: BN;
+    campaign: string;
     owner: string;
     sender: string;
-    0: BN;
+    0: string;
     1: string;
     2: string;
   };
@@ -26,14 +26,14 @@ export interface RewardCreated {
   name: "RewardCreated";
   args: {
     rewardId: BN;
-    campaignId: BN;
+    campaign: string;
     value: BN;
     deliveryDate: BN;
     stock: BN;
     active: boolean;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: BN;
     3: BN;
     4: BN;
@@ -46,10 +46,10 @@ export interface RewardDestroyed {
   name: "RewardDestroyed";
   args: {
     rewardId: BN;
-    campaignId: BN;
+    campaign: string;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: string;
   };
 }
@@ -58,14 +58,14 @@ export interface RewardModified {
   name: "RewardModified";
   args: {
     rewardId: BN;
-    campaignId: BN;
+    campaign: string;
     value: BN;
     deliveryDate: BN;
     stock: BN;
     active: boolean;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: BN;
     3: BN;
     4: BN;
@@ -78,11 +78,11 @@ export interface RewardRecipientAdded {
   name: "RewardRecipientAdded";
   args: {
     rewardId: BN;
-    campaignId: BN;
+    campaign: string;
     amount: BN;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: BN;
     3: string;
   };
@@ -92,10 +92,10 @@ export interface RewardRecipientApproval {
   name: "RewardRecipientApproval";
   args: {
     rewardRecipientId: BN;
-    campaignId: BN;
+    campaign: string;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: string;
   };
 }
@@ -104,11 +104,11 @@ export interface RewardStockIncreased {
   name: "RewardStockIncreased";
   args: {
     rewardId: BN;
-    campaignId: BN;
+    campaign: string;
     count: BN;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: BN;
     3: string;
   };
@@ -118,11 +118,11 @@ export interface RewarderApproval {
   name: "RewarderApproval";
   args: {
     rewardRecipientId: BN;
-    campaignId: BN;
+    campaign: string;
     status: boolean;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: boolean;
     3: string;
   };
@@ -180,7 +180,47 @@ type AllEvents =
 export interface CampaignRewardsInstance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+  /**
+   * Add an account to the role. Restricted to admins.
+   * @param _account Address of user being assigned role
+   * @param _role Role being assigned
+   */
+  addRole: {
+    (
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  campaign(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+  campaignContract(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+  campaignFactoryContract(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignRewardAddress(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
 
   /**
    * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
@@ -224,6 +264,46 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
     account: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
+
+  /**
+   * Remove an account from the role. Restricted to admins.
+   * @param _account Address of user whose role is being removed
+   * @param _role Role being removed
+   */
+  removeRole: {
+    (
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Remove oneself from the admin role.
+   */
+  renounceAdmin: {
+    (txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
 
   /**
    * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -610,7 +690,47 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
   methods: {
     DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+    /**
+     * Add an account to the role. Restricted to admins.
+     * @param _account Address of user being assigned role
+     * @param _role Role being assigned
+     */
+    addRole: {
+      (
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    campaign(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+    campaignContract(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+    campaignFactoryContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    campaignRewardAddress(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
 
     /**
      * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
@@ -654,6 +774,46 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
       account: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
+
+    /**
+     * Remove an account from the role. Restricted to admins.
+     * @param _account Address of user whose role is being removed
+     * @param _role Role being removed
+     */
+    removeRole: {
+      (
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Remove oneself from the admin role.
+     */
+    renounceAdmin: {
+      (txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
 
     /**
      * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.

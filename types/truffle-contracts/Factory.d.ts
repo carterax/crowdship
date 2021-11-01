@@ -13,13 +13,26 @@ export interface CampaignFactoryDeployed {
   name: "CampaignFactoryDeployed";
   args: {
     campaignFactory: string;
+    factoryWallet: string;
+    owner: string;
+    campaignIndex: BN;
     0: string;
+    1: string;
+    2: string;
+    3: BN;
   };
 }
 
 type AllEvents = CampaignFactoryDeployed;
 
 export interface FactoryInstance extends Truffle.ContractInstance {
+  deployedCampaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  deployedCampaigns(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   createCampaignFactory: {
     (
       _campaignFactoryImplementation: string,
@@ -44,6 +57,13 @@ export interface FactoryInstance extends Truffle.ContractInstance {
   };
 
   methods: {
+    deployedCampaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    deployedCampaigns(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     createCampaignFactory: {
       (
         _campaignFactoryImplementation: string,

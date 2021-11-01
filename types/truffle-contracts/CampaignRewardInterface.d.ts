@@ -16,6 +16,10 @@ type AllEvents = never;
 
 export interface CampaignRewardInterfaceInstance
   extends Truffle.ContractInstance {
+  campaignRewardAddress(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   assignReward: {
     (
       _rewardId: number | BN | string,
@@ -82,6 +86,10 @@ export interface CampaignRewardInterfaceInstance
   };
 
   methods: {
+    campaignRewardAddress(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     assignReward: {
       (
         _rewardId: number | BN | string,

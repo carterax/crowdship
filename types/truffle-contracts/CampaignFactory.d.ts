@@ -74,18 +74,6 @@ export interface CampaignDeployed {
   };
 }
 
-export interface CampaignFactoryCreated {
-  name: "CampaignFactoryCreated";
-  args: {
-    campaignFactory: string;
-    owner: string;
-    factoryWallet: string;
-    0: string;
-    1: string;
-    2: string;
-  };
-}
-
 export interface CampaignFeaturePaused {
   name: "CampaignFeaturePaused";
   args: {
@@ -340,7 +328,6 @@ type AllEvents =
   | CampaignCategoryChange
   | CampaignDefaultCommissionUpdated
   | CampaignDeployed
-  | CampaignFactoryCreated
   | CampaignFeaturePaused
   | CampaignFeatureUnpaused
   | CampaignFeatured
@@ -373,6 +360,34 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   MANAGE_USERS(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+  /**
+   * Add an account to the role. Restricted to admins.
+   * @param _account Address of user being assigned role
+   * @param _role Role being assigned
+   */
+  addRole: {
+    (
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
   approvedCampaignTransactionConfig(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
@@ -384,6 +399,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
 
   campaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignFactoryAddress(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
 
   campaignImplementation(
     txDetails?: Truffle.TransactionDetails
@@ -514,6 +533,46 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
+
+  /**
+   * Remove an account from the role. Restricted to admins.
+   * @param _account Address of user whose role is being removed
+   * @param _role Role being removed
+   */
+  removeRole: {
+    (
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Remove oneself from the admin role.
+   */
+  renounceAdmin: {
+    (txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
 
   /**
    * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -845,74 +904,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Add an account to the role. Restricted to admins.
-   * @param _account Address of user being assigned role
-   * @param _role Role being assigned
-   */
-  addRole: {
-    (
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Remove an account from the role. Restricted to admins.
-   * @param _account Address of user whose role is being removed
-   * @param _role Role being removed
-   */
-  removeRole: {
-    (
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _account: string,
-      _role: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Remove oneself from the admin role.
-   */
-  renounceAdmin: {
-    (txDetails?: Truffle.TransactionDetails): Promise<
-      Truffle.TransactionResponse<AllEvents>
-    >;
-    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
-  };
-
-  /**
    * Checks if a user can manage a campaign. Called but not restricted to external campaign proxies
    * @param _user Address of user
    */
@@ -1064,6 +1055,29 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
+   * Disables an approved campaign. Restricted to campaign owners
+   * @param _campaignId ID of the campaign
+   */
+  disableCampaignApproval: {
+    (
+      _campaignId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _campaignId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _campaignId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _campaignId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
    * Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory
    * @param _active Indicates if the campaign will be active or not.  Affects campaign listing and transactions
    * @param _campaignId ID of the campaign
@@ -1120,7 +1134,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Purchases time for which the specified campaign will be featured. Restricted to
+   * Purchases time for which the specified campaign will be featured.
    * @param _campaignId ID of the campaign
    * @param _token Address of token used to purchase feature package
    */
@@ -1364,6 +1378,34 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     MANAGE_USERS(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+    /**
+     * Add an account to the role. Restricted to admins.
+     * @param _account Address of user being assigned role
+     * @param _role Role being assigned
+     */
+    addRole: {
+      (
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
     approvedCampaignTransactionConfig(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
@@ -1375,6 +1417,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
 
     campaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    campaignFactoryAddress(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
 
     campaignImplementation(
       txDetails?: Truffle.TransactionDetails
@@ -1505,6 +1551,46 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
+
+    /**
+     * Remove an account from the role. Restricted to admins.
+     * @param _account Address of user whose role is being removed
+     * @param _role Role being removed
+     */
+    removeRole: {
+      (
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Remove oneself from the admin role.
+     */
+    renounceAdmin: {
+      (txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
 
     /**
      * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -1842,74 +1928,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Add an account to the role. Restricted to admins.
-     * @param _account Address of user being assigned role
-     * @param _role Role being assigned
-     */
-    addRole: {
-      (
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Remove an account from the role. Restricted to admins.
-     * @param _account Address of user whose role is being removed
-     * @param _role Role being removed
-     */
-    removeRole: {
-      (
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _account: string,
-        _role: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Remove oneself from the admin role.
-     */
-    renounceAdmin: {
-      (txDetails?: Truffle.TransactionDetails): Promise<
-        Truffle.TransactionResponse<AllEvents>
-      >;
-      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
-    };
-
-    /**
      * Checks if a user can manage a campaign. Called but not restricted to external campaign proxies
      * @param _user Address of user
      */
@@ -2061,6 +2079,29 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
+     * Disables an approved campaign. Restricted to campaign owners
+     * @param _campaignId ID of the campaign
+     */
+    disableCampaignApproval: {
+      (
+        _campaignId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _campaignId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _campaignId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _campaignId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
      * Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory
      * @param _active Indicates if the campaign will be active or not.  Affects campaign listing and transactions
      * @param _campaignId ID of the campaign
@@ -2117,7 +2158,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Purchases time for which the specified campaign will be featured. Restricted to
+     * Purchases time for which the specified campaign will be featured.
      * @param _campaignId ID of the campaign
      * @param _token Address of token used to purchase feature package
      */

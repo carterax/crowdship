@@ -21,6 +21,10 @@ export interface CampaignFactoryInterfaceInstance
     txDetails?: Truffle.TransactionDetails
   ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
 
+  campaignFactoryAddress(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   campaignToID(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
@@ -115,6 +119,10 @@ export interface CampaignFactoryInterfaceInstance
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+
+    campaignFactoryAddress(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
 
     campaignToID(
       arg0: string,

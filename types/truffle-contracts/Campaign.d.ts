@@ -12,10 +12,10 @@ export interface CampaignContract extends Truffle.Contract<CampaignInstance> {
 export interface CampaignDeadlineExtended {
   name: "CampaignDeadlineExtended";
   args: {
-    campaignId: BN;
+    campaign: string;
     time: BN;
     sender: string;
-    0: BN;
+    0: string;
     1: BN;
     2: string;
   };
@@ -24,10 +24,10 @@ export interface CampaignDeadlineExtended {
 export interface CampaignOwnerSet {
   name: "CampaignOwnerSet";
   args: {
-    campaignId: BN;
+    campaign: string;
     user: string;
     sender: string;
-    0: BN;
+    0: string;
     1: string;
     2: string;
   };
@@ -36,10 +36,10 @@ export interface CampaignOwnerSet {
 export interface CampaignOwnershipTransferred {
   name: "CampaignOwnershipTransferred";
   args: {
-    campaignId: BN;
+    campaign: string;
     newUser: string;
     sender: string;
-    0: BN;
+    0: string;
     1: string;
     2: string;
   };
@@ -48,9 +48,9 @@ export interface CampaignOwnershipTransferred {
 export interface CampaignReported {
   name: "CampaignReported";
   args: {
-    campaignId: BN;
+    campaign: string;
     sender: string;
-    0: BN;
+    0: string;
     1: string;
   };
 }
@@ -58,9 +58,9 @@ export interface CampaignReported {
 export interface CampaignReviewed {
   name: "CampaignReviewed";
   args: {
-    campaignId: BN;
+    campaign: string;
     sender: string;
-    0: BN;
+    0: string;
     1: string;
   };
 }
@@ -68,13 +68,13 @@ export interface CampaignReviewed {
 export interface CampaignSettingsUpdated {
   name: "CampaignSettingsUpdated";
   args: {
-    campaignId: BN;
+    campaign: string;
     minimumContribution: BN;
     deadline: BN;
     goalType: BN;
     token: string;
     sender: string;
-    0: BN;
+    0: string;
     1: BN;
     2: BN;
     3: BN;
@@ -86,10 +86,10 @@ export interface CampaignSettingsUpdated {
 export interface CampaignStateChange {
   name: "CampaignStateChange";
   args: {
-    campaignId: BN;
+    campaign: string;
     state: BN;
     sender: string;
-    0: BN;
+    0: string;
     1: BN;
     2: string;
   };
@@ -98,11 +98,11 @@ export interface CampaignStateChange {
 export interface CampaignUserDataTransferred {
   name: "CampaignUserDataTransferred";
   args: {
-    campaignId: BN;
+    campaign: string;
     oldAddress: string;
     newAddress: string;
     sender: string;
-    0: BN;
+    0: string;
     1: string;
     2: string;
     3: string;
@@ -112,12 +112,12 @@ export interface CampaignUserDataTransferred {
 export interface ContributionMade {
   name: "ContributionMade";
   args: {
-    campaignId: BN;
+    campaign: string;
     amount: BN;
     rewardId: BN;
     withReward: boolean;
     sender: string;
-    0: BN;
+    0: string;
     1: BN;
     2: BN;
     3: boolean;
@@ -128,11 +128,11 @@ export interface ContributionMade {
 export interface ContributionWithdrawn {
   name: "ContributionWithdrawn";
   args: {
-    campaignId: BN;
+    campaign: string;
     amount: BN;
     user: string;
     sender: string;
-    0: BN;
+    0: string;
     1: BN;
     2: string;
     3: string;
@@ -151,13 +151,13 @@ export interface RequestAdded {
   name: "RequestAdded";
   args: {
     requestId: BN;
-    campaignId: BN;
+    campaign: string;
     duration: BN;
     value: BN;
     recipient: string;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: BN;
     3: BN;
     4: string;
@@ -169,10 +169,10 @@ export interface RequestComplete {
   name: "RequestComplete";
   args: {
     requestId: BN;
-    campaignId: BN;
+    campaign: string;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: string;
   };
 }
@@ -181,10 +181,10 @@ export interface RequestVoided {
   name: "RequestVoided";
   args: {
     requestId: BN;
-    campaignId: BN;
+    campaign: string;
     sender: string;
     0: BN;
-    1: BN;
+    1: string;
     2: string;
   };
 }
@@ -228,10 +228,10 @@ export interface RoleRevoked {
 export interface TargetMet {
   name: "TargetMet";
   args: {
-    campaignId: BN;
+    campaign: string;
     amount: BN;
     sender: string;
-    0: BN;
+    0: string;
     1: BN;
     2: string;
   };
@@ -250,11 +250,11 @@ export interface VoteCancelled {
   args: {
     requestId: BN;
     support: BN;
-    campaignId: BN;
+    campaign: string;
     sender: string;
     0: BN;
     1: BN;
-    2: BN;
+    2: string;
     3: string;
   };
 }
@@ -264,11 +264,11 @@ export interface Voted {
   args: {
     requestId: BN;
     support: BN;
-    campaignId: BN;
+    campaign: string;
     sender: string;
     0: BN;
     1: BN;
-    2: BN;
+    2: string;
     3: string;
   };
 }
@@ -299,7 +299,37 @@ type AllEvents =
 export interface CampaignInstance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+  MANAGER(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
   acceptedToken(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+  /**
+   * Add an account to the role. Restricted to admins.
+   * @param _account Address of user being assigned role
+   * @param _role Role being assigned
+   */
+  addRole: {
+    (
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
 
   allowContributionAfterTargetIsMet(
     txDetails?: Truffle.TransactionDetails
@@ -313,6 +343,10 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   approversCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   campaignBalance(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignFactoryContract(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
 
   campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -383,6 +417,46 @@ export interface CampaignInstance extends Truffle.ContractInstance {
    * Returns true if the contract is paused, and false otherwise.
    */
   paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
+
+  /**
+   * Remove an account from the role. Restricted to admins.
+   * @param _account Address of user whose role is being removed
+   * @param _role Role being removed
+   */
+  removeRole: {
+    (
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _account: string,
+      _role: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Remove oneself from the admin role.
+   */
+  renounceAdmin: {
+    (txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
 
   /**
    * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -658,7 +732,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Sets the number of times the campaign owner can extended deadlines. Restricted to factory
+   * Sets the number of times the campaign owner can extended deadlines.
    * @param _count Number of times a campaign owner can extend the deadline
    */
   setDeadlineSetTimes: {
@@ -1021,7 +1095,37 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   methods: {
     DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+    MANAGER(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
     acceptedToken(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+    /**
+     * Add an account to the role. Restricted to admins.
+     * @param _account Address of user being assigned role
+     * @param _role Role being assigned
+     */
+    addRole: {
+      (
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
 
     allowContributionAfterTargetIsMet(
       txDetails?: Truffle.TransactionDetails
@@ -1035,6 +1139,10 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     approversCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     campaignBalance(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    campaignFactoryContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
 
     campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1105,6 +1213,46 @@ export interface CampaignInstance extends Truffle.ContractInstance {
      * Returns true if the contract is paused, and false otherwise.
      */
     paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
+
+    /**
+     * Remove an account from the role. Restricted to admins.
+     * @param _account Address of user whose role is being removed
+     * @param _role Role being removed
+     */
+    removeRole: {
+      (
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _account: string,
+        _role: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Remove oneself from the admin role.
+     */
+    renounceAdmin: {
+      (txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
 
     /**
      * Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.
@@ -1380,7 +1528,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Sets the number of times the campaign owner can extended deadlines. Restricted to factory
+     * Sets the number of times the campaign owner can extended deadlines.
      * @param _count Number of times a campaign owner can extend the deadline
      */
     setDeadlineSetTimes: {

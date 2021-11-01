@@ -54,10 +54,21 @@ module.exports = {
       provider: function () {
         return new HDWalletProvider(
           mnemonic,
-          `https://rinkeby.infura.io/v3/${process.env.INFURA_KEY}`
+          `wss://rinkeby.infura.io/ws/v3/${process.env.INFURA_KEY}`
         );
       },
       network_id: 4,
+      gasPrice: 10e9,
+      skipDryRun: true,
+    },
+    ropsten: {
+      provider: function () {
+        return new HDWalletProvider(
+          mnemonic,
+          `wss://ropsten.infura.io/ws/v3/${process.env.INFURA_KEY}`
+        );
+      },
+      network_id: 3,
       gasPrice: 10e9,
       skipDryRun: true,
     },
