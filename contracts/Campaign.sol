@@ -12,8 +12,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "./CampaignFactory.sol";
 import "./utils/AccessControl.sol";
 
-import "./interfaces/CampaignFactoryInterface.sol";
-import "./interfaces/CampaignRewardInterface.sol";
+import "./interfaces/ICampaignFactory.sol";
+import "./interfaces/ICampaignReward.sol";
 
 import "./libraries/contracts/CampaignFactoryLib.sol";
 import "./libraries/contracts/CampaignRewardLib.sol";
@@ -50,19 +50,16 @@ contract Campaign is
 
     /// @dev `Initializer Event`
     event CampaignOwnerSet(
-        Campaign indexed campaign,
         address user,
         address sender
     );
 
     /// @dev `Campaign Config Events`
     event CampaignOwnershipTransferred(
-        Campaign indexed campaign,
         address newUser,
         address sender
     );
     event CampaignSettingsUpdated(
-        Campaign indexed campaign,
         uint256 minimumContribution,
         uint256 deadline,
         uint256 goalType,
@@ -70,15 +67,12 @@ contract Campaign is
         address sender
     );
     event CampaignDeadlineExtended(
-        Campaign indexed campaign,
         uint256 time,
         address sender
     );
-    event CampaignReported(Campaign indexed campaign, address sender);
 
     /// @dev `Approval Transfer`
     event CampaignUserDataTransferred(
-        Campaign indexed campaign,
         address oldAddress,
         address newAddress,
         address sender
@@ -86,24 +80,21 @@ contract Campaign is
 
     /// @dev `Contribution Events`
     event ContributionMade(
-        Campaign indexed campaign,
         uint256 amount,
         uint256 indexed rewardId,
         bool withReward,
         address sender
     );
     event ContributionWithdrawn(
-        Campaign indexed campaign,
         uint256 amount,
         address user,
         address sender
     );
-    event TargetMet(Campaign indexed campaign, uint256 amount, address sender);
+    event TargetMet(uint256 amount, address sender);
 
     /// @dev `Request Events`
     event RequestAdded(
         uint256 indexed requestId,
-        Campaign indexed campaign,
         uint256 duration,
         uint256 value,
         address recipient,
@@ -111,12 +102,10 @@ contract Campaign is
     );
     event RequestVoided(
         uint256 indexed requestId,
-        Campaign indexed campaign,
         address sender
     );
     event RequestComplete(
         uint256 indexed requestId,
-        Campaign indexed campaign,
         address sender
     );
 
@@ -124,28 +113,26 @@ contract Campaign is
     event Voted(
         uint256 indexed requestId,
         uint8 support,
-        Campaign indexed campaign,
         address sender
     );
     event VoteCancelled(
         uint256 indexed requestId,
         uint8 support,
-        Campaign indexed campaign,
         address sender
     );
 
     /// @dev `Review Events`
-    event CampaignReviewed(Campaign indexed campaign, address sender);
+    event CampaignReviewed(address sender);
+    event CampaignReported(address sender);
 
     /// @dev `Campaign State Events`
     event CampaignStateChange(
-        Campaign indexed campaign,
         CAMPAIGN_STATE state,
         address sender
     );
 
-    CampaignFactoryInterface public campaignFactoryContract;
-    CampaignRewardInterface private campaignRewardContract;
+    ICampaignFactory public campaignFactoryContract;
+    ICampaignReward private campaignRewardContract;
 
     /// @dev `Request`
     struct Request {
@@ -255,10 +242,10 @@ contract Campaign is
     {
         require(address(_root) != address(0));
 
-        campaignFactoryContract = CampaignFactoryInterface(
+        campaignFactoryContract = ICampaignFactory(
             address(_campaignFactory)
         );
-        campaignRewardContract = CampaignRewardInterface(address(_camaignRewards));
+        campaignRewardContract = ICampaignReward(address(_camaignRewards));
         
         root = _root;
         campaignState = CAMPAIGN_STATE.COLLECTION;
@@ -272,7 +259,7 @@ contract Campaign is
 
         _setRoleAdmin(MANAGER, DEFAULT_ADMIN_ROLE);
 
-        emit CampaignOwnerSet(this, root, msg.sender);
+        emit CampaignOwnerSet(root, msg.sender);
     }
 
     /**
@@ -283,13 +270,12 @@ contract Campaign is
         external
         onlyAdmin
         whenNotPaused
-        userIsVerified(_newRoot)
     {
         root = _newRoot;
         _setupRole(DEFAULT_ADMIN_ROLE, _newRoot);
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        emit CampaignOwnershipTransferred(this, _newRoot, msg.sender);
+        emit CampaignOwnershipTransferred(_newRoot, msg.sender);
     }
 
     /**
@@ -327,7 +313,6 @@ contract Campaign is
         );
 
         emit CampaignUserDataTransferred(
-            this,
             _oldAddress,
             _newAddress,
             msg.sender
@@ -350,7 +335,7 @@ contract Campaign is
         uint256 _goalType,
         address _token,
         bool _allowContributionAfterTargetIsMet
-    ) external onlyAdmin userIsVerified(msg.sender) {
+    ) external onlyAdmin {
         require(approversCount < 1, "campaign has approvers");
         require(
             _minimumContribution >=
@@ -391,7 +376,6 @@ contract Campaign is
         goalType = GOALTYPE(_goalType);
 
         emit CampaignSettingsUpdated(
-            this,
             _minimumContribution,
             _duration,
             _goalType,
@@ -407,7 +391,6 @@ contract Campaign is
     function extendDeadline(uint256 _time)
         external
         onlyAdmin
-        userIsVerified(msg.sender)
         nonReentrant
         whenNotPaused
     {
@@ -439,7 +422,7 @@ contract Campaign is
         // limit ability to increase deadlines
         deadlineSetTimes = deadlineSetTimes.add(1);
 
-        emit CampaignDeadlineExtended(this, _time, msg.sender);
+        emit CampaignDeadlineExtended(_time, msg.sender);
     }
 
     /**
@@ -519,7 +502,7 @@ contract Campaign is
         // keep track of when target is met
         if (totalCampaignContribution >= target) {
             campaignState = CAMPAIGN_STATE.LIVE;
-            emit TargetMet(this, totalCampaignContribution, msg.sender);
+            emit TargetMet(totalCampaignContribution, msg.sender);
         }
 
         SafeERC20Upgradeable.safeTransferFrom(
@@ -529,7 +512,7 @@ contract Campaign is
             msg.value
         );
 
-        emit ContributionMade(this, msg.value, _rewardId, _withReward, msg.sender);
+        emit ContributionMade(msg.value, _rewardId, _withReward, msg.sender);
     }
 
     /**
@@ -538,7 +521,6 @@ contract Campaign is
      */
     function withdrawOwnContribution(address payable _wallet)
         external
-        userIsVerified(msg.sender)
         nonReentrant
     {
         require(!withdrawalsPaused);
@@ -647,7 +629,7 @@ contract Campaign is
             maxBalance
         );
 
-        emit ContributionWithdrawn(this, maxBalance, _user, msg.sender);
+        emit ContributionWithdrawn(maxBalance, _user, msg.sender);
     }
 
     /**
@@ -664,7 +646,6 @@ contract Campaign is
     )
         external
         onlyAdmin
-        userIsVerified(msg.sender)
         whenNotPaused
     {
         require(address(_recipient) != address(0));
@@ -733,7 +714,6 @@ contract Campaign is
 
         emit RequestAdded(
             requests.length.sub(1),
-            this,
             _duration,
             _value,
             _recipient,
@@ -748,7 +728,6 @@ contract Campaign is
     function voidRequest(uint256 _requestId)
         external
         onlyAdmin
-        userIsVerified(msg.sender)
         whenNotPaused
     {
         // request must not be void
@@ -760,7 +739,7 @@ contract Campaign is
 
         requests[_requestId].void = true;
 
-        emit RequestVoided(_requestId, this, msg.sender);
+        emit RequestVoided(_requestId, msg.sender);
     }
 
     /**
@@ -799,7 +778,7 @@ contract Campaign is
                 .add(1);
         }
 
-        emit Voted(_requestId, _support, this, msg.sender);
+        emit Voted(_requestId, _support, msg.sender);
     }
 
     /**
@@ -837,7 +816,6 @@ contract Campaign is
         emit VoteCancelled(
             _requestId,
             requestSupport[_requestId][msg.sender],
-            this,
             msg.sender
         );
     }
@@ -849,7 +827,6 @@ contract Campaign is
     function finalizeRequest(uint256 _requestId)
         external
         onlyAdmin
-        userIsVerified(msg.sender)
         whenNotPaused
         nonReentrant
     {
@@ -910,14 +887,13 @@ contract Campaign is
             );
         }
 
-        emit RequestComplete(_requestId, this, msg.sender);
+        emit RequestComplete(_requestId, msg.sender);
     }
 
     /// @dev Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over
     function reviewMode()
         external
         onlyAdmin
-        userIsVerified(msg.sender)
         whenNotPaused
     {
         // ensure finalized requests is more than 1
@@ -934,7 +910,7 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE.REVIEW;
         _pause();
 
-        emit CampaignStateChange(this, CAMPAIGN_STATE.REVIEW, msg.sender);
+        emit CampaignStateChange(CAMPAIGN_STATE.REVIEW, msg.sender);
     }
 
     /// @dev User acknowledgement of review state enabled by the campaign owner
@@ -954,13 +930,12 @@ contract Campaign is
 
         reviewCount = reviewCount.add(1);
 
-        emit CampaignReviewed(this, msg.sender);
+        emit CampaignReviewed(msg.sender);
     }
 
     /// @dev Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
     function markCampaignComplete()
         external
-        userIsVerified(msg.sender)
         onlyAdmin
         whenPaused
     {
@@ -989,7 +964,6 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE.COMPLETE;
 
         emit CampaignStateChange(
-            this,
             CAMPAIGN_STATE.COMPLETE,
             msg.sender
         );
@@ -1028,7 +1002,7 @@ contract Campaign is
             _pause();
         }
 
-        emit CampaignReported(this, msg.sender);
+        emit CampaignReported(msg.sender);
     }
 
     /// @dev Changes campaign state
@@ -1036,7 +1010,6 @@ contract Campaign is
         campaignState = CAMPAIGN_STATE(_state);
 
         emit CampaignStateChange(
-            this,
             CAMPAIGN_STATE(_state),
             msg.sender
         );

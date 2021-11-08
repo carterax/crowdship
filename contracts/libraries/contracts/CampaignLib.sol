@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "../../interfaces/CampaignInterface.sol";
+import "../../interfaces/ICampaign.sol";
 
 library CampaignLib {
     /**
@@ -10,7 +10,7 @@ library CampaignLib {
      * @param      _campaign    Campaign factory interface
      * @param      _user        Address of user check is being carried on
      */
-    function isAnApprover(CampaignInterface _campaign, address _user)
+    function isAnApprover(ICampaign _campaign, address _user)
         internal
         view
         returns (bool)

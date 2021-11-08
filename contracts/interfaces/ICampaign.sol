@@ -1,8 +1,8 @@
-// contracts/interfaces/CampaignInterface.sol
+// contracts/interfaces/ICampaign.sol
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-abstract contract CampaignInterface {
+abstract contract ICampaign {
     address public root;
     uint256 public campaignID;
 

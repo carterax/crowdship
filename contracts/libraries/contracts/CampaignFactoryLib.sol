@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "../../interfaces/CampaignFactoryInterface.sol";
+import "../../interfaces/ICampaignFactory.sol";
 
 library CampaignFactoryLib {
     /**
@@ -11,7 +11,7 @@ library CampaignFactoryLib {
      * @param      _user        Address of caller
      */
     function canManageCampaigns(
-        CampaignFactoryInterface _factory,
+        ICampaignFactory _factory,
         address _user
     ) internal view returns (bool) {
         return _factory.canManageCampaigns(_user);
@@ -23,7 +23,7 @@ library CampaignFactoryLib {
      * @param      _prop        Transaction config key
      */
     function getCampaignFactoryConfig(
-        CampaignFactoryInterface _factory,
+        ICampaignFactory _factory,
         string memory _prop
     ) internal view returns (uint256) {
         return _factory.campaignTransactionConfig(_prop);
@@ -35,7 +35,7 @@ library CampaignFactoryLib {
      * @param      _campaignId  ID of the campaign
      */
     function campaignInfo(
-        CampaignFactoryInterface _factory,
+        ICampaignFactory _factory,
         uint256 _campaignId
     )
         internal
@@ -80,7 +80,7 @@ library CampaignFactoryLib {
      * @param      _factory      Campaign factory interface
      * @param      _userAddress  Address of the user
      */
-    function userInfo(CampaignFactoryInterface _factory, address _userAddress)
+    function userInfo(ICampaignFactory _factory, address _userAddress)
         internal
         view
         returns (address, bool)
@@ -106,7 +106,7 @@ library CampaignFactoryLib {
      * @param      _amount      Amount being sent
      */
     function sendCommissionFee(
-        CampaignFactoryInterface _factory,
+        ICampaignFactory _factory,
         address _campaign,
         uint256 _amount
     ) internal {
@@ -119,7 +119,7 @@ library CampaignFactoryLib {
      * @param      _campaignId  ID of the campaign
      */
     function factoryPercentFee(
-        CampaignFactoryInterface _factory,
+        ICampaignFactory _factory,
         uint256 _campaignId
     ) internal view returns (uint256) {
         uint256 campaignCategory;

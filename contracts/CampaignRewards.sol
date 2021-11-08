@@ -9,10 +9,10 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "./CampaignFactory.sol";
 import "./Campaign.sol";
 
+import "./interfaces/ICampaignFactory.sol";
+import "./interfaces/ICampaign.sol";
 import "./utils/AccessControl.sol";
-import "./interfaces/CampaignFactoryInterface.sol";
 import "./libraries/contracts/CampaignFactoryLib.sol";
-import "./interfaces/CampaignInterface.sol";
 import "./libraries/contracts/CampaignLib.sol";
 
 contract CampaignRewards is Initializable, AccessControl {
@@ -20,7 +20,6 @@ contract CampaignRewards is Initializable, AccessControl {
 
     /// @dev `Initializer Event`
     event CampaignRewardOwnerSet(
-        Campaign indexed campaign,
         address owner,
         address sender
     );
@@ -28,7 +27,6 @@ contract CampaignRewards is Initializable, AccessControl {
     /// @dev `Reward Events`
     event RewardCreated(
         uint256 indexed rewardId,
-        Campaign indexed campaign,
         uint256 value,
         uint256 deliveryDate,
         uint256 stock,
@@ -37,7 +35,6 @@ contract CampaignRewards is Initializable, AccessControl {
     );
     event RewardModified(
         uint256 indexed rewardId,
-        Campaign indexed campaign,
         uint256 value,
         uint256 deliveryDate,
         uint256 stock,
@@ -46,37 +43,32 @@ contract CampaignRewards is Initializable, AccessControl {
     );
     event RewardStockIncreased(
         uint256 indexed rewardId,
-        Campaign indexed campaign,
         uint256 count,
         address sender
     );
     event RewardDestroyed(
         uint256 indexed rewardId,
-        Campaign indexed campaign,
         address sender
     );
 
     /// @dev `Rward Recipient Events`
     event RewardRecipientAdded(
         uint256 indexed rewardId,
-        Campaign indexed campaign,
         uint256 amount,
         address sender
     );
     event RewarderApproval(
         uint256 indexed rewardRecipientId,
-        Campaign indexed campaign,
         bool status,
         address sender
     );
     event RewardRecipientApproval(
         uint256 indexed rewardRecipientId,
-        Campaign indexed campaign,
         address sender
     );
 
-    CampaignFactoryInterface public campaignFactoryContract;
-    CampaignInterface public campaignContract;
+    ICampaignFactory public campaignFactoryContract;
+    ICampaign public campaignContract;
 
     address public root;
     address public campaignRewardAddress;
@@ -144,17 +136,17 @@ contract CampaignRewards is Initializable, AccessControl {
 
         _setupRole(DEFAULT_ADMIN_ROLE, _campaignOwner);
 
-        campaignFactoryContract = CampaignFactoryInterface(
+        campaignFactoryContract = ICampaignFactory(
             address(_campaignFactory)
         );
-        campaignContract = CampaignInterface(address(_campaign));
+        campaignContract = ICampaign(address(_campaign));
 
         campaignID = _campaignId;
         campaign = _campaign;
         root = _campaignOwner;
         campaignRewardAddress = address(this);
 
-        emit CampaignRewardOwnerSet(_campaign, root, msg.sender);
+        emit CampaignRewardOwnerSet(root, msg.sender);
     }
 
     /**
@@ -190,7 +182,6 @@ contract CampaignRewards is Initializable, AccessControl {
 
         emit RewardCreated(
             rewards.length.sub(1),
-            campaign,
             _value,
             _deliveryDate,
             _stock,
@@ -221,7 +212,7 @@ contract CampaignRewards is Initializable, AccessControl {
             _rewardId
         ].add(1);
 
-        emit RewardRecipientAdded(_rewardId, campaign, _amount, _user);
+        emit RewardRecipientAdded(_rewardId, _amount, _user);
     }
 
     /**
@@ -270,7 +261,6 @@ contract CampaignRewards is Initializable, AccessControl {
 
         emit RewardModified(
             _rewardId,
-            campaign,
             _value,
             _deliveryDate,
             _stock,
@@ -292,7 +282,7 @@ contract CampaignRewards is Initializable, AccessControl {
         require(rewards[_rewardId].exists, "not found");
         rewards[_rewardId].stock = rewards[_rewardId].stock.add(_count);
 
-        emit RewardStockIncreased(_rewardId, campaign, _count, msg.sender);
+        emit RewardStockIncreased(_rewardId, _count, msg.sender);
     }
 
     /**
@@ -310,7 +300,7 @@ contract CampaignRewards is Initializable, AccessControl {
 
         delete rewards[_rewardId];
 
-        emit RewardDestroyed(_rewardId, campaign, msg.sender);
+        emit RewardDestroyed(_rewardId, msg.sender);
     }
 
     /**
@@ -333,7 +323,6 @@ contract CampaignRewards is Initializable, AccessControl {
             .deliveryConfirmedByCampaign = _status;
         emit RewarderApproval(
             _rewardRecipientId,
-            campaign,
             _status,
             msg.sender
         );
@@ -369,7 +358,6 @@ contract CampaignRewards is Initializable, AccessControl {
         rewardRecipients[_rewardRecipientId].deliveryConfirmedByUser = true;
         emit RewardRecipientApproval(
             _rewardRecipientId,
-            campaign,
             msg.sender
         );
     }

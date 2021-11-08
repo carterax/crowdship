@@ -1,8 +1,8 @@
-// contracts/interfaces/CampaignRewardInterface.sol
+// contracts/interfaces/ICampaignReward.sol
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-abstract contract CampaignRewardInterface {
+abstract contract ICampaignReward {
     address public campaignRewardAddress;
     
     function assignReward(
