@@ -1,4 +1,3 @@
-// contracts/CampaignFactory.sol
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
@@ -10,8 +9,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-import "./Campaign.sol";
-import "./CampaignRewards.sol";
+import "./campaign/Campaign.sol";
+import "./campaign/CampaignReward.sol";
 import "./utils/AccessControl.sol";
 import "./libraries/math/DecimalMath.sol";
 
@@ -42,73 +41,38 @@ contract CampaignFactory is
         address campaignRewards,
         uint256 userId,
         uint256 category,
-        address sender
+        bool approved
     );
     event CampaignApproval(
-        uint256 indexed campaignId,
-        bool approval,
-        address sender
+        address indexed campaign,
+        bool approval
     );
     event CampaignActiveToggle(
-        uint256 indexed campaignId,
-        bool active,
-        address sender
+        address indexed campaign,
+        bool active
     );
     event CampaignCategoryChange(
-        uint256 indexed campaignId,
-        uint256 newCategory,
-        address sender
+        address indexed campaign,
+        uint256 newCategory
     );
-    
-    // event CampaignFeatured(
-    //     uint256 indexed campaignId,
-    //     uint256 featurePackageId,
-    //     uint256 amount,
-    //     address sender
-    // );
-    // event CampaignFeaturePaused(uint256 indexed campaignId, address sender);
-    // event CampaignFeatureUnpaused(
-    //     uint256 indexed campaignId,
-    //     uint256 timeLeft,
-    //     address sender
-    // );
 
     /// @dev `Token Events`
-    event TokenAdded(address indexed token, address sender);
-    event TokenApproval(address indexed token, bool state, address sender);
-    event TokenRemoved(uint256 indexed tokenId, address token, address sender);
+    event TokenAdded(address indexed token);
+    event TokenApproval(address indexed token, bool state);
 
     /// @dev `User Events`
-    event UserAdded(uint256 indexed userId, address sender);
-    event UserApproval(uint256 indexed userId, bool approval, address sender);
-    event UserRemoved(uint256 indexed userId, address sender);
+    event UserAdded(uint256 indexed userId);
+    event UserApproval(uint256 indexed userId, address indexed user, bool approval);
 
     /// @dev `Category Events`
     event CategoryAdded(
         uint256 indexed categoryId,
-        bool active,
-        address sender
+        bool active
     );
     event CategoryModified(
         uint256 indexed categoryId,
-        bool active,
-        address sender
+        bool active
     );
-
-    /// @dev `Feature Package Events`
-    // event FeaturePackageAdded(
-    //     uint256 indexed packageId,
-    //     uint256 cost,
-    //     uint256 time,
-    //     address sender
-    // );
-    // event FeaturePackageModified(
-    //     uint256 indexed packageId,
-    //     uint256 cost,
-    //     uint256 time,
-    //     address sender
-    // );
-    // event FeaturePackageDestroyed(uint256 indexed packageId, address sender);
 
     /// @dev Settings
     address public root;
@@ -116,7 +80,6 @@ contract CampaignFactory is
     address payable public factoryWallet;
     address public campaignImplementation;
     address public campaignRewardsImplementation;
-    address[] public tokenList;
     string[] public campaignTransactionConfigList;
     mapping(string => bool) public approvedCampaignTransactionConfig;
     mapping(string => uint256) public campaignTransactionConfig;
@@ -125,9 +88,8 @@ contract CampaignFactory is
     mapping(address => bool) public tokensApproved;
 
     /// @dev Revenue
-    uint256 public factoryRevenue; // total from all activities (campaignRevenueFromCommissions + campaignRevenueFromFeatures)
+    uint256 public factoryRevenue; // total from all campaigns
     mapping(uint256 => uint256) public campaignRevenueFromCommissions; // revenue from cuts
-    mapping(uint256 => uint256) public campaignRevenueFromFeatures; // revenue from ads
 
     /// @dev `Campaigns`
     struct CampaignInfo {
@@ -146,8 +108,8 @@ contract CampaignFactory is
     uint256 public campaignCount;
     mapping(address => address) public campaignToOwner;
     mapping(address => uint256) public campaignToID;
-    mapping(uint256 => bool) public featuredCampaignIsPaused;
-    mapping(uint256 => uint256) public pausedFeaturedCampaignTimeLeft;
+    // mapping(uint256 => bool) public featuredCampaignIsPaused;
+    // mapping(uint256 => uint256) public pausedFeaturedCampaignTimeLeft;
 
     /// @dev `Categories`
     struct CampaignCategory {
@@ -171,17 +133,6 @@ contract CampaignFactory is
     User[] public users;
     uint256 public userCount;
     mapping(address => uint256) public userID;
-
-    /// @dev `Featured`
-    struct Featured {
-        uint256 createdAt;
-        uint256 updatedAt;
-        uint256 time;
-        uint256 cost;
-        bool exists;
-    }
-    Featured[] public featurePackages;
-    uint256 public featurePackageCount;
 
     /// @dev Ensures caller is campaign owner alone
     modifier campaignOwner(uint256 _campaignId) {
@@ -302,7 +253,7 @@ contract CampaignFactory is
     function setFactoryConfig(
         address payable _wallet,
         Campaign _campaignImplementation,
-        CampaignRewards _campaignRewardsImplementation
+        CampaignReward _campaignRewardsImplementation
     ) external onlyAdmin {
         require(address(_wallet) != address(0));
         require(address(_campaignImplementation) != address(0));
@@ -379,6 +330,7 @@ contract CampaignFactory is
             DecimalMath.toUFixed(_denominator)
         );
         categoryCommission[_categoryId] = _commission.value;
+        campaignCategories[_categoryId].updatedAt = block.timestamp;
 
         emit CategoryCommissionUpdated(_categoryId, _commission.value);
     }
@@ -390,25 +342,9 @@ contract CampaignFactory is
     function addToken(address _token) external onlyAdmin {
         require(!tokenInList[_token]);
 
-        tokenList.push(_token);
         tokenInList[_token] = true;
 
-        emit TokenAdded(_token, msg.sender);
-    }
-
-    /**
-     * @dev        Removes a token from the list of accepted tokens and tokens in list
-     * @param      _tokenId      ID of the token
-     * @param      _token        Address of the token
-     */
-    function removeToken(uint256 _tokenId, address _token) external onlyAdmin {
-        require(tokenInList[_token]);
-
-        tokenInList[_token] = false;
-        tokensApproved[_token] = false;
-        delete tokenList[_tokenId];
-
-        emit TokenRemoved(_tokenId, _token, msg.sender);
+        emit TokenAdded(_token);
     }
 
     /**
@@ -423,7 +359,7 @@ contract CampaignFactory is
         require(tokenInList[_token]);
         tokensApproved[_token] = _state;
 
-        emit TokenApproval(_token, _state, msg.sender);
+        emit TokenApproval(_token, _state);
     }
 
     /**
@@ -458,7 +394,7 @@ contract CampaignFactory is
         userID[msg.sender] = users.length.sub(1);
         userCount = userCount.add(1);
 
-        emit UserAdded(users.length.sub(1), msg.sender);
+        emit UserAdded(users.length.sub(1));
     }
 
     /**
@@ -475,30 +411,14 @@ contract CampaignFactory is
         users[_userId].verified = _approval;
         users[_userId].updatedAt = block.timestamp;
 
-        emit UserApproval(_userId, _approval, msg.sender);
-    }
-
-    /**
-     * @dev        Deletes a user
-     * @param      _userId  ID of the user
-     */
-    function destroyUser(uint256 _userId)
-        external
-        onlyManager(MANAGE_USERS)
-        whenNotPaused
-    {
-        User storage user = users[_userId];
-        require(user.exists);
-        delete users[_userId];
-
-        emit UserRemoved(_userId, msg.sender);
+        emit UserApproval(_userId, users[_userId].userAddress, _approval);
     }
 
     /**
      * @dev        Deploys and tracks a new campagign
      * @param      _categoryId    ID of category campaign deployer specifies
      */
-    function createCampaign(uint256 _categoryId)
+    function createCampaign(uint256 _categoryId, bool _approved)
         external
         userIsVerified(msg.sender)
         whenNotPaused
@@ -523,7 +443,7 @@ contract CampaignFactory is
             updatedAt: 0,
             featureFor: 0,
             active: false,
-            approved: false,
+            approved: _approved,
             exists: true
         });
         deployedCampaigns.push(campaignInfo);
@@ -539,14 +459,13 @@ contract CampaignFactory is
 
         Campaign(campaign).__Campaign_init(
             CampaignFactory(this),
-            CampaignRewards(campaignRewards),
+            CampaignReward(campaignRewards),
             msg.sender,
             campaignId
         );
-        CampaignRewards(campaignRewards).__CampaignRewards_init(
+        CampaignReward(campaignRewards).__CampaignReward_init(
             CampaignFactory(this),
             Campaign(campaign),
-            msg.sender,
             campaignId
         );
 
@@ -557,7 +476,7 @@ contract CampaignFactory is
             address(campaignRewards),
             userID[msg.sender],
             _categoryId,
-            msg.sender
+            _approved
         );
     }
 
@@ -575,7 +494,7 @@ contract CampaignFactory is
         deployedCampaigns[_campaignId].approved = _approval;
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignApproval(_campaignId, _approval, msg.sender);
+        emit CampaignApproval(deployedCampaigns[_campaignId].campaign, _approval);
     }
 
     // /**
@@ -618,7 +537,7 @@ contract CampaignFactory is
         deployedCampaigns[_campaignId].active = _active;
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignActiveToggle(_campaignId, _active, msg.sender);
+        emit CampaignActiveToggle(deployedCampaigns[_campaignId].campaign, _active);
     }
 
     /**
@@ -650,131 +569,11 @@ contract CampaignFactory is
             deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
             emit CampaignCategoryChange(
-                _campaignId,
-                _newCategoryId,
-                msg.sender
+                deployedCampaigns[_campaignId].campaign,
+                _newCategoryId
             );
         }
     }
-
-    // /**
-    //  * @dev        Purchases time for which the specified campaign will be featured.
-    //  * @param      _campaignId    ID of the campaign
-    //  * @param      _token         Address of token used to purchase feature package
-    //  */
-    // function featureCampaign(
-    //     uint256 _campaignId,
-    //     uint256 _featurePackageId,
-    //     address _token
-    // )
-    //     external
-    //     payable
-    //     campaignOwner(_campaignId)
-    //     campaignExists(_campaignId)
-    //     campaignIsEnabled(_campaignId)
-    //     userIsVerified(msg.sender)
-    //     whenNotPaused
-    //     nonReentrant
-    // {
-    //     require(deployedCampaigns[_campaignId].approved, "campaign not approved");
-    //     require(tokensApproved[_token], "disapproved token");
-    //     require(featurePackages[_featurePackageId].exists, "package not found");
-    //     require(
-    //         msg.value >= featurePackages[_featurePackageId].cost,
-    //         "price exceeds amount"
-    //     );
-
-    //     // update campaign revenue to factory
-    //     factoryRevenue = factoryRevenue.add(msg.value);
-
-    //     // update campaign revenue from ads
-    //     campaignRevenueFromFeatures[_campaignId] = campaignRevenueFromFeatures[
-    //         _campaignId
-    //     ].add(msg.value);
-
-    //     // update featuredFor for time specified in the selected feature package
-    //     deployedCampaigns[_campaignId].featureFor = deployedCampaigns[
-    //         _campaignId
-    //     ].featureFor.add(featurePackages[_featurePackageId].time).add(
-    //             block.timestamp
-    //         );
-
-    //     deployedCampaigns[_campaignId].updatedAt = block.timestamp;
-
-    //     // transfer funds to factory wallet
-    //     SafeERC20Upgradeable.safeTransferFrom(
-    //         IERC20Upgradeable(_token),
-    //         msg.sender,
-    //         factoryWallet,
-    //         msg.value
-    //     );
-
-    //     emit CampaignFeatured(
-    //         _campaignId,
-    //         _featurePackageId,
-    //         msg.value,
-    //         msg.sender
-    //     );
-    // }
-
-    // /**
-    //  * @dev        Pauses campaign feature time storing what's left for later use. Restricted to campaign owner or manager
-    //  * @param      _campaignId   ID of the campaign
-    //  */
-    // function pauseCampaignFeatured(uint256 _campaignId)
-    //     external
-    //     campaignOwner(_campaignId)
-    //     campaignExists(_campaignId)
-    //     userIsVerified(msg.sender)
-    //     whenNotPaused
-    // {
-    //     require(
-    //         deployedCampaigns[_campaignId].featureFor >= block.timestamp,
-    //         "campaign feature expired or not eligible"
-    //     ); // check time in campaign feature hasn't expired
-    //     require(
-    //         !featuredCampaignIsPaused[_campaignId],
-    //         "campaign feature already paused"
-    //     ); // make sure campaign feature isn't paused
-
-    //     // time in campaign currently - current time
-    //     pausedFeaturedCampaignTimeLeft[_campaignId] = deployedCampaigns[
-    //         _campaignId
-    //     ].featureFor.sub(block.timestamp);
-
-    //     featuredCampaignIsPaused[_campaignId] = true;
-
-    //     emit CampaignFeaturePaused(_campaignId, msg.sender);
-    // }
-
-    // /**
-    //  * @dev        Resumes campaign feature time
-    //  * @param      _campaignId   ID of the campaign
-    //  */
-    // function unpauseCampaignFeatured(uint256 _campaignId)
-    //     external
-    //     campaignOwner(_campaignId)
-    //     campaignExists(_campaignId)
-    //     userIsVerified(msg.sender)
-    //     whenNotPaused
-    // {
-    //     require(featuredCampaignIsPaused[_campaignId]); // make sure campaign feature is paused
-
-    //     featuredCampaignIsPaused[_campaignId] = false;
-
-    //     deployedCampaigns[_campaignId].featureFor = deployedCampaigns[
-    //         _campaignId
-    //     ].featureFor.add(pausedFeaturedCampaignTimeLeft[_campaignId]); // add time left after pause
-
-    //     // we don't owe you no more
-    //     pausedFeaturedCampaignTimeLeft[_campaignId] = 0;
-
-    //     emit CampaignFeatureUnpaused(
-    //         _campaignId,
-    //         pausedFeaturedCampaignTimeLeft[_campaignId],
-    //         msg.sender
-    //     );
-    // }
 
     /**
      * @dev        Creates a category
@@ -801,8 +600,7 @@ contract CampaignFactory is
 
         emit CategoryAdded(
             campaignCategories.length.sub(1),
-            _active,
-            msg.sender
+            _active
         );
     }
 
@@ -821,64 +619,8 @@ contract CampaignFactory is
         campaignCategories[_categoryId].active = _active;
         campaignCategories[_categoryId].updatedAt = block.timestamp;
 
-        emit CategoryModified(_categoryId, _active, msg.sender);
+        emit CategoryModified(_categoryId, _active);
     }
-
-    // /**
-    //  * @dev        Creates a feature package purchased by campaig owners to feature their campaigns
-    //  * @param      _cost        Cost of purchasing this feature package
-    //  * @param      _time        How long a campaign will be featured for
-    //  */
-    // function createFeaturePackage(uint256 _cost, uint256 _time)
-    //     external
-    //     onlyAdmin
-    //     whenNotPaused
-    // {
-    //     featurePackages.push(Featured(block.timestamp, 0, _time, _cost, true));
-    //     featurePackageCount = featurePackageCount.add(1);
-
-    //     emit FeaturePackageAdded(
-    //         featurePackages.length.sub(1),
-    //         _cost,
-    //         _time,
-    //         msg.sender
-    //     );
-    // }
-
-    // /**
-    //  * @dev        Modifies details about a feature package
-    //  * @param      _packageId   ID of feature package
-    //  * @param      _cost        Cost of purchasing this feature package
-    //  * @param      _time        How long a campaign will be featured for
-    //  */
-    // function modifyFeaturedPackage(
-    //     uint256 _packageId,
-    //     uint256 _cost,
-    //     uint256 _time
-    // ) external onlyAdmin whenNotPaused {
-    //     require(featurePackages[_packageId].exists);
-    //     featurePackages[_packageId].cost = _cost;
-    //     featurePackages[_packageId].time = _time;
-    //     featurePackages[_packageId].updatedAt = block.timestamp;
-
-    //     emit FeaturePackageModified(_packageId, _cost, _time, msg.sender);
-    // }
-
-    // /**
-    //  * @dev        Deletes a feature package
-    //  * @param      _packageId   ID of feature package
-    //  */
-    // function destroyFeaturedPackage(uint256 _packageId)
-    //     external
-    //     onlyAdmin
-    //     whenNotPaused
-    // {
-    //     require(featurePackages[_packageId].exists);
-
-    //     delete featurePackages[_packageId];
-
-    //     emit FeaturePackageDestroyed(_packageId, msg.sender);
-    // }
 
     /// @dev Unpauses the factory, transactions in the factory resumes per usual
     function unpauseCampaign() external whenPaused onlyAdmin {

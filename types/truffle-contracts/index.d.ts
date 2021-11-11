@@ -14,6 +14,9 @@ import { ERC165UpgradeableContract } from "./ERC165Upgradeable";
 import { ERC20UpgradeableContract } from "./ERC20Upgradeable";
 import { FactoryContract } from "./Factory";
 import { IAccessControlUpgradeableContract } from "./IAccessControlUpgradeable";
+import { ICampaignContract } from "./ICampaign";
+import { ICampaignFactoryContract } from "./ICampaignFactory";
+import { ICampaignRewardContract } from "./ICampaignReward";
 import { IERC165UpgradeableContract } from "./IERC165Upgradeable";
 import { IERC20MetadataUpgradeableContract } from "./IERC20MetadataUpgradeable";
 import { IERC20UpgradeableContract } from "./IERC20Upgradeable";
@@ -42,6 +45,9 @@ declare global {
       require(
         name: "IAccessControlUpgradeable"
       ): IAccessControlUpgradeableContract;
+      require(name: "ICampaign"): ICampaignContract;
+      require(name: "ICampaignFactory"): ICampaignFactoryContract;
+      require(name: "ICampaignReward"): ICampaignRewardContract;
       require(name: "IERC165Upgradeable"): IERC165UpgradeableContract;
       require(
         name: "IERC20MetadataUpgradeable"
@@ -93,6 +99,15 @@ export {
   IAccessControlUpgradeableContract,
   IAccessControlUpgradeableInstance,
 } from "./IAccessControlUpgradeable";
+export { ICampaignContract, ICampaignInstance } from "./ICampaign";
+export {
+  ICampaignFactoryContract,
+  ICampaignFactoryInstance,
+} from "./ICampaignFactory";
+export {
+  ICampaignRewardContract,
+  ICampaignRewardInstance,
+} from "./ICampaignReward";
 export {
   IERC165UpgradeableContract,
   IERC165UpgradeableInstance,

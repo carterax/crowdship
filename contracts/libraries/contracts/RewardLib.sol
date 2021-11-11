@@ -1,21 +1,20 @@
-// contracts/CampaignRewardLib.sol
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "../../interfaces/ICampaignReward.sol";
+import "../../interfaces/IReward.sol";
 
-library CampaignRewardLib {
+library RewardLib {
     /**
      * @dev        Assigns a reward to the user
      * @param      _campaignReward     Campaign reward interface
      */
     function _assignReward(
-        ICampaignReward _campaignReward,
+        IReward _campaignReward,
         uint256 _rewardId,
         uint256 _amount,
         address _user
-    ) internal {
-        _campaignReward.assignReward(_rewardId, _amount, _user);
+    ) internal returns (uint256) {
+        return _campaignReward.assignReward(_rewardId, _amount, _user);
     }
 
     /**
@@ -23,7 +22,7 @@ library CampaignRewardLib {
      * @param      _user        Address of user who rewards are being renounced
      */
     function _renounceRewards(
-        ICampaignReward _campaignReward,
+        IReward _campaignReward,
         address _user
     ) internal {
         _campaignReward.renounceRewards(_user);
@@ -36,7 +35,7 @@ library CampaignRewardLib {
      * @param      _newAddress      Address of new owner rewards are being transferred to
      */
     function _transferRewards(
-        ICampaignReward _campaignReward,
+        IReward _campaignReward,
         address _oldAddress,
         address _newAddress
     ) internal {

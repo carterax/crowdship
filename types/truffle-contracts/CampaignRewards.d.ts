@@ -13,12 +13,8 @@ export interface CampaignRewardsContract
 export interface CampaignRewardOwnerSet {
   name: "CampaignRewardOwnerSet";
   args: {
-    campaign: string;
     owner: string;
-    sender: string;
     0: string;
-    1: string;
-    2: string;
   };
 }
 
@@ -26,19 +22,15 @@ export interface RewardCreated {
   name: "RewardCreated";
   args: {
     rewardId: BN;
-    campaign: string;
     value: BN;
     deliveryDate: BN;
     stock: BN;
     active: boolean;
-    sender: string;
     0: BN;
-    1: string;
+    1: BN;
     2: BN;
     3: BN;
-    4: BN;
-    5: boolean;
-    6: string;
+    4: boolean;
   };
 }
 
@@ -46,11 +38,7 @@ export interface RewardDestroyed {
   name: "RewardDestroyed";
   args: {
     rewardId: BN;
-    campaign: string;
-    sender: string;
     0: BN;
-    1: string;
-    2: string;
   };
 }
 
@@ -58,19 +46,15 @@ export interface RewardModified {
   name: "RewardModified";
   args: {
     rewardId: BN;
-    campaign: string;
     value: BN;
     deliveryDate: BN;
     stock: BN;
     active: boolean;
-    sender: string;
     0: BN;
-    1: string;
+    1: BN;
     2: BN;
     3: BN;
-    4: BN;
-    5: boolean;
-    6: string;
+    4: boolean;
   };
 }
 
@@ -78,13 +62,11 @@ export interface RewardRecipientAdded {
   name: "RewardRecipientAdded";
   args: {
     rewardId: BN;
-    campaign: string;
     amount: BN;
-    sender: string;
+    user: string;
     0: BN;
-    1: string;
-    2: BN;
-    3: string;
+    1: BN;
+    2: string;
   };
 }
 
@@ -92,11 +74,7 @@ export interface RewardRecipientApproval {
   name: "RewardRecipientApproval";
   args: {
     rewardRecipientId: BN;
-    campaign: string;
-    sender: string;
     0: BN;
-    1: string;
-    2: string;
   };
 }
 
@@ -104,13 +82,9 @@ export interface RewardStockIncreased {
   name: "RewardStockIncreased";
   args: {
     rewardId: BN;
-    campaign: string;
     count: BN;
-    sender: string;
     0: BN;
-    1: string;
-    2: BN;
-    3: string;
+    1: BN;
   };
 }
 
@@ -118,13 +92,9 @@ export interface RewarderApproval {
   name: "RewarderApproval";
   args: {
     rewardRecipientId: BN;
-    campaign: string;
     status: boolean;
-    sender: string;
     0: BN;
-    1: string;
-    2: boolean;
-    3: string;
+    1: boolean;
   };
 }
 
@@ -480,7 +450,7 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
       _amount: number | BN | string,
       _user: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
+    ): Promise<BN>;
     sendTransaction(
       _rewardId: number | BN | string,
       _amount: number | BN | string,
@@ -990,7 +960,7 @@ export interface CampaignRewardsInstance extends Truffle.ContractInstance {
         _amount: number | BN | string,
         _user: string,
         txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
+      ): Promise<BN>;
       sendTransaction(
         _rewardId: number | BN | string,
         _amount: number | BN | string,

@@ -13,36 +13,30 @@ export interface CampaignFactoryContract
 export interface CampaignActiveToggle {
   name: "CampaignActiveToggle";
   args: {
-    campaignId: BN;
+    campaign: string;
     active: boolean;
-    sender: string;
-    0: BN;
+    0: string;
     1: boolean;
-    2: string;
   };
 }
 
 export interface CampaignApproval {
   name: "CampaignApproval";
   args: {
-    campaignId: BN;
+    campaign: string;
     approval: boolean;
-    sender: string;
-    0: BN;
+    0: string;
     1: boolean;
-    2: string;
   };
 }
 
 export interface CampaignCategoryChange {
   name: "CampaignCategoryChange";
   args: {
-    campaignId: BN;
+    campaign: string;
     newCategory: BN;
-    sender: string;
-    0: BN;
+    0: string;
     1: BN;
-    2: string;
   };
 }
 
@@ -63,50 +57,14 @@ export interface CampaignDeployed {
     campaignRewards: string;
     userId: BN;
     category: BN;
-    sender: string;
+    approved: boolean;
     0: BN;
     1: string;
     2: string;
     3: string;
     4: BN;
     5: BN;
-    6: string;
-  };
-}
-
-export interface CampaignFeaturePaused {
-  name: "CampaignFeaturePaused";
-  args: {
-    campaignId: BN;
-    sender: string;
-    0: BN;
-    1: string;
-  };
-}
-
-export interface CampaignFeatureUnpaused {
-  name: "CampaignFeatureUnpaused";
-  args: {
-    campaignId: BN;
-    timeLeft: BN;
-    sender: string;
-    0: BN;
-    1: BN;
-    2: string;
-  };
-}
-
-export interface CampaignFeatured {
-  name: "CampaignFeatured";
-  args: {
-    campaignId: BN;
-    featurePackageId: BN;
-    amount: BN;
-    sender: string;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: string;
+    6: boolean;
   };
 }
 
@@ -125,10 +83,8 @@ export interface CategoryAdded {
   args: {
     categoryId: BN;
     active: boolean;
-    sender: string;
     0: BN;
     1: boolean;
-    2: string;
   };
 }
 
@@ -147,10 +103,8 @@ export interface CategoryModified {
   args: {
     categoryId: BN;
     active: boolean;
-    sender: string;
     0: BN;
     1: boolean;
-    2: string;
   };
 }
 
@@ -163,44 +117,6 @@ export interface FactoryConfigUpdated {
     0: string;
     1: string;
     2: string;
-  };
-}
-
-export interface FeaturePackageAdded {
-  name: "FeaturePackageAdded";
-  args: {
-    packageId: BN;
-    cost: BN;
-    time: BN;
-    sender: string;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: string;
-  };
-}
-
-export interface FeaturePackageDestroyed {
-  name: "FeaturePackageDestroyed";
-  args: {
-    packageId: BN;
-    sender: string;
-    0: BN;
-    1: string;
-  };
-}
-
-export interface FeaturePackageModified {
-  name: "FeaturePackageModified";
-  args: {
-    packageId: BN;
-    cost: BN;
-    time: BN;
-    sender: string;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: string;
   };
 }
 
@@ -252,9 +168,7 @@ export interface TokenAdded {
   name: "TokenAdded";
   args: {
     token: string;
-    sender: string;
     0: string;
-    1: string;
   };
 }
 
@@ -263,22 +177,8 @@ export interface TokenApproval {
   args: {
     token: string;
     state: boolean;
-    sender: string;
     0: string;
     1: boolean;
-    2: string;
-  };
-}
-
-export interface TokenRemoved {
-  name: "TokenRemoved";
-  args: {
-    tokenId: BN;
-    token: string;
-    sender: string;
-    0: BN;
-    1: string;
-    2: string;
   };
 }
 
@@ -294,9 +194,7 @@ export interface UserAdded {
   name: "UserAdded";
   args: {
     userId: BN;
-    sender: string;
     0: BN;
-    1: string;
   };
 }
 
@@ -304,21 +202,11 @@ export interface UserApproval {
   name: "UserApproval";
   args: {
     userId: BN;
+    user: string;
     approval: boolean;
-    sender: string;
-    0: BN;
-    1: boolean;
-    2: string;
-  };
-}
-
-export interface UserRemoved {
-  name: "UserRemoved";
-  args: {
-    userId: BN;
-    sender: string;
     0: BN;
     1: string;
+    2: boolean;
   };
 }
 
@@ -328,28 +216,20 @@ type AllEvents =
   | CampaignCategoryChange
   | CampaignDefaultCommissionUpdated
   | CampaignDeployed
-  | CampaignFeaturePaused
-  | CampaignFeatureUnpaused
-  | CampaignFeatured
   | CampaignTransactionConfigUpdated
   | CategoryAdded
   | CategoryCommissionUpdated
   | CategoryModified
   | FactoryConfigUpdated
-  | FeaturePackageAdded
-  | FeaturePackageDestroyed
-  | FeaturePackageModified
   | Paused
   | RoleAdminChanged
   | RoleGranted
   | RoleRevoked
   | TokenAdded
   | TokenApproval
-  | TokenRemoved
   | Unpaused
   | UserAdded
-  | UserApproval
-  | UserRemoved;
+  | UserApproval;
 
 export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
@@ -413,11 +293,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
-  campaignRevenueFromFeatures(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
-
   campaignRewardsImplementation(
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
@@ -469,18 +344,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-  featurePackageCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-  featurePackages(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: BN; 4: boolean }>;
-
-  featuredCampaignIsPaused(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<boolean>;
-
   /**
    * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
    */
@@ -528,11 +391,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * Returns true if the contract is paused, and false otherwise.
    */
   paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
-
-  pausedFeaturedCampaignTimeLeft(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
 
   /**
    * Remove an account from the role. Restricted to admins.
@@ -640,11 +498,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
-
-  tokenList(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<string>;
 
   tokensApproved(
     arg0: string,
@@ -848,34 +701,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Removes a token from the list of accepted tokens and tokens in list
-   * @param _token Address of the token
-   * @param _tokenId ID of the token
-   */
-  removeToken: {
-    (
-      _tokenId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _tokenId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _tokenId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _tokenId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
    * Sets if a token is accepted or not provided it's in the list of token
    * @param _state Indicates if the token is approved or not
    * @param _token Address of the token
@@ -981,53 +806,34 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Deletes a user
-   * @param _userId ID of the user
-   */
-  destroyUser: {
-    (
-      _userId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _userId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _userId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _userId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
    * Deploys and tracks a new campagign
    * @param _categoryId ID of category campaign deployer specifies
    */
   createCampaign: {
     (
       _categoryId: number | BN | string,
+      _approved: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _categoryId: number | BN | string,
+      _approved: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _categoryId: number | BN | string,
+      _approved: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _categoryId: number | BN | string,
+      _approved: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
 
   /**
-   * Approves or disapproves a campaign. Restricted to campaign managers from factory
+   * Approves or disapproves a campaign. Restricted to campaign managers
    * @param _approval Indicates if the campaign will be approved or not. Affects campaign listing and transactions
    * @param _campaignId ID of the campaign
    */
@@ -1050,29 +856,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     estimateGas(
       _campaignId: number | BN | string,
       _approval: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Disables an approved campaign. Restricted to campaign owners
-   * @param _campaignId ID of the campaign
-   */
-  disableCampaignApproval: {
-    (
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1134,84 +917,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Purchases time for which the specified campaign will be featured.
-   * @param _campaignId ID of the campaign
-   * @param _token Address of token used to purchase feature package
-   */
-  featureCampaign: {
-    (
-      _campaignId: number | BN | string,
-      _featurePackageId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _campaignId: number | BN | string,
-      _featurePackageId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _campaignId: number | BN | string,
-      _featurePackageId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _campaignId: number | BN | string,
-      _featurePackageId: number | BN | string,
-      _token: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Pauses campaign feature time storing what's left for later use. Restricted to campaign owner or manager
-   * @param _campaignId ID of the campaign
-   */
-  pauseCampaignFeatured: {
-    (
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Resumes campaign feature time
-   * @param _campaignId ID of the campaign
-   */
-  unpauseCampaignFeatured: {
-    (
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
    * Creates a category
    * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
    */
@@ -1257,90 +962,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     estimateGas(
       _categoryId: number | BN | string,
       _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Creates a feature package purchased by campaig owners to feature their campaigns
-   * @param _cost Cost of purchasing this feature package
-   * @param _time How long a campaign will be featured for
-   */
-  createFeaturePackage: {
-    (
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Modifies details about a feature package
-   * @param _cost Cost of purchasing this feature package
-   * @param _packageId ID of feature package
-   * @param _time How long a campaign will be featured for
-   */
-  modifyFeaturedPackage: {
-    (
-      _packageId: number | BN | string,
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _packageId: number | BN | string,
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _packageId: number | BN | string,
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _packageId: number | BN | string,
-      _cost: number | BN | string,
-      _time: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Deletes a feature package
-   * @param _packageId ID of feature package
-   */
-  destroyFeaturedPackage: {
-    (
-      _packageId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _packageId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _packageId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _packageId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1431,11 +1052,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
-    campaignRevenueFromFeatures(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
-
     campaignRewardsImplementation(
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
@@ -1487,18 +1103,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-    featurePackageCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-    featurePackages(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: BN; 4: boolean }>;
-
-    featuredCampaignIsPaused(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<boolean>;
-
     /**
      * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
      */
@@ -1546,11 +1150,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * Returns true if the contract is paused, and false otherwise.
      */
     paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
-
-    pausedFeaturedCampaignTimeLeft(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
 
     /**
      * Remove an account from the role. Restricted to admins.
@@ -1658,11 +1257,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
-
-    tokenList(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
 
     tokensApproved(
       arg0: string,
@@ -1872,34 +1466,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Removes a token from the list of accepted tokens and tokens in list
-     * @param _token Address of the token
-     * @param _tokenId ID of the token
-     */
-    removeToken: {
-      (
-        _tokenId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _tokenId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _tokenId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _tokenId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
      * Sets if a token is accepted or not provided it's in the list of token
      * @param _state Indicates if the token is approved or not
      * @param _token Address of the token
@@ -2005,53 +1571,34 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Deletes a user
-     * @param _userId ID of the user
-     */
-    destroyUser: {
-      (
-        _userId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _userId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _userId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _userId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
      * Deploys and tracks a new campagign
      * @param _categoryId ID of category campaign deployer specifies
      */
     createCampaign: {
       (
         _categoryId: number | BN | string,
+        _approved: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _categoryId: number | BN | string,
+        _approved: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _categoryId: number | BN | string,
+        _approved: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _categoryId: number | BN | string,
+        _approved: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
 
     /**
-     * Approves or disapproves a campaign. Restricted to campaign managers from factory
+     * Approves or disapproves a campaign. Restricted to campaign managers
      * @param _approval Indicates if the campaign will be approved or not. Affects campaign listing and transactions
      * @param _campaignId ID of the campaign
      */
@@ -2074,29 +1621,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       estimateGas(
         _campaignId: number | BN | string,
         _approval: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Disables an approved campaign. Restricted to campaign owners
-     * @param _campaignId ID of the campaign
-     */
-    disableCampaignApproval: {
-      (
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -2158,84 +1682,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Purchases time for which the specified campaign will be featured.
-     * @param _campaignId ID of the campaign
-     * @param _token Address of token used to purchase feature package
-     */
-    featureCampaign: {
-      (
-        _campaignId: number | BN | string,
-        _featurePackageId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _campaignId: number | BN | string,
-        _featurePackageId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _campaignId: number | BN | string,
-        _featurePackageId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _campaignId: number | BN | string,
-        _featurePackageId: number | BN | string,
-        _token: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Pauses campaign feature time storing what's left for later use. Restricted to campaign owner or manager
-     * @param _campaignId ID of the campaign
-     */
-    pauseCampaignFeatured: {
-      (
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Resumes campaign feature time
-     * @param _campaignId ID of the campaign
-     */
-    unpauseCampaignFeatured: {
-      (
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
      * Creates a category
      * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
      */
@@ -2281,90 +1727,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       estimateGas(
         _categoryId: number | BN | string,
         _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Creates a feature package purchased by campaig owners to feature their campaigns
-     * @param _cost Cost of purchasing this feature package
-     * @param _time How long a campaign will be featured for
-     */
-    createFeaturePackage: {
-      (
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Modifies details about a feature package
-     * @param _cost Cost of purchasing this feature package
-     * @param _packageId ID of feature package
-     * @param _time How long a campaign will be featured for
-     */
-    modifyFeaturedPackage: {
-      (
-        _packageId: number | BN | string,
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _packageId: number | BN | string,
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _packageId: number | BN | string,
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _packageId: number | BN | string,
-        _cost: number | BN | string,
-        _time: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Deletes a feature package
-     * @param _packageId ID of feature package
-     */
-    destroyFeaturedPackage: {
-      (
-        _packageId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _packageId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _packageId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _packageId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

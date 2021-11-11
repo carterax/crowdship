@@ -12,130 +12,104 @@ export interface CampaignContract extends Truffle.Contract<CampaignInstance> {
 export interface CampaignDeadlineExtended {
   name: "CampaignDeadlineExtended";
   args: {
-    campaign: string;
     time: BN;
-    sender: string;
-    0: string;
-    1: BN;
-    2: string;
+    0: BN;
   };
 }
 
 export interface CampaignOwnerSet {
   name: "CampaignOwnerSet";
   args: {
-    campaign: string;
     user: string;
-    sender: string;
     0: string;
-    1: string;
-    2: string;
   };
 }
 
 export interface CampaignOwnershipTransferred {
   name: "CampaignOwnershipTransferred";
   args: {
-    campaign: string;
-    newUser: string;
-    sender: string;
+    newOwner: string;
     0: string;
-    1: string;
-    2: string;
   };
 }
 
 export interface CampaignReported {
   name: "CampaignReported";
   args: {
-    campaign: string;
-    sender: string;
+    user: string;
     0: string;
-    1: string;
   };
 }
 
 export interface CampaignReviewed {
   name: "CampaignReviewed";
   args: {
-    campaign: string;
-    sender: string;
+    user: string;
     0: string;
-    1: string;
   };
 }
 
 export interface CampaignSettingsUpdated {
   name: "CampaignSettingsUpdated";
   args: {
-    campaign: string;
+    target: BN;
     minimumContribution: BN;
-    deadline: BN;
+    duration: BN;
     goalType: BN;
     token: string;
-    sender: string;
-    0: string;
+    allowContributionAfterTargetIsMet: boolean;
+    0: BN;
     1: BN;
     2: BN;
     3: BN;
     4: string;
-    5: string;
+    5: boolean;
   };
 }
 
 export interface CampaignStateChange {
   name: "CampaignStateChange";
   args: {
-    campaign: string;
     state: BN;
-    sender: string;
-    0: string;
-    1: BN;
-    2: string;
+    0: BN;
   };
 }
 
 export interface CampaignUserDataTransferred {
   name: "CampaignUserDataTransferred";
   args: {
-    campaign: string;
     oldAddress: string;
     newAddress: string;
-    sender: string;
     0: string;
     1: string;
-    2: string;
-    3: string;
   };
 }
 
 export interface ContributionMade {
   name: "ContributionMade";
   args: {
-    campaign: string;
+    contributionId: BN;
     amount: BN;
     rewardId: BN;
+    rewardRecipientId: BN;
     withReward: boolean;
-    sender: string;
-    0: string;
+    0: BN;
     1: BN;
     2: BN;
-    3: boolean;
-    4: string;
+    3: BN;
+    4: boolean;
   };
 }
 
 export interface ContributionWithdrawn {
   name: "ContributionWithdrawn";
   args: {
-    campaign: string;
+    contributionId: BN;
     amount: BN;
     user: string;
-    sender: string;
-    0: string;
+    0: BN;
     1: BN;
     2: string;
-    3: string;
   };
 }
 
@@ -151,17 +125,13 @@ export interface RequestAdded {
   name: "RequestAdded";
   args: {
     requestId: BN;
-    campaign: string;
     duration: BN;
     value: BN;
     recipient: string;
-    sender: string;
     0: BN;
-    1: string;
+    1: BN;
     2: BN;
-    3: BN;
-    4: string;
-    5: string;
+    3: string;
   };
 }
 
@@ -169,11 +139,7 @@ export interface RequestComplete {
   name: "RequestComplete";
   args: {
     requestId: BN;
-    campaign: string;
-    sender: string;
     0: BN;
-    1: string;
-    2: string;
   };
 }
 
@@ -181,11 +147,7 @@ export interface RequestVoided {
   name: "RequestVoided";
   args: {
     requestId: BN;
-    campaign: string;
-    sender: string;
     0: BN;
-    1: string;
-    2: string;
   };
 }
 
@@ -225,18 +187,6 @@ export interface RoleRevoked {
   };
 }
 
-export interface TargetMet {
-  name: "TargetMet";
-  args: {
-    campaign: string;
-    amount: BN;
-    sender: string;
-    0: string;
-    1: BN;
-    2: string;
-  };
-}
-
 export interface Unpaused {
   name: "Unpaused";
   args: {
@@ -248,28 +198,24 @@ export interface Unpaused {
 export interface VoteCancelled {
   name: "VoteCancelled";
   args: {
+    voteId: BN;
     requestId: BN;
     support: BN;
-    campaign: string;
-    sender: string;
     0: BN;
     1: BN;
-    2: string;
-    3: string;
+    2: BN;
   };
 }
 
 export interface Voted {
   name: "Voted";
   args: {
+    voteId: BN;
     requestId: BN;
     support: BN;
-    campaign: string;
-    sender: string;
     0: BN;
     1: BN;
-    2: string;
-    3: string;
+    2: BN;
   };
 }
 
@@ -291,7 +237,6 @@ type AllEvents =
   | RoleAdminChanged
   | RoleGranted
   | RoleRevoked
-  | TargetMet
   | Unpaused
   | VoteCancelled
   | Voted;
@@ -352,6 +297,11 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   campaignState(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+  contributionId(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
+
   currentRunningRequest(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   deadline(txDetails?: Truffle.TransactionDetails): Promise<BN>;
@@ -402,12 +352,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   hasRole(
     role: string,
     account: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<boolean>;
-
-  hasVoted(
-    arg0: number | BN | string,
-    arg1: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
@@ -493,12 +437,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   requestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-  requestSupport(
-    arg0: number | BN | string,
-    arg1: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
-
   requests(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
@@ -559,16 +497,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   target(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   totalCampaignContribution(
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
-
-  userContributionWithdrawn(
-    arg0: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<boolean>;
-
-  userTotalContribution(
-    arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
@@ -1013,7 +941,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Called by an approver to report a campaign to factory. Campaign must be in collection or live state
+   * Called by an approver to report a campaign. Campaign must be in collection or live state
    */
   reportCampaign: {
     (txDetails?: Truffle.TransactionDetails): Promise<
@@ -1148,6 +1076,11 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     campaignState(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    contributionId(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
+
     currentRunningRequest(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     deadline(txDetails?: Truffle.TransactionDetails): Promise<BN>;
@@ -1198,12 +1131,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     hasRole(
       role: string,
       account: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<boolean>;
-
-    hasVoted(
-      arg0: number | BN | string,
-      arg1: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
@@ -1289,12 +1216,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     requestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-    requestSupport(
-      arg0: number | BN | string,
-      arg1: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
-
     requests(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -1355,16 +1276,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     target(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     totalCampaignContribution(
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
-
-    userContributionWithdrawn(
-      arg0: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<boolean>;
-
-    userTotalContribution(
-      arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
@@ -1809,7 +1720,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Called by an approver to report a campaign to factory. Campaign must be in collection or live state
+     * Called by an approver to report a campaign. Campaign must be in collection or live state
      */
     reportCampaign: {
       (txDetails?: Truffle.TransactionDetails): Promise<
