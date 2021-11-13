@@ -71,6 +71,10 @@ contract CampaignFactory is
         bool approval
     );
 
+    /// @dev `Trustee Events`
+    event TrusteeAdded(uint256 indexed trusteeId, address trusteeAddress);
+    event TrusteeRemoved(uint256 indexed trusteeId, address trusteeAddress);
+
     /// @dev `Category Events`
     event CategoryAdded(uint256 indexed categoryId, bool active);
     event CategoryModified(uint256 indexed categoryId, bool active);
@@ -131,6 +135,18 @@ contract CampaignFactory is
     uint256 public userCount;
     mapping(address => uint256) public userID;
 
+    struct Trust {
+        address trustee;
+        address trustor;
+        uint256 createdAt;
+        bool isTrusted;
+    }
+    Trust[] public trustees;
+    mapping(address => uint256) public userTrusteeCount;
+
+    // { trustor -> trustee -> isTrusted }
+    mapping(address => mapping(address => bool)) public isUserTrustee;
+
     /// @dev Ensures caller is campaign owner alone
     modifier campaignOwner(uint256 _campaignId) {
         require(
@@ -146,16 +162,6 @@ contract CampaignFactory is
             deployedCampaigns[_campaignId].campaign == msg.sender,
             "only campaign owner"
         );
-        _;
-    }
-
-    /// @dev Ensures user is verifed
-    modifier userIsVerified(address _user) {
-        require(
-            users[userID[_user]].userAddress == _user,
-            "user does not exist"
-        );
-        require(users[userID[_user]].verified, "unverified user");
         _;
     }
 
@@ -383,13 +389,56 @@ contract CampaignFactory is
         factoryRevenue = factoryRevenue.add(_amount);
     }
 
-    /// @dev Keep track of user addresses. KYC purpose
+    /// @dev Keep track of user addresses. sybil resistance purpose
     function signUp() public whenNotPaused {
         users.push(User(msg.sender, block.timestamp, 0, false, true));
         userID[msg.sender] = users.length.sub(1);
         userCount = userCount.add(1);
 
         emit UserAdded(users.length.sub(1));
+    }
+
+    /**
+     * @dev        Ensures user specified is verified
+     * @param      _user    Address of user
+     */
+    function userIsVerified(address _user) public view returns (bool) {
+        return
+            users[userID[_user]].userAddress == _user &&
+            users[userID[_user]].verified;
+    }
+
+    /**
+     * @dev        Trustees are people the user can add to help recover their account in the case they lose access to ther wallets
+     * @param      _trustee    Address of the trustee, must be a verified user
+     */
+    function addTrustee(address _trustee) external whenNotPaused {
+        require(userIsVerified(msg.sender), "unverified user");
+        require(userIsVerified(_trustee), "unverified trustee");
+        require(userTrusteeCount[msg.sender] <= 6, "trustees exhausted");
+
+        isUserTrustee[msg.sender][_trustee] = true;
+        trustees.push(Trust(_trustee, msg.sender, block.timestamp, true));
+        userTrusteeCount[msg.sender] = userTrusteeCount[msg.sender].add(1);
+
+        emit TrusteeAdded(trustees.length.sub(1), _trustee);
+    }
+
+    /**
+     * @dev        Removes a trustee from users list of trustees
+     * @param      _trusteeId    Address of the trustee
+     */
+    function removeTrustee(uint256 _trusteeId) external whenNotPaused {
+        Trust storage trustee = trustees[_trusteeId];
+
+        require(msg.sender == trustee.trustor, "not owner of trust");
+        require(userIsVerified(msg.sender), "unverified user");
+
+        isUserTrustee[msg.sender][trustee.trustee] = false;
+        userTrusteeCount[msg.sender] = userTrusteeCount[msg.sender].sub(1);
+        delete trustees[_trusteeId];
+
+        emit TrusteeRemoved(_trusteeId, trustee.trustee);
     }
 
     /**

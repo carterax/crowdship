@@ -16,6 +16,8 @@ import "../utils/AccessControl.sol";
 
 import "../interfaces/ICampaignFactory.sol";
 import "../interfaces/ICampaignReward.sol";
+import "../interfaces/ICampaignRequest.sol";
+import "../interfaces/ICampaignVote.sol";
 
 import "../libraries/contracts/CampaignFactoryLib.sol";
 import "../libraries/contracts/CampaignRewardLib.sol";
@@ -94,8 +96,8 @@ contract Campaign is
 
     ICampaignFactory public campaignFactoryContract;
     ICampaignReward public campaignRewardContract;
-    CampaignRequest public campaignRequestContract;
-    CampaignVote public campaignVoteContract;
+    ICampaignRequest public campaignRequestContract;
+    ICampaignVote public campaignVoteContract;
 
     /// @dev `Contribution`
     struct Contribution {
@@ -127,6 +129,9 @@ contract Campaign is
     mapping(address => bool) public approvers;
     mapping(address => bool) public reported;
 
+    mapping(address => uint256) public transferAttemptCount;
+    mapping(address => uint256) public timeUntilNextTransferConfirmation;
+
     /// @dev Ensures caller is only factory, works only if campaign is approved
     modifier onlyFactory() {
         bool campaignIsApproved;
@@ -143,30 +148,6 @@ contract Campaign is
                 ),
                 "only factory"
             );
-        }
-        _;
-    }
-
-    /// @dev Ensures caller is factory if campaign is approved or campaign owner
-    modifier adminOrFactory() {
-        bool campaignIsApproved;
-        (, , campaignIsApproved) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            campaignID
-        );
-
-        if (campaignIsApproved) {
-            require(
-                CampaignFactoryLib.canManageCampaigns(
-                    campaignFactoryContract,
-                    msg.sender
-                ),
-                "only admin"
-            );
-        }
-
-        if (!campaignIsApproved) {
-            require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only admin");
         }
         _;
     }
@@ -199,8 +180,8 @@ contract Campaign is
 
         campaignFactoryContract = ICampaignFactory(address(_campaignFactory));
         campaignRewardContract = ICampaignReward(address(_camaignRewards));
-        campaignRequestContract = CampaignRequest(_campaignRequests);
-        campaignVoteContract = CampaignVote(_campaignVotes);
+        campaignRequestContract = ICampaignRequest(address(_campaignRequests));
+        campaignVoteContract = ICampaignVote(address(_campaignVotes));
 
         root = _root;
         campaignState = CAMPAIGN_STATE.COLLECTION;
@@ -215,6 +196,10 @@ contract Campaign is
         _setRoleAdmin(MANAGER, DEFAULT_ADMIN_ROLE);
 
         emit CampaignOwnerSet(root);
+    }
+
+    function isCampaignAdmin(address _user) external view returns (bool) {
+        return hasRole(DEFAULT_ADMIN_ROLE, _user);
     }
 
     function getCampaignGoalType() external view returns (GOALTYPE) {
@@ -252,34 +237,55 @@ contract Campaign is
      */
     function transferCampaignUserData(address _oldAddress, address _newAddress)
         external
-        onlyFactory
         nonReentrant
         whenNotPaused
         userIsVerified(_newAddress)
     {
         require(
+            campaignFactoryContract.isUserTrustee(_oldAddress, msg.sender),
+            "not a trustee"
+        );
+        require(
             campaignState == CAMPAIGN_STATE.COLLECTION ||
                 campaignState == CAMPAIGN_STATE.LIVE
         );
-        require(approvers[_oldAddress]);
-
-        // transfer balance
-        contributions[contributionId[_newAddress]].amount = contributions[
-            contributionId[_oldAddress]
-        ].amount;
-        contributions[contributionId[_oldAddress]].amount = 0;
-
-        // transfer approver account
-        approvers[_oldAddress] = false;
-        approvers[_newAddress] = true;
-
-        CampaignRewardLib._transferRewards(
-            campaignRewardContract,
-            _oldAddress,
-            _newAddress
+        require(approvers[_oldAddress], "not an approver");
+        require(
+            transferAttemptCount[_oldAddress] <= 6,
+            "transfer attempts exhausted"
+        );
+        require(
+            timeUntilNextTransferConfirmation[msg.sender] >= block.timestamp,
+            "time until next confirmation has not expired"
         );
 
-        emit CampaignUserDataTransferred(_oldAddress, _newAddress);
+        if (transferAttemptCount[_oldAddress] < 3) {
+            transferAttemptCount[_oldAddress] = transferAttemptCount[
+                _oldAddress
+            ].add(1);
+            timeUntilNextTransferConfirmation[msg.sender] = block.timestamp.add(
+                30 minutes
+            );
+            return;
+        } else {
+            // transfer balance
+            contributions[contributionId[_newAddress]].amount = contributions[
+                contributionId[_oldAddress]
+            ].amount;
+            contributions[contributionId[_oldAddress]].amount = 0;
+
+            // transfer approver account
+            approvers[_oldAddress] = false;
+            approvers[_newAddress] = true;
+
+            CampaignRewardLib._transferRewards(
+                campaignRewardContract,
+                _oldAddress,
+                _newAddress
+            );
+
+            emit CampaignUserDataTransferred(_oldAddress, _newAddress);
+        }
     }
 
     /**
@@ -395,7 +401,7 @@ contract Campaign is
      */
     function setDeadlineSetTimes(uint8 _count)
         external
-        adminOrFactory
+        onlyAdmin
         whenNotPaused
     {
         deadlineSetTimes = _count;
@@ -730,21 +736,14 @@ contract Campaign is
                 )
                 .mul(DecimalMath.UNIT)
         ) {
-            _setCampaignState(4);
+            campaignState = CAMPAIGN_STATE.UNSUCCESSFUL;
+
+            emit CampaignStateChange(campaignState);
+
             _pause();
         }
 
         emit CampaignReported(msg.sender);
-    }
-
-    /**
-     * @dev        Changes campaign state
-     * @param      _state      state of campaign
-     */
-    function _setCampaignState(uint256 _state) private {
-        campaignState = CAMPAIGN_STATE(_state);
-
-        emit CampaignStateChange(CAMPAIGN_STATE(_state));
     }
 
     /**

@@ -32,6 +32,8 @@ abstract contract ICampaign {
 
     mapping(address => bool) public approvers;
 
+    function isCampaignAdmin(address _user) external virtual returns (bool);
+
     function getCampaignGoalType() external virtual returns (GOALTYPE);
 
     function getCampaignState(uint256 state)

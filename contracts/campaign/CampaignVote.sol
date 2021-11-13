@@ -10,6 +10,7 @@ import "./Campaign.sol";
 
 import "../interfaces/ICampaignFactory.sol";
 import "../interfaces/ICampaign.sol";
+import "../interfaces/ICampaignRequest.sol";
 
 import "../libraries/contracts/CampaignFactoryLib.sol";
 import "../libraries/contracts/CampaignLib.sol";
@@ -44,8 +45,14 @@ contract CampaignVote is Initializable, PausableUpgradeable {
     ICampaignFactory public campaignFactoryContract;
     ICampaign public campaignContract;
 
+    /// @dev Ensures a user is verified
     modifier userIsVerified(address _user) {
-        // call to external factory
+        bool verified;
+        (, verified) = CampaignFactoryLib.userInfo(
+            campaignFactoryContract,
+            _user
+        );
+        require(verified, "user not verified");
         _;
     }
 
@@ -72,29 +79,12 @@ contract CampaignVote is Initializable, PausableUpgradeable {
     {
         require(campaignContract.approvers(msg.sender), "non approver");
         require(!votes[voteId[msg.sender][_requestId]].voted, "voted");
-        // require(
-        //     block.timestamp <= requests[_requestId].duration,
-        //     "request expired"
-        // );
-
-        // require(!requests[_requestId].void, "voided");
-
-        // if (_support == 0) {
-        //     requests[_requestId].againstCount = requests[_requestId]
-        //         .againstCount
-        //         .add(1);
-        // } else if (_support == 1) {
-        //     requests[_requestId].approvalCount = requests[_requestId]
-        //         .approvalCount
-        //         .add(1);
-        // } else {
-        //     requests[_requestId].abstainedCount = requests[_requestId]
-        //         .abstainedCount
-        //         .add(1);
-        // }
 
         votes.push(Vote(_support, _requestId, true, msg.sender));
         voteId[msg.sender][_requestId] = votes.length.sub(1);
+
+        ICampaignRequest(campaignContract.campaignRequestContract())
+            .signRequestVote(_requestId, _support);
 
         emit Voted(votes.length.sub(1), _requestId, _support);
     }
@@ -113,6 +103,9 @@ contract CampaignVote is Initializable, PausableUpgradeable {
         require(votes[voteId[msg.sender][_requestId]].voted, "vote first");
 
         votes[voteId[msg.sender][_requestId]].voted = false;
+
+        ICampaignRequest(campaignContract.campaignRequestContract())
+            .cancelVoteSignature(_requestId);
 
         emit VoteCancelled(
             voteId[msg.sender][_requestId],

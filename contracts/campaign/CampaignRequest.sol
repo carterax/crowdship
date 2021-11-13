@@ -57,12 +57,17 @@ contract CampaignRequest is
     ICampaign public campaignContract;
 
     modifier onlyAdmin(address _user) {
-        // call to external campaign contract
+        require(campaignContract.isCampaignAdmin(_user), "not campaign admin");
         _;
     }
 
     modifier userIsVerified(address _user) {
-        // call to external factory
+        bool verified;
+        (, verified) = CampaignFactoryLib.userInfo(
+            campaignFactoryContract,
+            _user
+        );
+        require(verified, "unverified");
         _;
     }
 

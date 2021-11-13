@@ -23,7 +23,11 @@ contract AccessControl is AccessControlUpgradeable {
      * @param      _account Address of user being assigned role
      * @param      _role   Role being assigned
      */
-    function addRole(address _account, bytes32 _role) external virtual onlyAdmin {
+    function addRole(address _account, bytes32 _role)
+        external
+        virtual
+        onlyAdmin
+    {
         grantRole(_role, _account);
     }
 

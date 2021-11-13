@@ -40,6 +40,8 @@ abstract contract ICampaignFactory {
     User[] public users;
     mapping(address => uint256) public userID;
 
+    mapping(address => mapping(address => bool)) public isUserTrustee;
+
     function getCampaignTransactionConfig(string memory _prop)
         public
         virtual
