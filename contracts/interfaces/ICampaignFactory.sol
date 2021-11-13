@@ -16,10 +16,7 @@ abstract contract ICampaignFactory {
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
-        uint256 featureFor;
-        bool active;
         bool approved;
-        bool exists;
     }
     CampaignInfo[] public deployedCampaigns;
     mapping(address => uint256) public campaignToID;

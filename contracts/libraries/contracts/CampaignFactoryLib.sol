@@ -10,10 +10,11 @@ library CampaignFactoryLib {
      * @param      _factory     Campaign factory interface
      * @param      _user        Address of caller
      */
-    function canManageCampaigns(
-        ICampaignFactory _factory,
-        address _user
-    ) internal view returns (bool) {
+    function canManageCampaigns(ICampaignFactory _factory, address _user)
+        internal
+        view
+        returns (bool)
+    {
         return _factory.canManageCampaigns(_user);
     }
 
@@ -34,45 +35,23 @@ library CampaignFactoryLib {
      * @param      _factory     Campaign factory interface
      * @param      _campaignId  ID of the campaign
      */
-    function campaignInfo(
-        ICampaignFactory _factory,
-        uint256 _campaignId
-    )
+    function campaignInfo(ICampaignFactory _factory, uint256 _campaignId)
         internal
         view
         returns (
             address,
-            address,
             uint256,
-            bool,
             bool
         )
     {
-        bool campaignIsEnabled;
-        bool campaignIsApproved;
         address campaignAddress;
-        address campaignRewardAddress;
         uint256 campaignCategory;
+        bool campaignIsApproved;
 
-        (
-            campaignAddress,
-            campaignRewardAddress,
-            ,
-            ,
-            ,
-            campaignCategory,
-            ,
-            campaignIsEnabled,
-            campaignIsApproved
-        ) = _factory.deployedCampaigns(_campaignId);
+        (campaignAddress, , , , campaignCategory, campaignIsApproved) = _factory
+            .deployedCampaigns(_campaignId);
 
-        return (
-            campaignAddress,
-            campaignRewardAddress,
-            campaignCategory,
-            campaignIsEnabled,
-            campaignIsApproved
-        );
+        return (campaignAddress, campaignCategory, campaignIsApproved);
     }
 
     /**
@@ -118,16 +97,15 @@ library CampaignFactoryLib {
      * @param      _factory     Campaign factory interface
      * @param      _campaignId  ID of the campaign
      */
-    function factoryPercentFee(
-        ICampaignFactory _factory,
-        uint256 _campaignId
-    ) internal view returns (uint256) {
+    function factoryPercentFee(ICampaignFactory _factory, uint256 _campaignId)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 campaignCategory;
         uint256 percentCommission;
 
-        (, , , , campaignCategory, , , , ) = _factory.deployedCampaigns(
-            _campaignId
-        );
+        (, , , , campaignCategory, ) = _factory.deployedCampaigns(_campaignId);
         percentCommission = _factory.categoryCommission(campaignCategory);
 
         if (percentCommission == 0) {
