@@ -56,6 +56,12 @@ contract CampaignVote is Initializable, PausableUpgradeable {
         _;
     }
 
+    /**
+     * @dev        Constructor
+     * @param      _campaignFactory     Address of factory
+     * @param      _campaign            Address of campaign contract
+     * @param      _campaignId          ID of it's campaign contract
+     */
     function __CampaignVote_init(
         CampaignFactory _campaignFactory,
         Campaign _campaign,
@@ -68,7 +74,7 @@ contract CampaignVote is Initializable, PausableUpgradeable {
     }
 
     /**
-     * @dev        Approvers only method which approves spending request issued by the campaign manager or factory
+     * @dev        Approvers only method which approves spending request issued by the campaign manager
      * @param      _requestId   ID of request being voted on
      * @param      _support     An integer of 0 for against, 1 for in-favor, and 2 for abstain
      */

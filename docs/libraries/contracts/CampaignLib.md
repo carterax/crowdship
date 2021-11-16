@@ -20,7 +20,7 @@
 #### Declaration
 ```solidity
   function isAnApprover(
-    contract CampaignInterface _campaign,
+    contract ICampaign _campaign,
     address _user
   ) internal returns (bool)
 ```
@@ -31,7 +31,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaign` | contract CampaignInterface |    Campaign factory interface
+|`_campaign` | contract ICampaign |    Campaign factory interface
 |`_user` | address |        Address of user check is being carried on
 ---  
 

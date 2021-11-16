@@ -18,7 +18,7 @@ abstract contract ICampaignRequest {
     uint256 public finalizedRequestCount;
     uint256 public currentRunningRequest;
 
-    function finalizeRequest(uint256 _requestId) external virtual;
+    function signRequestFinalization(uint256 _requestId) external virtual;
 
     function signRequestVote(uint256 _requestId, uint256 _support)
         external

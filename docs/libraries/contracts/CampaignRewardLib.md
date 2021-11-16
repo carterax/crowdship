@@ -20,8 +20,8 @@
 #### Declaration
 ```solidity
   function _assignReward(
-    contract CampaignRewardInterface _campaignReward
-  ) internal
+    contract ICampaignReward _campaignReward
+  ) internal returns (uint256)
 ```
 
 #### Modifiers:
@@ -30,7 +30,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignReward` | contract CampaignRewardInterface |     Campaign reward interface
+|`_campaignReward` | contract ICampaignReward |     Campaign reward interface
 ---  
 ### _renounceRewards
 >        Renounces rewards owned by the specified user
@@ -39,7 +39,7 @@ No modifiers
 #### Declaration
 ```solidity
   function _renounceRewards(
-    contract CampaignRewardInterface _user
+    contract ICampaignReward _user
   ) internal
 ```
 
@@ -49,7 +49,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_user` | contract CampaignRewardInterface |        Address of user who rewards are being renounced
+|`_user` | contract ICampaignReward |        Address of user who rewards are being renounced
 ---  
 ### _transferRewards
 >        Transfers rewards from the old owner to a new owner
@@ -58,7 +58,7 @@ No modifiers
 #### Declaration
 ```solidity
   function _transferRewards(
-    contract CampaignRewardInterface _campaignReward,
+    contract ICampaignReward _campaignReward,
     address _oldAddress,
     address _newAddress
   ) internal
@@ -70,7 +70,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignReward` | contract CampaignRewardInterface |  Campaign reward interface
+|`_campaignReward` | contract ICampaignReward |  Campaign reward interface
 |`_oldAddress` | address |      Address of previous owner of rewards
 |`_newAddress` | address |      Address of new owner rewards are being transferred to
 ---  

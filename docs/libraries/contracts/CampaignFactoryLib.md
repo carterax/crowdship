@@ -20,7 +20,7 @@
 #### Declaration
 ```solidity
   function canManageCampaigns(
-    contract CampaignFactoryInterface _factory,
+    contract ICampaignFactory _factory,
     address _user
   ) internal returns (bool)
 ```
@@ -31,7 +31,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_factory` | contract ICampaignFactory |     Campaign factory interface
 |`_user` | address |        Address of caller
 ---  
 ### getCampaignFactoryConfig
@@ -41,7 +41,7 @@ No modifiers
 #### Declaration
 ```solidity
   function getCampaignFactoryConfig(
-    contract CampaignFactoryInterface _factory,
+    contract ICampaignFactory _factory,
     string _prop
   ) internal returns (uint256)
 ```
@@ -52,7 +52,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_factory` | contract ICampaignFactory |     Campaign factory interface
 |`_prop` | string |        Transaction config key
 ---  
 ### campaignInfo
@@ -62,9 +62,9 @@ No modifiers
 #### Declaration
 ```solidity
   function campaignInfo(
-    contract CampaignFactoryInterface _factory,
+    contract ICampaignFactory _factory,
     uint256 _campaignId
-  ) internal returns (address, address, uint256, bool, bool)
+  ) internal returns (address, uint256, bool)
 ```
 
 #### Modifiers:
@@ -73,7 +73,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_factory` | contract ICampaignFactory |     Campaign factory interface
 |`_campaignId` | uint256 |  ID of the campaign
 ---  
 ### userInfo
@@ -83,7 +83,7 @@ No modifiers
 #### Declaration
 ```solidity
   function userInfo(
-    contract CampaignFactoryInterface _factory,
+    contract ICampaignFactory _factory,
     address _userAddress
   ) internal returns (address, bool)
 ```
@@ -94,7 +94,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_factory` | contract CampaignFactoryInterface |      Campaign factory interface
+|`_factory` | contract ICampaignFactory |      Campaign factory interface
 |`_userAddress` | address |  Address of the user
 ---  
 ### sendCommissionFee
@@ -104,7 +104,7 @@ No modifiers
 #### Declaration
 ```solidity
   function sendCommissionFee(
-    contract CampaignFactoryInterface _factory,
+    contract ICampaignFactory _factory,
     address _campaign,
     uint256 _amount
   ) internal
@@ -116,7 +116,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_factory` | contract ICampaignFactory |     Campaign factory interface
 |`_campaign` | address |    Address of campaign sending fee
 |`_amount` | uint256 |      Amount being sent
 ---  
@@ -127,7 +127,7 @@ No modifiers
 #### Declaration
 ```solidity
   function factoryPercentFee(
-    contract CampaignFactoryInterface _factory,
+    contract ICampaignFactory _factory,
     uint256 _campaignId
   ) internal returns (uint256)
 ```
@@ -138,7 +138,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_factory` | contract CampaignFactoryInterface |     Campaign factory interface
+|`_factory` | contract ICampaignFactory |     Campaign factory interface
 |`_campaignId` | uint256 |  ID of the campaign
 ---  
 

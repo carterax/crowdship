@@ -66,6 +66,7 @@ contract Campaign is
         bool allowContributionAfterTargetIsMet
     );
     event CampaignDeadlineExtended(uint256 time);
+    event DeadlineThresholdExtended(uint8 count);
 
     /// @dev `Approval Transfer`
     event CampaignUserDataTransferred(address oldAddress, address newAddress);
@@ -166,11 +167,15 @@ contract Campaign is
     /**
      * @dev        Constructor
      * @param      _campaignFactory     Address of factory
+     * @param      _campaignRewards     Address of campaign reward contract
+     * @param      _campaignRequests    Address of campaign request contract
+     * @param      _campaignVotes       Address of campaign vote contract
      * @param      _root                Address of campaign owner
+     * @param      _campaignId          ID of the campaign from campaign factory
      */
     function __Campaign_init(
         CampaignFactory _campaignFactory,
-        CampaignReward _camaignRewards,
+        CampaignReward _campaignRewards,
         CampaignRequest _campaignRequests,
         CampaignVote _campaignVotes,
         address _root,
@@ -179,7 +184,7 @@ contract Campaign is
         require(address(_root) != address(0));
 
         campaignFactoryContract = ICampaignFactory(address(_campaignFactory));
-        campaignRewardContract = ICampaignReward(address(_camaignRewards));
+        campaignRewardContract = ICampaignReward(address(_campaignRewards));
         campaignRequestContract = ICampaignRequest(address(_campaignRequests));
         campaignVoteContract = ICampaignVote(address(_campaignVotes));
 
@@ -198,14 +203,23 @@ contract Campaign is
         emit CampaignOwnerSet(root);
     }
 
+    /**
+     * @dev        Checks if a provided address is a campaign admin
+     * @param      _user     Address of the user
+     */
     function isCampaignAdmin(address _user) external view returns (bool) {
         return hasRole(DEFAULT_ADMIN_ROLE, _user);
     }
 
+    /// @dev Returns the campaigns funding goal type
     function getCampaignGoalType() external view returns (GOALTYPE) {
         return goalType;
     }
 
+    /**
+     * @dev        Returns a campaign state by a provided index
+     * @param      _state     Integer representing a state in the campaign
+     */
     function getCampaignState(uint256 _state)
         external
         pure
@@ -405,6 +419,8 @@ contract Campaign is
         whenNotPaused
     {
         deadlineSetTimes = _count;
+
+        emit DeadlineThresholdExtended(_count);
     }
 
     /**
@@ -498,21 +514,6 @@ contract Campaign is
     {
         require(!withdrawalsPaused);
         _withdrawContribution(msg.sender, _wallet);
-    }
-
-    /**
-     * @dev        Allows withdrawal of balance by factory on behalf of a user. 
-                   Cases where users wallet is compromised
-     * @param      _user      User whose funds are being requested
-     * @param      _wallet    Address where amount is delivered
-     */
-    function withdrawContributionForUser(address _user, address payable _wallet)
-        external
-        onlyFactory
-        nonReentrant
-    {
-        require(!withdrawalsPaused);
-        _withdrawContribution(_user, _wallet);
     }
 
     /**
@@ -625,7 +626,7 @@ contract Campaign is
         );
 
         campaignBalance = campaignBalance.sub(requestValue);
-        campaignRequestContract.finalizeRequest(_requestId);
+        campaignRequestContract.signRequestFinalization(_requestId);
 
         emit RequestComplete(_requestId);
     }

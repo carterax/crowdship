@@ -16,6 +16,7 @@ import "../libraries/contracts/CampaignFactoryLib.sol";
 
 import "../interfaces/ICampaignFactory.sol";
 import "../interfaces/ICampaign.sol";
+import "../interfaces/ICampaignVote.sol";
 
 import "../libraries/math/DecimalMath.sol";
 
@@ -56,11 +57,13 @@ contract CampaignRequest is
     ICampaignFactory public campaignFactoryContract;
     ICampaign public campaignContract;
 
+    /// @dev Ensures caller is campaign owner
     modifier onlyAdmin(address _user) {
         require(campaignContract.isCampaignAdmin(_user), "not campaign admin");
         _;
     }
 
+    /// @dev Ensures caller is a verified user
     modifier userIsVerified(address _user) {
         bool verified;
         (, verified) = CampaignFactoryLib.userInfo(
@@ -71,19 +74,12 @@ contract CampaignRequest is
         _;
     }
 
-    /// @dev Ensures caller is a registered campaign contract from factory
-    modifier onlyRegisteredCampaigns() {
-        address campaignAddress;
-
-        (campaignAddress, , ) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            campaignID
-        );
-
-        require(campaignAddress == msg.sender, "forbidden");
-        _;
-    }
-
+    /**
+     * @dev        Constructor
+     * @param      _campaignFactory     Address of factory
+     * @param      _campaign            Address of campaign contract
+     * @param      _campaignId          ID of it's campaign contract
+     */
     function __CampaignRequest_init(
         CampaignFactory _campaignFactory,
         Campaign _campaign,
@@ -213,8 +209,16 @@ contract CampaignRequest is
         emit RequestVoided(_requestId);
     }
 
+    /**
+     * @dev        Finalizes vote on a request, called only from voting contract
+     * @param      _requestId   ID of request being finalized
+     * @param      _support     An integer of 0 for against, 1 for in-favor, and 2 for abstain
+     */
     function signRequestVote(uint256 _requestId, uint256 _support) external {
-        require(campaignContract.campaignVoteContract() == msg.sender);
+        require(
+            campaignContract.campaignVoteContract() == msg.sender,
+            "forbidden"
+        );
         require(
             block.timestamp <= requests[_requestId].duration,
             "request expired"
@@ -236,14 +240,21 @@ contract CampaignRequest is
         }
     }
 
+    /**
+     * @dev        Finalizes vote cancellation, called only from the voting contract
+     * @param      _requestId   ID of request whose vote is being cancelled
+     */
     function cancelVoteSignature(uint256 _requestId) external {
-        require(campaignContract.campaignVoteContract() == msg.sender);
+        require(
+            campaignContract.campaignVoteContract() == msg.sender,
+            "forbidden"
+        );
         require(
             block.timestamp <= requests[_requestId].duration,
             "request expired"
         );
 
-        CampaignVote campaignVote = CampaignVote(
+        ICampaignVote campaignVote = ICampaignVote(
             campaignContract.campaignVoteContract()
         );
         uint256 voteId = campaignVote.voteId(msg.sender, _requestId);
@@ -266,15 +277,16 @@ contract CampaignRequest is
     }
 
     /**
-     * @dev        Withdrawal method called only when a request receives the right amount votes
-     * @param      _requestId      ID of request being withdrawn
+     * @dev        Request finalization called only from the campaign contract
+     * @param      _requestId      ID of request whose withdrawal is being finalized
      */
-    function finalizeRequest(uint256 _requestId)
+    function signRequestFinalization(uint256 _requestId)
         external
-        onlyRegisteredCampaigns
         whenNotPaused
         nonReentrant
     {
+        require(address(campaignContract) == msg.sender, "forbidden");
+
         Request storage request = requests[_requestId];
         // more than 50% of approvers to finalize
         DecimalMath.UFixed memory percentOfRequestApprovals = DecimalMath.muld(
