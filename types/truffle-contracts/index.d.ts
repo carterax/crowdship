@@ -8,18 +8,23 @@ import { CampaignContract } from "./Campaign";
 import { CampaignFactoryContract } from "./CampaignFactory";
 import { CampaignFactoryInterfaceContract } from "./CampaignFactoryInterface";
 import { CampaignInterfaceContract } from "./CampaignInterface";
+import { CampaignRequestContract } from "./CampaignRequest";
+import { CampaignRewardContract } from "./CampaignReward";
 import { CampaignRewardInterfaceContract } from "./CampaignRewardInterface";
 import { CampaignRewardsContract } from "./CampaignRewards";
+import { CampaignVoteContract } from "./CampaignVote";
 import { ERC165UpgradeableContract } from "./ERC165Upgradeable";
 import { ERC20UpgradeableContract } from "./ERC20Upgradeable";
 import { FactoryContract } from "./Factory";
 import { IAccessControlUpgradeableContract } from "./IAccessControlUpgradeable";
 import { ICampaignContract } from "./ICampaign";
 import { ICampaignFactoryContract } from "./ICampaignFactory";
+import { ICampaignRequestContract } from "./ICampaignRequest";
 import { ICampaignRewardContract } from "./ICampaignReward";
 import { IERC165UpgradeableContract } from "./IERC165Upgradeable";
 import { IERC20MetadataUpgradeableContract } from "./IERC20MetadataUpgradeable";
 import { IERC20UpgradeableContract } from "./IERC20Upgradeable";
+import { IRewardContract } from "./IReward";
 import { MigrationsContract } from "./Migrations";
 import { PausableUpgradeableContract } from "./PausableUpgradeable";
 import { TestTokenContract } from "./TestToken";
@@ -37,8 +42,11 @@ declare global {
         name: "CampaignFactoryInterface"
       ): CampaignFactoryInterfaceContract;
       require(name: "CampaignInterface"): CampaignInterfaceContract;
+      require(name: "CampaignRequest"): CampaignRequestContract;
+      require(name: "CampaignReward"): CampaignRewardContract;
       require(name: "CampaignRewardInterface"): CampaignRewardInterfaceContract;
       require(name: "CampaignRewards"): CampaignRewardsContract;
+      require(name: "CampaignVote"): CampaignVoteContract;
       require(name: "ERC165Upgradeable"): ERC165UpgradeableContract;
       require(name: "ERC20Upgradeable"): ERC20UpgradeableContract;
       require(name: "Factory"): FactoryContract;
@@ -47,12 +55,14 @@ declare global {
       ): IAccessControlUpgradeableContract;
       require(name: "ICampaign"): ICampaignContract;
       require(name: "ICampaignFactory"): ICampaignFactoryContract;
+      require(name: "ICampaignRequest"): ICampaignRequestContract;
       require(name: "ICampaignReward"): ICampaignRewardContract;
       require(name: "IERC165Upgradeable"): IERC165UpgradeableContract;
       require(
         name: "IERC20MetadataUpgradeable"
       ): IERC20MetadataUpgradeableContract;
       require(name: "IERC20Upgradeable"): IERC20UpgradeableContract;
+      require(name: "IReward"): IRewardContract;
       require(name: "Migrations"): MigrationsContract;
       require(name: "PausableUpgradeable"): PausableUpgradeableContract;
       require(name: "TestToken"): TestTokenContract;
@@ -79,6 +89,14 @@ export {
   CampaignInterfaceInstance,
 } from "./CampaignInterface";
 export {
+  CampaignRequestContract,
+  CampaignRequestInstance,
+} from "./CampaignRequest";
+export {
+  CampaignRewardContract,
+  CampaignRewardInstance,
+} from "./CampaignReward";
+export {
   CampaignRewardInterfaceContract,
   CampaignRewardInterfaceInstance,
 } from "./CampaignRewardInterface";
@@ -86,6 +104,7 @@ export {
   CampaignRewardsContract,
   CampaignRewardsInstance,
 } from "./CampaignRewards";
+export { CampaignVoteContract, CampaignVoteInstance } from "./CampaignVote";
 export {
   ERC165UpgradeableContract,
   ERC165UpgradeableInstance,
@@ -105,6 +124,10 @@ export {
   ICampaignFactoryInstance,
 } from "./ICampaignFactory";
 export {
+  ICampaignRequestContract,
+  ICampaignRequestInstance,
+} from "./ICampaignRequest";
+export {
   ICampaignRewardContract,
   ICampaignRewardInstance,
 } from "./ICampaignReward";
@@ -120,6 +143,7 @@ export {
   IERC20UpgradeableContract,
   IERC20UpgradeableInstance,
 } from "./IERC20Upgradeable";
+export { IRewardContract, IRewardInstance } from "./IReward";
 export { MigrationsContract, MigrationsInstance } from "./Migrations";
 export {
   PausableUpgradeableContract,

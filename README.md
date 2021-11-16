@@ -70,7 +70,7 @@ Make sure you have [Metamask](https://metamask.io/) installed and setup
 - Open and compile all contracts under `./contracts/*.sol` using `solc v0.8.0`
 - Under compiler configuration enable `optimization` with a runs value of `1`, hit the compile button
 - Under deploy & run transactions from the select dropdown, choose `Injected web3`
-- Deploy `Factory.sol` `CampaignFactory.sol` `CampaignRewards.sol` and `Campaign.sol`, after deploying these contracts please take note of their addresses as they would be required for various implementations across some contracts.
+- Deploy `Factory.sol` `CampaignFactory.sol` `CampaignReward.sol` and `Campaign.sol`, after deploying these contracts please take note of their addresses as they would be required for various implementations across some contracts.
 - After deployment you can now interact with the contract methods 🎉
 
 ## Running tests ✅

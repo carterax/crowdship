@@ -121,30 +121,8 @@ export interface Paused {
   };
 }
 
-export interface RequestAdded {
-  name: "RequestAdded";
-  args: {
-    requestId: BN;
-    duration: BN;
-    value: BN;
-    recipient: string;
-    0: BN;
-    1: BN;
-    2: BN;
-    3: string;
-  };
-}
-
 export interface RequestComplete {
   name: "RequestComplete";
-  args: {
-    requestId: BN;
-    0: BN;
-  };
-}
-
-export interface RequestVoided {
-  name: "RequestVoided";
   args: {
     requestId: BN;
     0: BN;
@@ -195,30 +173,6 @@ export interface Unpaused {
   };
 }
 
-export interface VoteCancelled {
-  name: "VoteCancelled";
-  args: {
-    voteId: BN;
-    requestId: BN;
-    support: BN;
-    0: BN;
-    1: BN;
-    2: BN;
-  };
-}
-
-export interface Voted {
-  name: "Voted";
-  args: {
-    voteId: BN;
-    requestId: BN;
-    support: BN;
-    0: BN;
-    1: BN;
-    2: BN;
-  };
-}
-
 type AllEvents =
   | CampaignDeadlineExtended
   | CampaignOwnerSet
@@ -231,15 +185,11 @@ type AllEvents =
   | ContributionMade
   | ContributionWithdrawn
   | Paused
-  | RequestAdded
   | RequestComplete
-  | RequestVoided
   | RoleAdminChanged
   | RoleGranted
   | RoleRevoked
-  | Unpaused
-  | VoteCancelled
-  | Voted;
+  | Unpaused;
 
 export interface CampaignInstance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
@@ -295,20 +245,26 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+  campaignRequestContract(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
+  campaignRewardContract(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   campaignState(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignVoteContract(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
   contributionId(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
-  currentRunningRequest(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
   deadline(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   deadlineSetTimes(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-  finalizedRequestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   /**
    * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
@@ -361,6 +317,10 @@ export interface CampaignInstance extends Truffle.ContractInstance {
    * Returns true if the contract is paused, and false otherwise.
    */
   paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
+
+  percent(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  percentBase(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   /**
    * Remove an account from the role. Restricted to admins.
@@ -435,22 +395,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
-  requestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-  requests(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<{
-    0: string;
-    1: boolean;
-    2: BN;
-    3: BN;
-    4: BN;
-    5: BN;
-    6: BN;
-    7: boolean;
-  }>;
-
   reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   reviewed(
@@ -496,7 +440,17 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   target(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+  timeUntilNextTransferConfirmation(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
+
   totalCampaignContribution(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
+
+  transferAttemptCount(
+    arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
@@ -511,6 +465,8 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     (
       _campaignFactory: string,
       _camaignRewards: string,
+      _campaignRequests: string,
+      _campaignVotes: string,
       _root: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -518,6 +474,8 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     call(
       _campaignFactory: string,
       _camaignRewards: string,
+      _campaignRequests: string,
+      _campaignVotes: string,
       _root: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -525,6 +483,8 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     sendTransaction(
       _campaignFactory: string,
       _camaignRewards: string,
+      _campaignRequests: string,
+      _campaignVotes: string,
       _root: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -532,11 +492,25 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     estimateGas(
       _campaignFactory: string,
       _camaignRewards: string,
+      _campaignRequests: string,
+      _campaignVotes: string,
       _root: string,
       _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
+
+  isCampaignAdmin(
+    _user: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
+  getCampaignGoalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  getCampaignState(
+    _state: number | BN | string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
 
   /**
    * Transfers campaign ownership from one user to another.
@@ -775,113 +749,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   ): Promise<BN>;
 
   /**
-   * Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory Restricted unless target is met and deadline is expired
-   * @param _duration Duration until users aren't able to vote on the request
-   * @param _recipient Address where requested funds are deposited
-   * @param _value Amount being requested by the campaign manager
-   */
-  createRequest: {
-    (
-      _recipient: string,
-      _value: number | BN | string,
-      _duration: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _recipient: string,
-      _value: number | BN | string,
-      _duration: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _recipient: string,
-      _value: number | BN | string,
-      _duration: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _recipient: string,
-      _value: number | BN | string,
-      _duration: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Renders a request void and useless
-   * @param _requestId ID of request being voided
-   */
-  voidRequest: {
-    (
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Approvers only method which approves spending request issued by the campaign manager or factory
-   * @param _requestId ID of request being voted on
-   * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
-   */
-  voteOnRequest: {
-    (
-      _requestId: number | BN | string,
-      _support: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _requestId: number | BN | string,
-      _support: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _requestId: number | BN | string,
-      _support: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _requestId: number | BN | string,
-      _support: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Approvers only method which cancels initial vote on a request
-   * @param _requestId ID of request being voted on
-   */
-  cancelVote: {
-    (
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _requestId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
    * Withdrawal method called only when a request receives the right amount votes
    * @param _requestId ID of request being withdrawn
    */
@@ -950,28 +817,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     call(txDetails?: Truffle.TransactionDetails): Promise<void>;
     sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
     estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
-  };
-
-  /**
-   * Changes campaign state
-   */
-  setCampaignState: {
-    (
-      _state: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _state: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _state: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _state: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
   };
 
   /**
@@ -1074,20 +919,28 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    campaignRequestContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
+    campaignRewardContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     campaignState(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    campaignVoteContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
 
     contributionId(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
-    currentRunningRequest(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
     deadline(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     deadlineSetTimes(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-    finalizedRequestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     /**
      * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
@@ -1140,6 +993,10 @@ export interface CampaignInstance extends Truffle.ContractInstance {
      * Returns true if the contract is paused, and false otherwise.
      */
     paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
+
+    percent(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    percentBase(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     /**
      * Remove an account from the role. Restricted to admins.
@@ -1214,22 +1071,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
-    requestCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
-    requests(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<{
-      0: string;
-      1: boolean;
-      2: BN;
-      3: BN;
-      4: BN;
-      5: BN;
-      6: BN;
-      7: boolean;
-    }>;
-
     reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     reviewed(
@@ -1275,7 +1116,17 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     target(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    timeUntilNextTransferConfirmation(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
+
     totalCampaignContribution(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
+
+    transferAttemptCount(
+      arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
@@ -1290,6 +1141,8 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       (
         _campaignFactory: string,
         _camaignRewards: string,
+        _campaignRequests: string,
+        _campaignVotes: string,
         _root: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
@@ -1297,6 +1150,8 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       call(
         _campaignFactory: string,
         _camaignRewards: string,
+        _campaignRequests: string,
+        _campaignVotes: string,
         _root: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
@@ -1304,6 +1159,8 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       sendTransaction(
         _campaignFactory: string,
         _camaignRewards: string,
+        _campaignRequests: string,
+        _campaignVotes: string,
         _root: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
@@ -1311,11 +1168,25 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       estimateGas(
         _campaignFactory: string,
         _camaignRewards: string,
+        _campaignRequests: string,
+        _campaignVotes: string,
         _root: string,
         _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
+
+    isCampaignAdmin(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
+    getCampaignGoalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    getCampaignState(
+      _state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
 
     /**
      * Transfers campaign ownership from one user to another.
@@ -1554,113 +1425,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<BN>;
 
     /**
-     * Creates a formal request to withdraw funds from user contributions called by the campagn manager or factory Restricted unless target is met and deadline is expired
-     * @param _duration Duration until users aren't able to vote on the request
-     * @param _recipient Address where requested funds are deposited
-     * @param _value Amount being requested by the campaign manager
-     */
-    createRequest: {
-      (
-        _recipient: string,
-        _value: number | BN | string,
-        _duration: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _recipient: string,
-        _value: number | BN | string,
-        _duration: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _recipient: string,
-        _value: number | BN | string,
-        _duration: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _recipient: string,
-        _value: number | BN | string,
-        _duration: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Renders a request void and useless
-     * @param _requestId ID of request being voided
-     */
-    voidRequest: {
-      (
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Approvers only method which approves spending request issued by the campaign manager or factory
-     * @param _requestId ID of request being voted on
-     * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
-     */
-    voteOnRequest: {
-      (
-        _requestId: number | BN | string,
-        _support: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _requestId: number | BN | string,
-        _support: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _requestId: number | BN | string,
-        _support: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _requestId: number | BN | string,
-        _support: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Approvers only method which cancels initial vote on a request
-     * @param _requestId ID of request being voted on
-     */
-    cancelVote: {
-      (
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _requestId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
      * Withdrawal method called only when a request receives the right amount votes
      * @param _requestId ID of request being withdrawn
      */
@@ -1729,28 +1493,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       call(txDetails?: Truffle.TransactionDetails): Promise<void>;
       sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
       estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
-    };
-
-    /**
-     * Changes campaign state
-     */
-    setCampaignState: {
-      (
-        _state: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _state: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _state: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _state: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
     };
 
     /**

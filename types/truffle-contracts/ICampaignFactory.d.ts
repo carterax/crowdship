@@ -40,19 +40,15 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
   deployedCampaigns(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{
-    0: string;
-    1: string;
-    2: BN;
-    3: BN;
-    4: BN;
-    5: BN;
-    6: boolean;
-    7: boolean;
-    8: boolean;
-  }>;
+  ): Promise<{ 0: string; 1: string; 2: BN; 3: BN; 4: BN; 5: boolean }>;
 
   factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+  isUserTrustee(
+    arg0: string,
+    arg1: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
 
   root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
@@ -139,19 +135,15 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
     deployedCampaigns(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{
-      0: string;
-      1: string;
-      2: BN;
-      3: BN;
-      4: BN;
-      5: BN;
-      6: boolean;
-      7: boolean;
-      8: boolean;
-    }>;
+    ): Promise<{ 0: string; 1: string; 2: BN; 3: BN; 4: BN; 5: boolean }>;
 
     factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+    isUserTrustee(
+      arg0: string,
+      arg1: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
 
     root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 

@@ -51,18 +51,18 @@ export interface CampaignDefaultCommissionUpdated {
 export interface CampaignDeployed {
   name: "CampaignDeployed";
   args: {
-    campaignId: BN;
     factory: string;
     campaign: string;
     campaignRewards: string;
-    userId: BN;
+    campaignRequests: string;
+    campaignVotes: string;
     category: BN;
     approved: boolean;
-    0: BN;
+    0: string;
     1: string;
     2: string;
     3: string;
-    4: BN;
+    4: string;
     5: BN;
     6: boolean;
   };
@@ -114,9 +114,13 @@ export interface FactoryConfigUpdated {
     factoryWallet: string;
     campaignImplementation: string;
     campaignRewardsImplementation: string;
+    campaignRequestsImplementation: string;
+    campaignVotesImplementation: string;
     0: string;
     1: string;
     2: string;
+    3: string;
+    4: string;
   };
 }
 
@@ -182,6 +186,26 @@ export interface TokenApproval {
   };
 }
 
+export interface TrusteeAdded {
+  name: "TrusteeAdded";
+  args: {
+    trusteeId: BN;
+    trusteeAddress: string;
+    0: BN;
+    1: string;
+  };
+}
+
+export interface TrusteeRemoved {
+  name: "TrusteeRemoved";
+  args: {
+    trusteeId: BN;
+    trusteeAddress: string;
+    0: BN;
+    1: string;
+  };
+}
+
 export interface Unpaused {
   name: "Unpaused";
   args: {
@@ -227,6 +251,8 @@ type AllEvents =
   | RoleRevoked
   | TokenAdded
   | TokenApproval
+  | TrusteeAdded
+  | TrusteeRemoved
   | Unpaused
   | UserAdded
   | UserApproval;
@@ -288,6 +314,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
 
+  campaignRequestsImplementation(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   campaignRevenueFromCommissions(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
@@ -317,6 +347,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
 
+  campaignVotesImplementation(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   categoryCommission(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
@@ -327,18 +361,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   deployedCampaigns(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{
-    0: string;
-    1: string;
-    2: string;
-    3: BN;
-    4: BN;
-    5: BN;
-    6: BN;
-    7: boolean;
-    8: boolean;
-    9: boolean;
-  }>;
+  ): Promise<{ 0: string; 1: string; 2: BN; 3: BN; 4: BN; 5: boolean }>;
 
   factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -384,6 +407,12 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   hasRole(
     role: string,
     account: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
+  isUserTrustee(
+    arg0: string,
+    arg1: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
@@ -504,9 +533,19 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
+  trustees(
+    arg0: number | BN | string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<{ 0: string; 1: string; 2: BN; 3: boolean }>;
+
   userCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   userID(arg0: string, txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  userTrusteeCount(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
 
   users(
     arg0: number | BN | string,
@@ -551,24 +590,32 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       _wallet: string,
       _campaignImplementation: string,
       _campaignRewardsImplementation: string,
+      _campaignRequestsImplementation: string,
+      _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _wallet: string,
       _campaignImplementation: string,
       _campaignRewardsImplementation: string,
+      _campaignRequestsImplementation: string,
+      _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _wallet: string,
       _campaignImplementation: string,
       _campaignRewardsImplementation: string,
+      _campaignRequestsImplementation: string,
+      _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _wallet: string,
       _campaignImplementation: string,
       _campaignRewardsImplementation: string,
+      _campaignRequestsImplementation: string,
+      _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -766,7 +813,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Keep track of user addresses. KYC purpose
+   * Keep track of user addresses. sybil resistance purpose
    */
   signUp: {
     (txDetails?: Truffle.TransactionDetails): Promise<
@@ -775,6 +822,60 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     call(txDetails?: Truffle.TransactionDetails): Promise<void>;
     sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
     estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
+
+  /**
+   * Ensures user specified is verified
+   * @param _user Address of user
+   */
+  userIsVerified(
+    _user: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
+  /**
+   * Trustees are people the user can add to help recover their account in the case they lose access to ther wallets
+   * @param _trustee Address of the trustee, must be a verified user
+   */
+  addTrustee: {
+    (_trustee: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(
+      _trustee: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _trustee: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _trustee: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Removes a trustee from users list of trustees
+   * @param _trusteeId Address of the trustee
+   */
+  removeTrustee: {
+    (
+      _trusteeId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _trusteeId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _trusteeId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _trusteeId: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
   };
 
   /**
@@ -856,34 +957,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     estimateGas(
       _campaignId: number | BN | string,
       _approval: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
-   * Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory
-   * @param _active Indicates if the campaign will be active or not.  Affects campaign listing and transactions
-   * @param _campaignId ID of the campaign
-   */
-  toggleCampaignActive: {
-    (
-      _campaignId: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _campaignId: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _campaignId: number | BN | string,
-      _active: boolean,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _campaignId: number | BN | string,
-      _active: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1047,6 +1120,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
 
+    campaignRequestsImplementation(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     campaignRevenueFromCommissions(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -1076,6 +1153,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
 
+    campaignVotesImplementation(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     categoryCommission(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -1086,18 +1167,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     deployedCampaigns(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{
-      0: string;
-      1: string;
-      2: string;
-      3: BN;
-      4: BN;
-      5: BN;
-      6: BN;
-      7: boolean;
-      8: boolean;
-      9: boolean;
-    }>;
+    ): Promise<{ 0: string; 1: string; 2: BN; 3: BN; 4: BN; 5: boolean }>;
 
     factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1143,6 +1213,12 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     hasRole(
       role: string,
       account: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
+    isUserTrustee(
+      arg0: string,
+      arg1: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
@@ -1263,9 +1339,19 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
+    trustees(
+      arg0: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<{ 0: string; 1: string; 2: BN; 3: boolean }>;
+
     userCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     userID(arg0: string, txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    userTrusteeCount(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
 
     users(
       arg0: number | BN | string,
@@ -1310,24 +1396,32 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
         _wallet: string,
         _campaignImplementation: string,
         _campaignRewardsImplementation: string,
+        _campaignRequestsImplementation: string,
+        _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _wallet: string,
         _campaignImplementation: string,
         _campaignRewardsImplementation: string,
+        _campaignRequestsImplementation: string,
+        _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _wallet: string,
         _campaignImplementation: string,
         _campaignRewardsImplementation: string,
+        _campaignRequestsImplementation: string,
+        _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _wallet: string,
         _campaignImplementation: string,
         _campaignRewardsImplementation: string,
+        _campaignRequestsImplementation: string,
+        _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1531,7 +1625,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Keep track of user addresses. KYC purpose
+     * Keep track of user addresses. sybil resistance purpose
      */
     signUp: {
       (txDetails?: Truffle.TransactionDetails): Promise<
@@ -1540,6 +1634,60 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       call(txDetails?: Truffle.TransactionDetails): Promise<void>;
       sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
       estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
+
+    /**
+     * Ensures user specified is verified
+     * @param _user Address of user
+     */
+    userIsVerified(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
+    /**
+     * Trustees are people the user can add to help recover their account in the case they lose access to ther wallets
+     * @param _trustee Address of the trustee, must be a verified user
+     */
+    addTrustee: {
+      (_trustee: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(
+        _trustee: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _trustee: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _trustee: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Removes a trustee from users list of trustees
+     * @param _trusteeId Address of the trustee
+     */
+    removeTrustee: {
+      (
+        _trusteeId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _trusteeId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _trusteeId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _trusteeId: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
     };
 
     /**
@@ -1621,34 +1769,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       estimateGas(
         _campaignId: number | BN | string,
         _approval: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
-     * Temporal campaign deactivation. Restricted to campaign managers or campaign managers from factory
-     * @param _active Indicates if the campaign will be active or not.  Affects campaign listing and transactions
-     * @param _campaignId ID of the campaign
-     */
-    toggleCampaignActive: {
-      (
-        _campaignId: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _campaignId: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _campaignId: number | BN | string,
-        _active: boolean,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _campaignId: number | BN | string,
-        _active: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

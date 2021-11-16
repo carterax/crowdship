@@ -256,7 +256,7 @@ contract Campaign is
         );
         require(
             timeUntilNextTransferConfirmation[msg.sender] >= block.timestamp,
-            "time until next confirmation has not expired"
+            "time until next confirmation not expired"
         );
 
         if (transferAttemptCount[_oldAddress] < 3) {

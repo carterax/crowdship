@@ -12,24 +12,170 @@ export interface ICampaignContract extends Truffle.Contract<ICampaignInstance> {
 type AllEvents = never;
 
 export interface ICampaignInstance extends Truffle.ContractInstance {
+  acceptedToken(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
   approvers(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
+  approversCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignBalance(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
   campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignRequestContract(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
+  campaignState(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  campaignVoteContract(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+  deadline(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  goalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  percent(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
   root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+  target(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  totalCampaignContribution(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<BN>;
+
+  isCampaignAdmin: {
+    (_user: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+    sendTransaction(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  getCampaignGoalType: {
+    (txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
+
+  getCampaignState: {
+    (
+      state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
+    sendTransaction(
+      state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
   methods: {
+    acceptedToken(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
     approvers(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
+    approversCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    campaignBalance(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
     campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    campaignRequestContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
+    campaignState(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    campaignVoteContract(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
+    deadline(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    goalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    percent(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
     root(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+    target(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    totalCampaignContribution(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BN>;
+
+    isCampaignAdmin: {
+      (_user: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(
+        _user: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<boolean>;
+      sendTransaction(
+        _user: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _user: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    getCampaignGoalType: {
+      (txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
+
+    getCampaignState: {
+      (
+        state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<BN>;
+      sendTransaction(
+        state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
   };
 
   getPastEvents(event: string): Promise<EventData[]>;
