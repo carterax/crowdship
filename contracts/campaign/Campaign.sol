@@ -748,6 +748,16 @@ contract Campaign is
     }
 
     /**
+     * @dev        Sets the campaign state, only ever called if campaign is approved with factory
+     * @param      _state      Indicates pause or unpause state
+     */
+    function setCampaignState(uint256 _state) external onlyFactory {
+        campaignState = CAMPAIGN_STATE(_state);
+
+        emit CampaignStateChange(campaignState);
+    }
+
+    /**
      * @dev        Pauses or Unpauses withdrawals depending on state passed in argument
      * @param      _state      Indicates pause or unpause state
      */

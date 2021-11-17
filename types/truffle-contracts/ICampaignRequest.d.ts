@@ -33,7 +33,7 @@ export interface ICampaignRequestInstance extends Truffle.ContractInstance {
     7: boolean;
   }>;
 
-  finalizeRequest: {
+  signRequestFinalization: {
     (
       _requestId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -115,7 +115,7 @@ export interface ICampaignRequestInstance extends Truffle.ContractInstance {
       7: boolean;
     }>;
 
-    finalizeRequest: {
+    signRequestFinalization: {
       (
         _requestId: number | BN | string,
         txDetails?: Truffle.TransactionDetails

@@ -69,12 +69,14 @@ export interface RewardModified {
 export interface RewardRecipientAdded {
   name: "RewardRecipientAdded";
   args: {
+    rewardRecipientId: BN;
     rewardId: BN;
     amount: BN;
     user: string;
     0: BN;
     1: BN;
-    2: string;
+    2: BN;
+    3: string;
   };
 }
 

@@ -84,6 +84,12 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
     7: boolean;
   }>;
 
+  /**
+   * Constructor
+   * @param _campaign Address of campaign contract
+   * @param _campaignFactory Address of factory
+   * @param _campaignId ID of it's campaign contract
+   */
   __CampaignRequest_init: {
     (
       _campaignFactory: string,
@@ -167,6 +173,11 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
     ): Promise<number>;
   };
 
+  /**
+   * Finalizes vote on a request, called only from voting contract
+   * @param _requestId ID of request being finalized
+   * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
+   */
   signRequestVote: {
     (
       _requestId: number | BN | string,
@@ -190,6 +201,10 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
     ): Promise<number>;
   };
 
+  /**
+   * Finalizes vote cancellation, called only from the voting contract
+   * @param _requestId ID of request whose vote is being cancelled
+   */
   cancelVoteSignature: {
     (
       _requestId: number | BN | string,
@@ -210,10 +225,10 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Withdrawal method called only when a request receives the right amount votes
-   * @param _requestId ID of request being withdrawn
+   * Request finalization called only from the campaign contract
+   * @param _requestId ID of request whose withdrawal is being finalized
    */
-  finalizeRequest: {
+  signRequestFinalization: {
     (
       _requestId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -266,6 +281,12 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
       7: boolean;
     }>;
 
+    /**
+     * Constructor
+     * @param _campaign Address of campaign contract
+     * @param _campaignFactory Address of factory
+     * @param _campaignId ID of it's campaign contract
+     */
     __CampaignRequest_init: {
       (
         _campaignFactory: string,
@@ -349,6 +370,11 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
       ): Promise<number>;
     };
 
+    /**
+     * Finalizes vote on a request, called only from voting contract
+     * @param _requestId ID of request being finalized
+     * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
+     */
     signRequestVote: {
       (
         _requestId: number | BN | string,
@@ -372,6 +398,10 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
       ): Promise<number>;
     };
 
+    /**
+     * Finalizes vote cancellation, called only from the voting contract
+     * @param _requestId ID of request whose vote is being cancelled
+     */
     cancelVoteSignature: {
       (
         _requestId: number | BN | string,
@@ -392,10 +422,10 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Withdrawal method called only when a request receives the right amount votes
-     * @param _requestId ID of request being withdrawn
+     * Request finalization called only from the campaign contract
+     * @param _requestId ID of request whose withdrawal is being finalized
      */
-    finalizeRequest: {
+    signRequestFinalization: {
       (
         _requestId: number | BN | string,
         txDetails?: Truffle.TransactionDetails

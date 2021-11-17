@@ -113,6 +113,14 @@ export interface ContributionWithdrawn {
   };
 }
 
+export interface DeadlineThresholdExtended {
+  name: "DeadlineThresholdExtended";
+  args: {
+    count: BN;
+    0: BN;
+  };
+}
+
 export interface Paused {
   name: "Paused";
   args: {
@@ -184,6 +192,7 @@ type AllEvents =
   | CampaignUserDataTransferred
   | ContributionMade
   | ContributionWithdrawn
+  | DeadlineThresholdExtended
   | Paused
   | RequestComplete
   | RoleAdminChanged
@@ -459,12 +468,16 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   /**
    * Constructor
    * @param _campaignFactory Address of factory
+   * @param _campaignId ID of the campaign from campaign factory
+   * @param _campaignRequests Address of campaign request contract
+   * @param _campaignRewards Address of campaign reward contract
+   * @param _campaignVotes Address of campaign vote contract
    * @param _root Address of campaign owner
    */
   __Campaign_init: {
     (
       _campaignFactory: string,
-      _camaignRewards: string,
+      _campaignRewards: string,
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
@@ -473,7 +486,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _campaignFactory: string,
-      _camaignRewards: string,
+      _campaignRewards: string,
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
@@ -482,7 +495,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<void>;
     sendTransaction(
       _campaignFactory: string,
-      _camaignRewards: string,
+      _campaignRewards: string,
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
@@ -491,7 +504,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<string>;
     estimateGas(
       _campaignFactory: string,
-      _camaignRewards: string,
+      _campaignRewards: string,
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
@@ -500,13 +513,24 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<number>;
   };
 
+  /**
+   * Checks if a provided address is a campaign admin
+   * @param _user Address of the user
+   */
   isCampaignAdmin(
     _user: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
+  /**
+   * Returns the campaigns funding goal type
+   */
   getCampaignGoalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+  /**
+   * Returns a campaign state by a provided index
+   * @param _state Integer representing a state in the campaign
+   */
   getCampaignState(
     _state: number | BN | string,
     txDetails?: Truffle.TransactionDetails
@@ -712,34 +736,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Allows withdrawal of balance by factory on behalf of a user.  Cases where users wallet is compromised
-   * @param _user User whose funds are being requested
-   * @param _wallet Address where amount is delivered
-   */
-  withdrawContributionForUser: {
-    (
-      _user: string,
-      _wallet: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
-    call(
-      _user: string,
-      _wallet: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<void>;
-    sendTransaction(
-      _user: string,
-      _wallet: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      _user: string,
-      _wallet: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
-  /**
    * Used to measure user funds left after request finalizations
    * @param _user Address of user check is carried out on
    */
@@ -817,6 +813,29 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     call(txDetails?: Truffle.TransactionDetails): Promise<void>;
     sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
     estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
+
+  /**
+   * Sets the campaign state, only ever called if campaign is approved with factory
+   * @param _state Indicates pause or unpause state
+   */
+  setCampaignState: {
+    (
+      _state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _state: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
   };
 
   /**
@@ -1135,12 +1154,16 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     /**
      * Constructor
      * @param _campaignFactory Address of factory
+     * @param _campaignId ID of the campaign from campaign factory
+     * @param _campaignRequests Address of campaign request contract
+     * @param _campaignRewards Address of campaign reward contract
+     * @param _campaignVotes Address of campaign vote contract
      * @param _root Address of campaign owner
      */
     __Campaign_init: {
       (
         _campaignFactory: string,
-        _camaignRewards: string,
+        _campaignRewards: string,
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
@@ -1149,7 +1172,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _campaignFactory: string,
-        _camaignRewards: string,
+        _campaignRewards: string,
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
@@ -1158,7 +1181,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       ): Promise<void>;
       sendTransaction(
         _campaignFactory: string,
-        _camaignRewards: string,
+        _campaignRewards: string,
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
@@ -1167,7 +1190,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       ): Promise<string>;
       estimateGas(
         _campaignFactory: string,
-        _camaignRewards: string,
+        _campaignRewards: string,
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
@@ -1176,13 +1199,24 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       ): Promise<number>;
     };
 
+    /**
+     * Checks if a provided address is a campaign admin
+     * @param _user Address of the user
+     */
     isCampaignAdmin(
       _user: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
+    /**
+     * Returns the campaigns funding goal type
+     */
     getCampaignGoalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    /**
+     * Returns a campaign state by a provided index
+     * @param _state Integer representing a state in the campaign
+     */
     getCampaignState(
       _state: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -1388,34 +1422,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Allows withdrawal of balance by factory on behalf of a user.  Cases where users wallet is compromised
-     * @param _user User whose funds are being requested
-     * @param _wallet Address where amount is delivered
-     */
-    withdrawContributionForUser: {
-      (
-        _user: string,
-        _wallet: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
-      call(
-        _user: string,
-        _wallet: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<void>;
-      sendTransaction(
-        _user: string,
-        _wallet: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<string>;
-      estimateGas(
-        _user: string,
-        _wallet: string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<number>;
-    };
-
-    /**
      * Used to measure user funds left after request finalizations
      * @param _user Address of user check is carried out on
      */
@@ -1493,6 +1499,29 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       call(txDetails?: Truffle.TransactionDetails): Promise<void>;
       sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
       estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
+
+    /**
+     * Sets the campaign state, only ever called if campaign is approved with factory
+     * @param _state Indicates pause or unpause state
+     */
+    setCampaignState: {
+      (
+        _state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _state: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
     };
 
     /**

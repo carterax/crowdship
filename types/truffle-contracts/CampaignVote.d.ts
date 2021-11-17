@@ -77,6 +77,12 @@ export interface CampaignVoteInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<{ 0: BN; 1: BN; 2: boolean; 3: string }>;
 
+  /**
+   * Constructor
+   * @param _campaign Address of campaign contract
+   * @param _campaignFactory Address of factory
+   * @param _campaignId ID of it's campaign contract
+   */
   __CampaignVote_init: {
     (
       _campaignFactory: string,
@@ -105,7 +111,7 @@ export interface CampaignVoteInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Approvers only method which approves spending request issued by the campaign manager or factory
+   * Approvers only method which approves spending request issued by the campaign manager
    * @param _requestId ID of request being voted on
    * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
    */
@@ -180,6 +186,12 @@ export interface CampaignVoteInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<{ 0: BN; 1: BN; 2: boolean; 3: string }>;
 
+    /**
+     * Constructor
+     * @param _campaign Address of campaign contract
+     * @param _campaignFactory Address of factory
+     * @param _campaignId ID of it's campaign contract
+     */
     __CampaignVote_init: {
       (
         _campaignFactory: string,
@@ -208,7 +220,7 @@ export interface CampaignVoteInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Approvers only method which approves spending request issued by the campaign manager or factory
+     * Approvers only method which approves spending request issued by the campaign manager
      * @param _requestId ID of request being voted on
      * @param _support An integer of 0 for against, 1 for in-favor, and 2 for abstain
      */

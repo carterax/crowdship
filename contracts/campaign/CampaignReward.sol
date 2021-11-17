@@ -43,6 +43,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
 
     /// @dev `Rward Recipient Events`
     event RewardRecipientAdded(
+        uint256 indexed rewardRecipientId,
         uint256 indexed rewardId,
         uint256 amount,
         address indexed user
@@ -189,7 +190,12 @@ contract CampaignReward is Initializable, PausableUpgradeable {
             _rewardId
         ].add(1);
 
-        emit RewardRecipientAdded(_rewardId, _amount, _user);
+        emit RewardRecipientAdded(
+            rewardRecipients.length.sub(1),
+            _rewardId,
+            _amount,
+            _user
+        );
 
         return rewardRecipients.length.sub(1);
     }
