@@ -40,7 +40,15 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
   deployedCampaigns(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: string; 1: string; 2: BN; 3: BN; 4: BN; 5: boolean }>;
+  ): Promise<{
+    0: string;
+    1: string;
+    2: BN;
+    3: BN;
+    4: BN;
+    5: boolean;
+    6: boolean;
+  }>;
 
   factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
@@ -135,7 +143,15 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
     deployedCampaigns(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: string; 1: string; 2: BN; 3: BN; 4: BN; 5: boolean }>;
+    ): Promise<{
+      0: string;
+      1: string;
+      2: BN;
+      3: BN;
+      4: BN;
+      5: boolean;
+      6: boolean;
+    }>;
 
     factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
 

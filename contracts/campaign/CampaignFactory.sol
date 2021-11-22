@@ -14,29 +14,25 @@ import "./CampaignReward.sol";
 import "./CampaignRequest.sol";
 import "./CampaignVote.sol";
 
-import "../utils/AccessControl.sol";
 import "../libraries/math/DecimalMath.sol";
 
 contract CampaignFactory is
     Initializable,
-    AccessControl,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable
 {
     using SafeMathUpgradeable for uint256;
 
-    /// @dev default role(s)
-    bytes32 public constant MANAGE_CATEGORIES = keccak256("MANAGE CATEGORIES");
-    bytes32 public constant MANAGE_CAMPAIGNS = keccak256("MANAGE CAMPAIGNS");
-    bytes32 public constant MANAGE_USERS = keccak256("MANAGE USERS");
-
     /// @dev `Factory Config Events`
-    event FactoryConfigUpdated(
-        address factoryWallet,
-        address campaignImplementation,
-        address campaignRewardsImplementation,
-        address campaignRequestsImplementation,
-        address campaignVotesImplementation
+    event CampaignImplementationUpdated(address indexed campaignImplementation);
+    event CampaignRewardImplementationUpdated(
+        address indexed campaignRewardImplementation
+    );
+    event CampaignRequestImplementationUpdated(
+        address indexed campaignRequestImplementation
+    );
+    event CampaignVoteImplementationUpdated(
+        address indexed campaignVoteImplementation
     );
     event CategoryCommissionUpdated(
         uint256 indexed categoryId,
@@ -55,8 +51,8 @@ contract CampaignFactory is
         uint256 category,
         bool approved
     );
-    event CampaignApproval(address indexed campaign, bool approval);
-    event CampaignActiveToggle(address indexed campaign, bool active);
+    event CampaignApproval(address indexed campaign);
+    event CampaignActivation(address indexed campaign);
     event CampaignCategoryChange(address indexed campaign, uint256 newCategory);
 
     /// @dev `Token Events`
@@ -80,9 +76,8 @@ contract CampaignFactory is
     event CategoryModified(uint256 indexed categoryId, bool active);
 
     /// @dev Settings
-    address public root;
+    address public governance;
     address public campaignFactoryAddress;
-    address payable public factoryWallet;
     address public campaignImplementation;
     address public campaignRewardsImplementation;
     address public campaignVotesImplementation;
@@ -105,6 +100,7 @@ contract CampaignFactory is
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
+        bool active;
         bool approved;
     }
     CampaignInfo[] public deployedCampaigns;
@@ -147,6 +143,12 @@ contract CampaignFactory is
     // { trustor -> trustee -> isTrusted }
     mapping(address => mapping(address => bool)) public isUserTrustee;
 
+    modifier onlyAdmin() {
+        // check is governance address
+        require(governance == msg.sender, "forbidden");
+        _;
+    }
+
     /// @dev Ensures caller is campaign owner alone
     modifier campaignOwner(uint256 _campaignId) {
         require(
@@ -167,15 +169,15 @@ contract CampaignFactory is
 
     /**
      * @dev        Contructor
-     * @param      _wallet     Address where all revenue gets deposited
+     * @param      _governance     Address where all revenue gets deposited
      */
-    function __CampaignFactory_init(address payable _wallet, address _root)
-        public
-        initializer
-    {
-        require(address(_wallet) != address(0));
-        root = _root;
-        factoryWallet = _wallet;
+    function __CampaignFactory_init(
+        address _governance,
+        uint256[15] calldata _config
+    ) public initializer {
+        require(_governance != address(0));
+
+        governance = _governance;
         campaignFactoryAddress = address(this);
 
         string[15] memory transactionConfigs = [
@@ -196,75 +198,64 @@ contract CampaignFactory is
             "reportThresholdMark"
         ];
 
-        uint24[15] memory defaultTransactionConfigValues = [
-            2, // defaultCommission
-            3, // deadlineStrikesAllowed
-            1, // minimumContributionAllowed
-            10000, // maximumContributionAllowed
-            1000, // minimumRequestAmountAllowed
-            5000, // maximumRequestAmountAllowed
-            5000, // minimumCampaignTarget
-            1000000, // maximumCampaignTarget
-            604800, // maxDeadlineExtension
-            86400, // minDeadlineExtension
-            86400, // minRequestDuration
-            604800, // maxRequestDuration
-            80, // reviewThresholdMark
-            51, // requestFinalizationThreshold
-            51 // reportThresholdMark
-        ];
-
         for (uint256 index = 0; index < transactionConfigs.length; index++) {
             campaignTransactionConfigList.push(transactionConfigs[index]);
             approvedCampaignTransactionConfig[transactionConfigs[index]] = true;
-            campaignTransactionConfig[
-                transactionConfigs[index]
-            ] = defaultTransactionConfigValues[index];
+            campaignTransactionConfig[transactionConfigs[index]] = _config[
+                index
+            ];
         }
-
-        _setupRole(DEFAULT_ADMIN_ROLE, root);
-        _setupRole(MANAGE_CATEGORIES, root);
-        _setupRole(MANAGE_CAMPAIGNS, root);
-        _setupRole(MANAGE_USERS, root);
-
-        _setRoleAdmin(MANAGE_CATEGORIES, DEFAULT_ADMIN_ROLE);
-        _setRoleAdmin(MANAGE_CAMPAIGNS, DEFAULT_ADMIN_ROLE);
-        _setRoleAdmin(MANAGE_USERS, DEFAULT_ADMIN_ROLE);
-
-        // add root as user
-        signUp();
     }
 
     /**
      * @dev        Set Factory controlled values dictating how campaigns should run
-     * @param      _wallet                          Address where all revenue gets deposited
      * @param      _campaignImplementation          Address of base contract to deploy minimal proxies to campaigns
-     * @param      _campaignRewardsImplementation   Address of base contract to deploy minimal proxies to campaign rewards
      */
-    function setFactoryConfig(
-        address payable _wallet,
-        Campaign _campaignImplementation,
-        CampaignReward _campaignRewardsImplementation,
-        CampaignRequest _campaignRequestsImplementation,
-        CampaignVote _campaignVotesImplementation
-    ) external onlyAdmin {
-        require(address(_wallet) != address(0));
+    function setCampaignImplementation(Campaign _campaignImplementation)
+        external
+        onlyAdmin
+    {
         require(address(_campaignImplementation) != address(0));
+
+        campaignImplementation = address(_campaignImplementation);
+
+        emit CampaignImplementationUpdated(address(_campaignImplementation));
+    }
+
+    function setCampaignRewardImplementation(
+        CampaignReward _campaignRewardsImplementation
+    ) external onlyAdmin {
         require(address(_campaignRewardsImplementation) != address(0));
 
-        factoryWallet = _wallet;
-        campaignImplementation = address(_campaignImplementation);
         campaignRewardsImplementation = address(_campaignRewardsImplementation);
+
+        emit CampaignRewardImplementationUpdated(
+            address(_campaignRewardsImplementation)
+        );
+    }
+
+    function setCampaignRequestImplementation(
+        CampaignRequest _campaignRequestsImplementation
+    ) external onlyAdmin {
+        require(address(_campaignRequestsImplementation) != address(0));
+
         campaignRequestsImplementation = address(
             _campaignRequestsImplementation
         );
+
+        emit CampaignRequestImplementationUpdated(
+            address(_campaignRequestsImplementation)
+        );
+    }
+
+    function setCampaignVoteImplementation(
+        CampaignVote _campaignVotesImplementation
+    ) external onlyAdmin {
+        require(address(_campaignVotesImplementation) != address(0));
+
         campaignVotesImplementation = address(_campaignVotesImplementation);
 
-        emit FactoryConfigUpdated(
-            _wallet,
-            address(_campaignImplementation),
-            address(_campaignRewardsImplementation),
-            address(_campaignRequestsImplementation),
+        emit CampaignVoteImplementationUpdated(
             address(_campaignVotesImplementation)
         );
     }
@@ -370,7 +361,7 @@ contract CampaignFactory is
      * @param      _user    Address of user
      */
     function canManageCampaigns(address _user) public view returns (bool) {
-        return hasRole(MANAGE_CAMPAIGNS, _user);
+        return _user == governance;
     }
 
     /**
@@ -448,7 +439,7 @@ contract CampaignFactory is
      */
     function toggleUserApproval(uint256 _userId, bool _approval)
         external
-        onlyManager(MANAGE_USERS)
+        onlyAdmin
         whenNotPaused
     {
         require(users[_userId].exists);
@@ -489,6 +480,7 @@ contract CampaignFactory is
             owner: msg.sender,
             createdAt: block.timestamp,
             updatedAt: 0,
+            active: false,
             approved: _approved
         });
         deployedCampaigns.push(campaignInfo);
@@ -538,22 +530,35 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Approves or disapproves a campaign. Restricted to campaign managers
+     * @dev        Activates a campaign. Activating a campaign simply makes the campaign available for listing 
+                   on crowdship, events will be stored on thegraph activated or not, Restricted to campaign managers
      * @param      _campaignId    ID of the campaign
-     * @param      _approval      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
      */
-    function toggleCampaignApproval(uint256 _campaignId, bool _approval)
+    function activateCampaign(uint256 _campaignId)
         external
         campaignOwner(_campaignId)
         whenNotPaused
     {
-        deployedCampaigns[_campaignId].approved = _approval;
+        deployedCampaigns[_campaignId].active = true;
         deployedCampaigns[_campaignId].updatedAt = block.timestamp;
 
-        emit CampaignApproval(
-            deployedCampaigns[_campaignId].campaign,
-            _approval
-        );
+        emit CampaignActivation(deployedCampaigns[_campaignId].campaign);
+    }
+
+    /**
+     * @dev        Approves a campaign. By approving your campaign all events will 
+                   stored on thegraph and listed on crowdship, Restricted to campaign managers
+     * @param      _campaignId    ID of the campaign
+     */
+    function approveCampaign(uint256 _campaignId)
+        external
+        campaignOwner(_campaignId)
+        whenNotPaused
+    {
+        deployedCampaigns[_campaignId].approved = true;
+        deployedCampaigns[_campaignId].updatedAt = block.timestamp;
+
+        emit CampaignApproval(deployedCampaigns[_campaignId].campaign);
     }
 
     /**
@@ -594,11 +599,7 @@ contract CampaignFactory is
      * @dev        Creates a category
      * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
      */
-    function createCategory(bool _active)
-        external
-        onlyManager(MANAGE_CATEGORIES)
-        whenNotPaused
-    {
+    function createCategory(bool _active) external onlyAdmin whenNotPaused {
         // create category with `campaignCount` default to 0
         CampaignCategory memory newCategory = CampaignCategory({
             campaignCount: 0,
@@ -623,7 +624,7 @@ contract CampaignFactory is
      */
     function modifyCategory(uint256 _categoryId, bool _active)
         external
-        onlyManager(MANAGE_CATEGORIES)
+        onlyAdmin
         whenNotPaused
     {
         require(campaignCategories[_categoryId].exists);

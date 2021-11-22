@@ -11,8 +11,7 @@ contract Factory {
 
     event CampaignFactoryDeployed(
         address indexed campaignFactory,
-        address factoryWallet,
-        address owner,
+        address governance,
         uint256 campaignIndex
     );
 
@@ -24,14 +23,15 @@ contract Factory {
 
     function createCampaignFactory(
         address _campaignFactoryImplementation,
-        address payable _wallet
+        address _governance,
+        uint256[15] calldata _config
     ) public {
         address campaignFactory = ClonesUpgradeable.clone(
             _campaignFactoryImplementation
         );
         CampaignFactory(campaignFactory).__CampaignFactory_init(
-            _wallet,
-            msg.sender
+            _governance,
+            _config
         );
         deployedCampaigns[campaignFactory] = DeployedCampaignFactory({
             factory: campaignFactory
@@ -41,8 +41,7 @@ contract Factory {
 
         emit CampaignFactoryDeployed(
             campaignFactory,
-            _wallet,
-            msg.sender,
+            _governance,
             deployedCampaignCount
         );
     }

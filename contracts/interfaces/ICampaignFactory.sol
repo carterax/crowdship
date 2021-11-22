@@ -16,6 +16,7 @@ abstract contract ICampaignFactory {
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
+        bool active;
         bool approved;
     }
     CampaignInfo[] public deployedCampaigns;

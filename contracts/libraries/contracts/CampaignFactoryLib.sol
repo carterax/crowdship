@@ -48,8 +48,15 @@ library CampaignFactoryLib {
         uint256 campaignCategory;
         bool campaignIsApproved;
 
-        (campaignAddress, , , , campaignCategory, campaignIsApproved) = _factory
-            .deployedCampaigns(_campaignId);
+        (
+            campaignAddress,
+            ,
+            ,
+            ,
+            campaignCategory,
+            ,
+            campaignIsApproved
+        ) = _factory.deployedCampaigns(_campaignId);
 
         return (campaignAddress, campaignCategory, campaignIsApproved);
     }
@@ -105,7 +112,9 @@ library CampaignFactoryLib {
         uint256 campaignCategory;
         uint256 percentCommission;
 
-        (, , , , campaignCategory, ) = _factory.deployedCampaigns(_campaignId);
+        (, , , , campaignCategory, , ) = _factory.deployedCampaigns(
+            _campaignId
+        );
         percentCommission = _factory.categoryCommission(campaignCategory);
 
         if (percentCommission == 0) {
