@@ -94,6 +94,7 @@ contract Campaign is
 
     /// @dev `Campaign State Events`
     event CampaignStateChange(CAMPAIGN_STATE state);
+    event WithdrawalStateUpdated(bool withdrawalState);
 
     ICampaignFactory public campaignFactoryContract;
     ICampaignReward public campaignRewardContract;
@@ -303,7 +304,7 @@ contract Campaign is
     }
 
     /**
-     * @dev         Modifies campaign details while it's not approved
+     * @dev         Modifies campaign details
      * @param      _target                              Contribution target of the campaign
      * @param      _minimumContribution                 The minimum amout required to be an approver
      * @param      _duration                            How long until the campaign stops receiving contributions
@@ -763,6 +764,8 @@ contract Campaign is
      */
     function toggleWithdrawalState(bool _state) external onlyFactory {
         withdrawalsPaused = _state;
+
+        emit WithdrawalStateUpdated(_state);
     }
 
     /// @dev Unpauses the campaign, transactions in the campaign resume per usual

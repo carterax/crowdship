@@ -181,6 +181,14 @@ export interface Unpaused {
   };
 }
 
+export interface WithdrawalStateUpdated {
+  name: "WithdrawalStateUpdated";
+  args: {
+    withdrawalState: boolean;
+    0: boolean;
+  };
+}
+
 type AllEvents =
   | CampaignDeadlineExtended
   | CampaignOwnerSet
@@ -198,7 +206,8 @@ type AllEvents =
   | RoleAdminChanged
   | RoleGranted
   | RoleRevoked
-  | Unpaused;
+  | Unpaused
+  | WithdrawalStateUpdated;
 
 export interface CampaignInstance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
@@ -587,7 +596,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Modifies campaign details while it's not approved
+   * Modifies campaign details
    * @param _allowContributionAfterTargetIsMet Indicates if the campaign can receive contributions after duration expires
    * @param _duration How long until the campaign stops receiving contributions
    * @param _goalType If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
@@ -1273,7 +1282,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Modifies campaign details while it's not approved
+     * Modifies campaign details
      * @param _allowContributionAfterTargetIsMet Indicates if the campaign can receive contributions after duration expires
      * @param _duration How long until the campaign stops receiving contributions
      * @param _goalType If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite

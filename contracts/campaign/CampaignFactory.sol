@@ -208,8 +208,8 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Set Factory controlled values dictating how campaigns should run
-     * @param      _campaignImplementation          Address of base contract to deploy minimal proxies to campaigns
+     * @dev        Updates campaign implementation address
+     * @param      _campaignImplementation  Address of base contract to deploy minimal proxies
      */
     function setCampaignImplementation(Campaign _campaignImplementation)
         external
@@ -222,6 +222,10 @@ contract CampaignFactory is
         emit CampaignImplementationUpdated(address(_campaignImplementation));
     }
 
+    /**
+     * @dev        Updates campaign reward implementation address
+     * @param      _campaignRewardsImplementation   Address of base contract to deploy minimal proxies
+     */
     function setCampaignRewardImplementation(
         CampaignReward _campaignRewardsImplementation
     ) external onlyAdmin {
@@ -234,6 +238,10 @@ contract CampaignFactory is
         );
     }
 
+    /**
+     * @dev        Updates campaign request implementation address
+     * @param      _campaignRequestsImplementation   Address of base contract to deploy minimal proxies
+     */
     function setCampaignRequestImplementation(
         CampaignRequest _campaignRequestsImplementation
     ) external onlyAdmin {
@@ -248,6 +256,10 @@ contract CampaignFactory is
         );
     }
 
+    /**
+     * @dev        Updates campaign request implementation address
+     * @param      _campaignVotesImplementation   Address of base contract to deploy minimal proxies
+     */
     function setCampaignVoteImplementation(
         CampaignVote _campaignVotesImplementation
     ) external onlyAdmin {

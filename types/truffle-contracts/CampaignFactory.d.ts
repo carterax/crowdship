@@ -64,6 +64,30 @@ export interface CampaignDeployed {
   };
 }
 
+export interface CampaignImplementationUpdated {
+  name: "CampaignImplementationUpdated";
+  args: {
+    campaignImplementation: string;
+    0: string;
+  };
+}
+
+export interface CampaignRequestImplementationUpdated {
+  name: "CampaignRequestImplementationUpdated";
+  args: {
+    campaignRequestImplementation: string;
+    0: string;
+  };
+}
+
+export interface CampaignRewardImplementationUpdated {
+  name: "CampaignRewardImplementationUpdated";
+  args: {
+    campaignRewardImplementation: string;
+    0: string;
+  };
+}
+
 export interface CampaignTransactionConfigUpdated {
   name: "CampaignTransactionConfigUpdated";
   args: {
@@ -71,6 +95,14 @@ export interface CampaignTransactionConfigUpdated {
     value: BN;
     0: string;
     1: BN;
+  };
+}
+
+export interface CampaignVoteImplementationUpdated {
+  name: "CampaignVoteImplementationUpdated";
+  args: {
+    campaignVoteImplementation: string;
+    0: string;
   };
 }
 
@@ -101,22 +133,6 @@ export interface CategoryModified {
     active: boolean;
     0: BN;
     1: boolean;
-  };
-}
-
-export interface FactoryConfigUpdated {
-  name: "FactoryConfigUpdated";
-  args: {
-    factoryWallet: string;
-    campaignImplementation: string;
-    campaignRewardsImplementation: string;
-    campaignRequestsImplementation: string;
-    campaignVotesImplementation: string;
-    0: string;
-    1: string;
-    2: string;
-    3: string;
-    4: string;
   };
 }
 
@@ -200,11 +216,14 @@ type AllEvents =
   | CampaignCategoryChange
   | CampaignDefaultCommissionUpdated
   | CampaignDeployed
+  | CampaignImplementationUpdated
+  | CampaignRequestImplementationUpdated
+  | CampaignRewardImplementationUpdated
   | CampaignTransactionConfigUpdated
+  | CampaignVoteImplementationUpdated
   | CategoryAdded
   | CategoryCommissionUpdated
   | CategoryModified
-  | FactoryConfigUpdated
   | Paused
   | TokenAdded
   | TokenApproval
@@ -215,12 +234,6 @@ type AllEvents =
   | UserApproval;
 
 export interface CampaignFactoryInstance extends Truffle.ContractInstance {
-  MANAGE_CAMPAIGNS(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
-  MANAGE_CATEGORIES(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
-  MANAGE_USERS(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
   approvedCampaignTransactionConfig(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
@@ -300,7 +313,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-  factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
+  governance(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
   isUserTrustee(
     arg0: string,
@@ -312,8 +325,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * Returns true if the contract is paused, and false otherwise.
    */
   paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
-
-  root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
   tokenInList(
     arg0: string,
@@ -346,67 +357,118 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   /**
    * Contructor
-   * @param _wallet Address where all revenue gets deposited
+   * @param _governance Address where all revenue gets deposited
    */
   __CampaignFactory_init: {
     (
-      _wallet: string,
-      _root: string,
+      _governance: string,
+      _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
-      _wallet: string,
-      _root: string,
+      _governance: string,
+      _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _wallet: string,
-      _root: string,
+      _governance: string,
+      _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _wallet: string,
-      _root: string,
+      _governance: string,
+      _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
 
   /**
-   * Set Factory controlled values dictating how campaigns should run
-   * @param _campaignImplementation Address of base contract to deploy minimal proxies to campaigns
-   * @param _campaignRewardsImplementation Address of base contract to deploy minimal proxies to campaign rewards
-   * @param _wallet Address where all revenue gets deposited
+   * Updates campaign implementation address
+   * @param _campaignImplementation Address of base contract to deploy minimal proxies
    */
-  setFactoryConfig: {
+  setCampaignImplementation: {
     (
-      _wallet: string,
       _campaignImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _campaignImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _campaignImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _campaignImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Updates campaign reward implementation address
+   * @param _campaignRewardsImplementation Address of base contract to deploy minimal proxies
+   */
+  setCampaignRewardImplementation: {
+    (
       _campaignRewardsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _campaignRewardsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _campaignRewardsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _campaignRewardsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Updates campaign request implementation address
+   * @param _campaignRequestsImplementation Address of base contract to deploy minimal proxies
+   */
+  setCampaignRequestImplementation: {
+    (
       _campaignRequestsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _campaignRequestsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _campaignRequestsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _campaignRequestsImplementation: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Updates campaign request implementation address
+   * @param _campaignVotesImplementation Address of base contract to deploy minimal proxies
+   */
+  setCampaignVoteImplementation: {
+    (
       _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
-      _wallet: string,
-      _campaignImplementation: string,
-      _campaignRewardsImplementation: string,
-      _campaignRequestsImplementation: string,
       _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _wallet: string,
-      _campaignImplementation: string,
-      _campaignRewardsImplementation: string,
-      _campaignRequestsImplementation: string,
       _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _wallet: string,
-      _campaignImplementation: string,
-      _campaignRewardsImplementation: string,
-      _campaignRequestsImplementation: string,
       _campaignVotesImplementation: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -874,12 +936,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   methods: {
-    MANAGE_CAMPAIGNS(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
-    MANAGE_CATEGORIES(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
-    MANAGE_USERS(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
     approvedCampaignTransactionConfig(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
@@ -959,7 +1015,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-    factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    governance(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
     isUserTrustee(
       arg0: string,
@@ -971,8 +1027,6 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * Returns true if the contract is paused, and false otherwise.
      */
     paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
-
-    root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
     tokenInList(
       arg0: string,
@@ -1005,67 +1059,118 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     /**
      * Contructor
-     * @param _wallet Address where all revenue gets deposited
+     * @param _governance Address where all revenue gets deposited
      */
     __CampaignFactory_init: {
       (
-        _wallet: string,
-        _root: string,
+        _governance: string,
+        _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
-        _wallet: string,
-        _root: string,
+        _governance: string,
+        _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _wallet: string,
-        _root: string,
+        _governance: string,
+        _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _wallet: string,
-        _root: string,
+        _governance: string,
+        _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
 
     /**
-     * Set Factory controlled values dictating how campaigns should run
-     * @param _campaignImplementation Address of base contract to deploy minimal proxies to campaigns
-     * @param _campaignRewardsImplementation Address of base contract to deploy minimal proxies to campaign rewards
-     * @param _wallet Address where all revenue gets deposited
+     * Updates campaign implementation address
+     * @param _campaignImplementation Address of base contract to deploy minimal proxies
      */
-    setFactoryConfig: {
+    setCampaignImplementation: {
       (
-        _wallet: string,
         _campaignImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _campaignImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _campaignImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _campaignImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Updates campaign reward implementation address
+     * @param _campaignRewardsImplementation Address of base contract to deploy minimal proxies
+     */
+    setCampaignRewardImplementation: {
+      (
         _campaignRewardsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _campaignRewardsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _campaignRewardsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _campaignRewardsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Updates campaign request implementation address
+     * @param _campaignRequestsImplementation Address of base contract to deploy minimal proxies
+     */
+    setCampaignRequestImplementation: {
+      (
         _campaignRequestsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _campaignRequestsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _campaignRequestsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _campaignRequestsImplementation: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Updates campaign request implementation address
+     * @param _campaignVotesImplementation Address of base contract to deploy minimal proxies
+     */
+    setCampaignVoteImplementation: {
+      (
         _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
-        _wallet: string,
-        _campaignImplementation: string,
-        _campaignRewardsImplementation: string,
-        _campaignRequestsImplementation: string,
         _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _wallet: string,
-        _campaignImplementation: string,
-        _campaignRewardsImplementation: string,
-        _campaignRequestsImplementation: string,
         _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _wallet: string,
-        _campaignImplementation: string,
-        _campaignRewardsImplementation: string,
-        _campaignRequestsImplementation: string,
         _campaignVotesImplementation: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
