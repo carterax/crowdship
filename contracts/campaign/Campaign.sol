@@ -119,7 +119,6 @@ contract Campaign is
     bool public withdrawalsPaused;
     uint8 public percentBase;
     uint256 public percent;
-    uint256 public campaignID;
     uint256 public totalCampaignContribution;
     uint256 public campaignBalance;
     uint256 public minimumContribution;
@@ -137,9 +136,9 @@ contract Campaign is
     /// @dev Ensures caller is only factory, works only if campaign is approved
     modifier onlyFactory() {
         bool campaignIsApproved;
-        (, , campaignIsApproved) = CampaignFactoryLib.campaignInfo(
+        (, campaignIsApproved) = CampaignFactoryLib.campaignInfo(
             campaignFactoryContract,
-            campaignID
+            this
         );
 
         if (campaignIsApproved) {
@@ -157,7 +156,7 @@ contract Campaign is
     /// @dev Ensures a user is verified
     modifier userIsVerified(address _user) {
         bool verified;
-        (, verified) = CampaignFactoryLib.userInfo(
+        (, , verified) = CampaignFactoryLib.userInfo(
             campaignFactoryContract,
             _user
         );
@@ -172,15 +171,13 @@ contract Campaign is
      * @param      _campaignRequests    Address of campaign request contract
      * @param      _campaignVotes       Address of campaign vote contract
      * @param      _root                Address of campaign owner
-     * @param      _campaignId          ID of the campaign from campaign factory
      */
     function __Campaign_init(
         CampaignFactory _campaignFactory,
         CampaignReward _campaignRewards,
         CampaignRequest _campaignRequests,
         CampaignVote _campaignVotes,
-        address _root,
-        uint256 _campaignId
+        address _root
     ) public initializer {
         require(address(_root) != address(0));
 
@@ -191,7 +188,6 @@ contract Campaign is
 
         root = _root;
         campaignState = CAMPAIGN_STATE.COLLECTION;
-        campaignID = _campaignId;
         percentBase = 100;
         percent = percentBase.mul(DecimalMath.UNIT);
         withdrawalsPaused = false;

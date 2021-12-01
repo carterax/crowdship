@@ -47,27 +47,29 @@ contract CampaignRequest is
         bool complete;
         bool void;
     }
-    Request[] public requests;
+    mapping(uint256 => Request) public requests;
 
     uint256 public requestCount;
     uint256 public finalizedRequestCount;
     uint256 public currentRunningRequest;
-    uint256 public campaignID;
 
-    ICampaignFactory public campaignFactoryContract;
-    ICampaign public campaignContract;
+    CampaignFactory public campaignFactoryContract;
+    Campaign public campaignContract;
+
+    ICampaign public campaignInterface;
+    ICampaignFactory public campaignFactoryInterface;
 
     /// @dev Ensures caller is campaign owner
     modifier onlyAdmin(address _user) {
-        require(campaignContract.isCampaignAdmin(_user), "not campaign admin");
+        require(campaignInterface.isCampaignAdmin(_user), "not campaign admin");
         _;
     }
 
     /// @dev Ensures caller is a verified user
     modifier userIsVerified(address _user) {
         bool verified;
-        (, verified) = CampaignFactoryLib.userInfo(
-            campaignFactoryContract,
+        (, , verified) = CampaignFactoryLib.userInfo(
+            campaignFactoryInterface,
             _user
         );
         require(verified, "unverified");
@@ -77,18 +79,17 @@ contract CampaignRequest is
     /**
      * @dev        Constructor
      * @param      _campaignFactory     Address of factory
-     * @param      _campaign            Address of campaign contract
-     * @param      _campaignId          ID of it's campaign contract
+     * @param      _campaign            Address of campaign contract this contract belongs to
      */
     function __CampaignRequest_init(
         CampaignFactory _campaignFactory,
-        Campaign _campaign,
-        uint256 _campaignId
+        Campaign _campaign
     ) public initializer {
-        campaignFactoryContract = ICampaignFactory(address(_campaignFactory));
-        campaignContract = ICampaign(address(_campaign));
+        campaignFactoryContract = _campaignFactory;
+        campaignContract = _campaign;
 
-        campaignID = _campaignId;
+        campaignFactoryInterface = ICampaignFactory(address(_campaignFactory));
+        campaignInterface = ICampaign(address(_campaign));
     }
 
     /**
@@ -106,52 +107,52 @@ contract CampaignRequest is
         require(address(_recipient) != address(0));
 
         if (
-            campaignContract.totalCampaignContribution() <
-            campaignContract.target()
+            campaignInterface.totalCampaignContribution() <
+            campaignInterface.target()
         )
             require(
-                block.timestamp >= campaignContract.deadline(),
+                block.timestamp >= campaignInterface.deadline(),
                 "deadline not expired"
             );
 
         if (
-            campaignContract.goalType() ==
-            campaignContract.getCampaignGoalType()
+            campaignInterface.goalType() ==
+            campaignInterface.getCampaignGoalType()
         ) {
             require(
-                campaignContract.totalCampaignContribution() >=
-                    campaignContract.target() &&
-                    campaignContract.campaignState() ==
-                    campaignContract.getCampaignState(1),
+                campaignInterface.totalCampaignContribution() >=
+                    campaignInterface.target() &&
+                    campaignInterface.campaignState() ==
+                    campaignInterface.getCampaignState(1),
                 "target unmet"
             );
         }
         require(
             _value >=
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "minimumRequestAmountAllowed"
                 ) &&
                 _value <=
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "maximumRequestAmountAllowed"
                 ),
             "amount deficit"
         );
         require(
-            _value <= campaignContract.campaignBalance(),
+            _value <= campaignInterface.campaignBalance(),
             "amount over balance"
         );
         require(
             _duration >=
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "minRequestDuration"
                 ) &&
                 _duration <=
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "maxRequestDuration"
                 ),
             "duration deficit"
@@ -165,27 +166,20 @@ contract CampaignRequest is
                 "request ongoing"
             );
 
-        requests.push(
-            Request(
-                _recipient,
-                _value,
-                0,
-                0,
-                0,
-                block.timestamp.add(_duration),
-                false,
-                false
-            )
-        );
         requestCount = requestCount.add(1);
-        currentRunningRequest = requests.length.sub(1);
-
-        emit RequestAdded(
-            requests.length.sub(1),
-            _duration,
+        currentRunningRequest = requestCount.sub(1);
+        requests[currentRunningRequest] = Request(
+            _recipient,
             _value,
-            _recipient
+            0,
+            0,
+            0,
+            block.timestamp.add(_duration),
+            false,
+            false
         );
+
+        emit RequestAdded(currentRunningRequest, _duration, _value, _recipient);
     }
 
     /**
@@ -216,7 +210,7 @@ contract CampaignRequest is
      */
     function signRequestVote(uint256 _requestId, uint256 _support) external {
         require(
-            campaignContract.campaignVoteContract() == msg.sender,
+            campaignInterface.campaignVoteContract() == msg.sender,
             "forbidden"
         );
         require(
@@ -246,7 +240,7 @@ contract CampaignRequest is
      */
     function cancelVoteSignature(uint256 _requestId) external {
         require(
-            campaignContract.campaignVoteContract() == msg.sender,
+            campaignInterface.campaignVoteContract() == msg.sender,
             "forbidden"
         );
         require(
@@ -255,11 +249,11 @@ contract CampaignRequest is
         );
 
         ICampaignVote campaignVote = ICampaignVote(
-            campaignContract.campaignVoteContract()
+            campaignInterface.campaignVoteContract()
         );
-        uint256 voteId = campaignVote.voteId(msg.sender, _requestId);
+
         uint8 support;
-        (support, , , ) = campaignVote.votes(voteId);
+        (support, , , ) = campaignVote.votes(msg.sender, _requestId);
 
         if (support == 0) {
             requests[_requestId].againstCount = requests[_requestId]
@@ -292,15 +286,15 @@ contract CampaignRequest is
         DecimalMath.UFixed memory percentOfRequestApprovals = DecimalMath.muld(
             DecimalMath.divd(
                 DecimalMath.toUFixed(request.approvalCount),
-                DecimalMath.toUFixed(campaignContract.approversCount())
+                DecimalMath.toUFixed(campaignInterface.approversCount())
             ),
-            campaignContract.percent()
+            campaignInterface.percent()
         );
         require(
             percentOfRequestApprovals.value >=
                 CampaignFactoryLib
                     .getCampaignFactoryConfig(
-                        campaignFactoryContract,
+                        campaignFactoryInterface,
                         "requestFinalizationThreshold"
                     )
                     .mul(DecimalMath.UNIT),
@@ -311,10 +305,10 @@ contract CampaignRequest is
         DecimalMath.UFixed memory factoryFee = DecimalMath.muld(
             DecimalMath.divd(
                 CampaignFactoryLib.factoryPercentFee(
-                    campaignFactoryContract,
-                    campaignID
+                    campaignFactoryInterface,
+                    campaignContract
                 ),
-                campaignContract.percent()
+                campaignInterface.percent()
             ),
             request.value
         );
@@ -325,21 +319,21 @@ contract CampaignRequest is
         ];
         address payable[2] memory addresses = [
             request.recipient,
-            campaignFactoryContract.factoryWallet()
+            campaignFactoryInterface.factoryWallet()
         ];
 
         request.complete = true;
         finalizedRequestCount = finalizedRequestCount.add(1);
 
         CampaignFactoryLib.sendCommissionFee(
-            campaignFactoryContract,
-            address(this),
+            campaignFactoryInterface,
+            campaignContract,
             factoryFee.value
         );
 
         for (uint256 i = 0; i < addresses.length; i++) {
             SafeERC20Upgradeable.safeTransfer(
-                IERC20Upgradeable(campaignContract.acceptedToken()),
+                IERC20Upgradeable(campaignInterface.acceptedToken()),
                 addresses[i],
                 payouts[i]
             );

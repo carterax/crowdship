@@ -8,6 +8,5 @@ abstract contract ICampaignVote {
         bool voted;
         address approver;
     }
-    Vote[] public votes;
-    mapping(address => mapping(uint256 => uint256)) public voteId;
+    mapping(address => mapping(uint256 => Vote)) public votes; // { user -> request -> vote }
 }

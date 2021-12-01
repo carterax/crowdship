@@ -51,12 +51,11 @@ contract CampaignReward is Initializable, PausableUpgradeable {
     event RewarderApproval(uint256 indexed rewardRecipientId, bool status);
     event RewardRecipientApproval(uint256 indexed rewardRecipientId);
 
-    ICampaignFactory public campaignFactoryContract;
-    ICampaign public campaignContract;
+    ICampaignFactory public campaignFactoryInterface;
+    ICampaign public campaignInterface;
 
     address public campaignRewardAddress;
     Campaign public campaign;
-    uint256 public campaignID;
 
     /// @dev `Reward`
     struct Reward {
@@ -82,8 +81,8 @@ contract CampaignReward is Initializable, PausableUpgradeable {
     /// @dev Ensures a user is verified
     modifier userIsVerified(address _user) {
         bool verified;
-        (, verified) = CampaignFactoryLib.userInfo(
-            campaignFactoryContract,
+        (, , verified) = CampaignFactoryLib.userInfo(
+            campaignFactoryInterface,
             _user
         );
         require(verified, "user not verified");
@@ -92,36 +91,35 @@ contract CampaignReward is Initializable, PausableUpgradeable {
 
     /// @dev Ensures caller is a registered campaign contract from factory
     modifier onlyRegisteredCampaigns() {
-        address campaignAddress;
-
-        (campaignAddress, , ) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            campaignID
-        );
-
-        require(campaignAddress == msg.sender, "forbidden");
+        require(address(campaign) == msg.sender, "forbidden");
         _;
     }
 
-    modifier onlyAdmin(address _user) {
+    modifier onlyAdmin() {
         // make external call to campaign contract
+        bool isAdmin;
+
+        (isAdmin) = CampaignFactoryLib.canManageCampaigns(
+            campaignFactoryInterface,
+            msg.sender
+        );
+
+        require(isAdmin, "restricted");
         _;
     }
 
     /**
      * @dev        Constructor
      * @param      _campaignFactory     Address of factory
-     * @param      _campaignId          ID of campaign reward contract belongs to
+     * @param      _campaign            Address of campaign this contract belongs to
      */
     function __CampaignReward_init(
         CampaignFactory _campaignFactory,
-        Campaign _campaign,
-        uint256 _campaignId
+        Campaign _campaign
     ) public initializer {
-        campaignFactoryContract = ICampaignFactory(address(_campaignFactory));
-        campaignContract = ICampaign(address(_campaign));
+        campaignFactoryInterface = ICampaignFactory(address(_campaignFactory));
+        campaignInterface = ICampaign(address(_campaign));
 
-        campaignID = _campaignId;
         campaign = _campaign;
         campaignRewardAddress = address(this);
 
@@ -140,11 +138,11 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _deliveryDate,
         uint256 _stock,
         bool _active
-    ) external onlyAdmin(msg.sender) userIsVerified(msg.sender) {
+    ) external onlyAdmin userIsVerified(msg.sender) {
         require(
             _value >
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "minimumContributionAllowed"
                 ),
             "amount too low"
@@ -152,7 +150,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         require(
             _value <
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "maximumContributionAllowed"
                 ),
             "amount too high"
@@ -214,7 +212,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _deliveryDate,
         uint256 _stock,
         bool _active
-    ) external onlyAdmin(msg.sender) {
+    ) external onlyAdmin {
         /**
          * To modify a reward:
          * check reward has no backers
@@ -225,7 +223,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         require(
             _value >
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "minimumContributionAllowed"
                 ),
             "amount too low"
@@ -233,7 +231,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         require(
             _value <
                 CampaignFactoryLib.getCampaignFactoryConfig(
-                    campaignFactoryContract,
+                    campaignFactoryInterface,
                     "maximumContributionAllowed"
                 ),
             "amount too high"
@@ -254,7 +252,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function increaseRewardStock(uint256 _rewardId, uint256 _count)
         external
-        onlyAdmin(msg.sender)
+        onlyAdmin
     {
         require(rewards[_rewardId].exists, "not found");
         rewards[_rewardId].stock = rewards[_rewardId].stock.add(_count);
@@ -266,7 +264,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      * @dev        Deletes a reward by id
      * @param      _rewardId    Reward unique id
      */
-    function destroyReward(uint256 _rewardId) external onlyAdmin(msg.sender) {
+    function destroyReward(uint256 _rewardId) external onlyAdmin {
         // check reward has no backers
         require(rewardToRewardRecipientCount[_rewardId] < 1, "has backers");
         require(rewards[_rewardId].exists, "not found");
@@ -283,7 +281,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function campaignSentReward(uint256 _rewardRecipientId, bool _status)
         external
-        onlyAdmin(msg.sender)
+        onlyAdmin
     {
         require(
             rewardToRewardRecipientCount[
@@ -305,7 +303,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         userIsVerified(msg.sender)
     {
         require(
-            CampaignLib.isAnApprover(campaignContract, msg.sender),
+            CampaignLib.isAnApprover(campaignInterface, msg.sender),
             "not an approver"
         );
         require(

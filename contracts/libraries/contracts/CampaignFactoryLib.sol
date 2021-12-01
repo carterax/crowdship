@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "../../campaign/Campaign.sol";
 import "../../interfaces/ICampaignFactory.sol";
 
 library CampaignFactoryLib {
@@ -33,32 +34,21 @@ library CampaignFactoryLib {
     /**
      * @dev        Returns information on a campaign from the factory
      * @param      _factory     Campaign factory interface
-     * @param      _campaignId  ID of the campaign
+     * @param      _campaign    Address of the campaign
      */
-    function campaignInfo(ICampaignFactory _factory, uint256 _campaignId)
+    function campaignInfo(ICampaignFactory _factory, Campaign _campaign)
         internal
         view
-        returns (
-            address,
-            uint256,
-            bool
-        )
+        returns (uint256, bool)
     {
-        address campaignAddress;
         uint256 campaignCategory;
         bool campaignIsApproved;
 
-        (
-            campaignAddress,
-            ,
-            ,
-            ,
-            campaignCategory,
-            ,
-            campaignIsApproved
-        ) = _factory.deployedCampaigns(_campaignId);
+        (, , , campaignCategory, , campaignIsApproved) = _factory.campaigns(
+            _campaign
+        );
 
-        return (campaignAddress, campaignCategory, campaignIsApproved);
+        return (campaignCategory, campaignIsApproved);
     }
 
     /**
@@ -69,20 +59,21 @@ library CampaignFactoryLib {
     function userInfo(ICampaignFactory _factory, address _userAddress)
         internal
         view
-        returns (address, bool)
+        returns (
+            uint256,
+            uint256,
+            bool
+        )
     {
         require(address(_userAddress) != address(0));
 
-        address userAddress;
+        uint256 joined;
+        uint256 updatedAt;
         bool verified;
 
-        (userAddress, , , verified, ) = _factory.users(
-            _factory.userID(_userAddress)
-        );
+        (joined, updatedAt, verified) = _factory.users(_userAddress);
 
-        require(userAddress == _userAddress, "user does not exist");
-
-        return (userAddress, verified);
+        return (joined, updatedAt, verified);
     }
 
     /**
@@ -93,7 +84,7 @@ library CampaignFactoryLib {
      */
     function sendCommissionFee(
         ICampaignFactory _factory,
-        address _campaign,
+        Campaign _campaign,
         uint256 _amount
     ) internal {
         _factory.receiveCampaignCommission(_campaign, _amount);
@@ -102,9 +93,9 @@ library CampaignFactoryLib {
     /**
      * @dev        Returns factory percentage cut on all requests per category
      * @param      _factory     Campaign factory interface
-     * @param      _campaignId  ID of the campaign
+     * @param      _campaign    Address of the campaign
      */
-    function factoryPercentFee(ICampaignFactory _factory, uint256 _campaignId)
+    function factoryPercentFee(ICampaignFactory _factory, Campaign _campaign)
         internal
         view
         returns (uint256)
@@ -112,9 +103,7 @@ library CampaignFactoryLib {
         uint256 campaignCategory;
         uint256 percentCommission;
 
-        (, , , , campaignCategory, , ) = _factory.deployedCampaigns(
-            _campaignId
-        );
+        (, , , campaignCategory, , ) = _factory.campaigns(_campaign);
         percentCommission = _factory.categoryCommission(campaignCategory);
 
         if (percentCommission == 0) {

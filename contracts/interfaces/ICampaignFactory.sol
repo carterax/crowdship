@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "../campaign/Campaign.sol";
+
 abstract contract ICampaignFactory {
     address public root;
     address public campaignFactoryAddress;
@@ -11,7 +13,6 @@ abstract contract ICampaignFactory {
     mapping(address => bool) public tokensApproved;
 
     struct CampaignInfo {
-        address campaign;
         address owner;
         uint256 createdAt;
         uint256 updatedAt;
@@ -19,8 +20,7 @@ abstract contract ICampaignFactory {
         bool active;
         bool approved;
     }
-    CampaignInfo[] public deployedCampaigns;
-    mapping(address => uint256) public campaignToID;
+    mapping(Campaign => CampaignInfo) public campaigns;
 
     struct CampaignCategory {
         uint256 campaignCount;
@@ -32,14 +32,11 @@ abstract contract ICampaignFactory {
     CampaignCategory[] public campaignCategories;
 
     struct User {
-        address userAddress;
         uint256 joined;
         uint256 updatedAt;
         bool verified;
-        bool exists;
     }
-    User[] public users;
-    mapping(address => uint256) public userID;
+    mapping(address => User) public users;
 
     mapping(address => mapping(address => bool)) public isUserTrustee;
 
@@ -54,7 +51,7 @@ abstract contract ICampaignFactory {
         virtual
         returns (bool);
 
-    function receiveCampaignCommission(address _campaign, uint256 _amount)
+    function receiveCampaignCommission(Campaign _campaign, uint256 _amount)
         external
         virtual;
 }

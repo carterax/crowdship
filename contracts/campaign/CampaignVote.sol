@@ -32,24 +32,23 @@ contract CampaignVote is Initializable, PausableUpgradeable {
 
     /// @dev `Vote`
     struct Vote {
+        uint256 id;
         uint8 support;
         uint256 requestId;
         bool voted;
         address approver;
     }
-    Vote[] public votes;
-    mapping(address => mapping(uint256 => uint256)) public voteId; // { user -> request -> vote }
+    mapping(address => mapping(uint256 => Vote)) public votes; // { user -> request -> vote }
+    uint256 public voteCount;
 
-    uint256 public campaignID;
-
-    ICampaignFactory public campaignFactoryContract;
-    ICampaign public campaignContract;
+    ICampaignFactory public campaignFactoryInterface;
+    ICampaign public campaignInterface;
 
     /// @dev Ensures a user is verified
     modifier userIsVerified(address _user) {
         bool verified;
-        (, verified) = CampaignFactoryLib.userInfo(
-            campaignFactoryContract,
+        (, , verified) = CampaignFactoryLib.userInfo(
+            campaignFactoryInterface,
             _user
         );
         require(verified, "user not verified");
@@ -59,18 +58,14 @@ contract CampaignVote is Initializable, PausableUpgradeable {
     /**
      * @dev        Constructor
      * @param      _campaignFactory     Address of factory
-     * @param      _campaign            Address of campaign contract
-     * @param      _campaignId          ID of it's campaign contract
+     * @param      _campaign            Address of campaign contract this contract belongs to
      */
     function __CampaignVote_init(
         CampaignFactory _campaignFactory,
-        Campaign _campaign,
-        uint256 _campaignId
+        Campaign _campaign
     ) public initializer {
-        campaignFactoryContract = ICampaignFactory(address(_campaignFactory));
-        campaignContract = ICampaign(address(_campaign));
-
-        campaignID = _campaignId;
+        campaignFactoryInterface = ICampaignFactory(address(_campaignFactory));
+        campaignInterface = ICampaign(address(_campaign));
     }
 
     /**
@@ -83,16 +78,22 @@ contract CampaignVote is Initializable, PausableUpgradeable {
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(campaignContract.approvers(msg.sender), "non approver");
-        require(!votes[voteId[msg.sender][_requestId]].voted, "voted");
+        require(campaignInterface.approvers(msg.sender), "non approver");
+        require(!votes[msg.sender][_requestId].voted, "voted");
 
-        votes.push(Vote(_support, _requestId, true, msg.sender));
-        voteId[msg.sender][_requestId] = votes.length.sub(1);
+        voteCount = voteCount.add(1);
+        votes[msg.sender][_requestId] = Vote(
+            voteCount.sub(1),
+            _support,
+            _requestId,
+            true,
+            msg.sender
+        );
 
-        ICampaignRequest(campaignContract.campaignRequestContract())
+        ICampaignRequest(campaignInterface.campaignRequestContract())
             .signRequestVote(_requestId, _support);
 
-        emit Voted(votes.length.sub(1), _requestId, _support);
+        emit Voted(voteCount.sub(1), _requestId, _support);
     }
 
     /**
@@ -104,19 +105,19 @@ contract CampaignVote is Initializable, PausableUpgradeable {
         userIsVerified(msg.sender)
         whenNotPaused
     {
-        require(campaignContract.approvers(msg.sender), "non approver");
+        require(campaignInterface.approvers(msg.sender), "non approver");
 
-        require(votes[voteId[msg.sender][_requestId]].voted, "vote first");
+        require(votes[msg.sender][_requestId].voted, "vote first");
 
-        votes[voteId[msg.sender][_requestId]].voted = false;
+        votes[msg.sender][_requestId].voted = false;
 
-        ICampaignRequest(campaignContract.campaignRequestContract())
+        ICampaignRequest(campaignInterface.campaignRequestContract())
             .cancelVoteSignature(_requestId);
 
         emit VoteCancelled(
-            voteId[msg.sender][_requestId],
+            votes[msg.sender][_requestId].id,
             _requestId,
-            votes[voteId[msg.sender][_requestId]].support
+            votes[msg.sender][_requestId].support
         );
     }
 }

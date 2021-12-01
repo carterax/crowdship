@@ -12,7 +12,7 @@ abstract contract ICampaignRequest {
         bool complete;
         bool void;
     }
-    Request[] public requests;
+    mapping(uint256 => Request) public requests;
 
     uint256 public requestCount;
     uint256 public finalizedRequestCount;

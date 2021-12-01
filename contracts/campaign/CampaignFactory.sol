@@ -51,21 +51,20 @@ contract CampaignFactory is
         uint256 category,
         bool approved
     );
-    event CampaignApproval(address indexed campaign);
-    event CampaignActivation(address indexed campaign);
-    event CampaignCategoryChange(address indexed campaign, uint256 newCategory);
+    event CampaignApproval(Campaign indexed campaign);
+    event CampaignActivation(Campaign indexed campaign);
+    event CampaignCategoryChange(
+        Campaign indexed campaign,
+        uint256 newCategory
+    );
 
     /// @dev `Token Events`
     event TokenAdded(address indexed token);
     event TokenApproval(address indexed token, bool state);
 
     /// @dev `User Events`
-    event UserAdded(uint256 indexed userId);
-    event UserApproval(
-        uint256 indexed userId,
-        address indexed user,
-        bool approval
-    );
+    event UserAdded(address indexed userId);
+    event UserApproval(address indexed user, bool approval);
 
     /// @dev `Trustee Events`
     event TrusteeAdded(uint256 indexed trusteeId, address trusteeAddress);
@@ -91,11 +90,10 @@ contract CampaignFactory is
 
     /// @dev Revenue
     uint256 public factoryRevenue; // total from all campaigns
-    mapping(uint256 => uint256) public campaignRevenueFromCommissions; // revenue from cuts
+    mapping(address => uint256) public campaignRevenueFromCommissions; // revenue from cuts
 
     /// @dev `Campaigns`
     struct CampaignInfo {
-        address campaign;
         address owner;
         uint256 createdAt;
         uint256 updatedAt;
@@ -103,10 +101,8 @@ contract CampaignFactory is
         bool active;
         bool approved;
     }
-    CampaignInfo[] public deployedCampaigns;
+    mapping(Campaign => CampaignInfo) public campaigns;
     uint256 public campaignCount;
-    mapping(address => address) public campaignToOwner;
-    mapping(address => uint256) public campaignToID;
 
     /// @dev `Categories`
     struct CampaignCategory {
@@ -121,15 +117,12 @@ contract CampaignFactory is
 
     /// @dev `Users`
     struct User {
-        address userAddress;
         uint256 joined;
         uint256 updatedAt;
         bool verified;
-        bool exists;
     }
-    User[] public users;
+    mapping(address => User) public users;
     uint256 public userCount;
-    mapping(address => uint256) public userID;
 
     struct Trust {
         address trustee;
@@ -150,20 +143,17 @@ contract CampaignFactory is
     }
 
     /// @dev Ensures caller is campaign owner alone
-    modifier campaignOwner(uint256 _campaignId) {
+    modifier campaignOwner(Campaign _campaign) {
         require(
-            deployedCampaigns[_campaignId].owner == msg.sender,
+            campaigns[_campaign].owner == msg.sender,
             "only campaign owner"
         );
         _;
     }
 
     /// @dev Ensures caller is a registered campaign contract from factory
-    modifier onlyRegisteredCampaigns(uint256 _campaignId) {
-        require(
-            deployedCampaigns[_campaignId].campaign == msg.sender,
-            "only campaign owner"
-        );
+    modifier onlyRegisteredCampaigns(Campaign _campaign) {
+        require(address(_campaign) == msg.sender, "only campaign owner");
         _;
     }
 
@@ -383,22 +373,20 @@ contract CampaignFactory is
      */
     function receiveCampaignCommission(Campaign _campaign, uint256 _amount)
         external
-        onlyRegisteredCampaigns(campaignToID[address(_campaign)])
+        onlyRegisteredCampaigns(_campaign)
     {
         campaignRevenueFromCommissions[
-            campaignToID[address(_campaign)]
-        ] = campaignRevenueFromCommissions[campaignToID[address(_campaign)]]
-            .add(_amount);
+            address(_campaign)
+        ] = campaignRevenueFromCommissions[address(_campaign)].add(_amount);
         factoryRevenue = factoryRevenue.add(_amount);
     }
 
     /// @dev Keep track of user addresses. sybil resistance purpose
     function signUp() public whenNotPaused {
-        users.push(User(msg.sender, block.timestamp, 0, false, true));
-        userID[msg.sender] = users.length.sub(1);
+        users[msg.sender] = User(block.timestamp, 0, false);
         userCount = userCount.add(1);
 
-        emit UserAdded(users.length.sub(1));
+        emit UserAdded(msg.sender);
     }
 
     /**
@@ -406,9 +394,7 @@ contract CampaignFactory is
      * @param      _user    Address of user
      */
     function userIsVerified(address _user) public view returns (bool) {
-        return
-            users[userID[_user]].userAddress == _user &&
-            users[userID[_user]].verified;
+        return users[_user].verified;
     }
 
     /**
@@ -446,19 +432,18 @@ contract CampaignFactory is
 
     /**
      * @dev        Approves or disapproves a user
-     * @param      _userId      ID of the user
+     * @param      _user        Address of the user
      * @param      _approval    Indicates if the user will be approved or not
      */
-    function toggleUserApproval(uint256 _userId, bool _approval)
+    function toggleUserApproval(address _user, bool _approval)
         external
         onlyAdmin
         whenNotPaused
     {
-        require(users[_userId].exists);
-        users[_userId].verified = _approval;
-        users[_userId].updatedAt = block.timestamp;
+        users[_user].verified = _approval;
+        users[_user].updatedAt = block.timestamp;
 
-        emit UserApproval(_userId, users[_userId].userAddress, _approval);
+        emit UserApproval(_user, _approval);
     }
 
     /**
@@ -475,19 +460,20 @@ contract CampaignFactory is
                 campaignCategories[_categoryId].active
         );
 
-        address campaign = ClonesUpgradeable.clone(campaignImplementation);
-        address campaignRewards = ClonesUpgradeable.clone(
-            campaignRewardsImplementation
+        Campaign campaign = Campaign(
+            ClonesUpgradeable.clone(campaignImplementation)
         );
-        address campaignRequests = ClonesUpgradeable.clone(
-            campaignRequestsImplementation
+        CampaignReward campaignRewards = CampaignReward(
+            ClonesUpgradeable.clone(campaignRewardsImplementation)
         );
-        address campaignVotes = ClonesUpgradeable.clone(
-            campaignVotesImplementation
+        CampaignRequest campaignRequests = CampaignRequest(
+            ClonesUpgradeable.clone(campaignRequestsImplementation)
+        );
+        CampaignVote campaignVotes = CampaignVote(
+            ClonesUpgradeable.clone(campaignVotesImplementation)
         );
 
         CampaignInfo memory campaignInfo = CampaignInfo({
-            campaign: campaign,
             category: _categoryId,
             owner: msg.sender,
             createdAt: block.timestamp,
@@ -495,11 +481,7 @@ contract CampaignFactory is
             active: false,
             approved: _approved
         });
-        deployedCampaigns.push(campaignInfo);
-        campaignToOwner[address(campaign)] = msg.sender; // keep track of campaign owner
-
-        uint256 campaignId = deployedCampaigns.length.sub(1);
-        campaignToID[address(campaign)] = campaignId;
+        campaigns[campaign] = campaignInfo;
 
         campaignCategories[_categoryId].campaignCount = campaignCategories[
             _categoryId
@@ -511,23 +493,19 @@ contract CampaignFactory is
             CampaignReward(campaignRewards),
             CampaignRequest(campaignRequests),
             CampaignVote(campaignVotes),
-            msg.sender,
-            campaignId
+            msg.sender
         );
         CampaignReward(campaignRewards).__CampaignReward_init(
             CampaignFactory(this),
-            Campaign(campaign),
-            campaignId
+            Campaign(campaign)
         );
-        CampaignRequest(campaignRewards).__CampaignRequest_init(
+        CampaignRequest(campaignRequests).__CampaignRequest_init(
             CampaignFactory(this),
-            Campaign(campaign),
-            campaignId
+            Campaign(campaign)
         );
-        CampaignVote(campaignRewards).__CampaignVote_init(
+        CampaignVote(campaignVotes).__CampaignVote_init(
             CampaignFactory(this),
-            Campaign(campaign),
-            campaignId
+            Campaign(campaign)
         );
 
         emit CampaignDeployed(
@@ -543,52 +521,52 @@ contract CampaignFactory is
 
     /**
      * @dev        Activates a campaign. Activating a campaign simply makes the campaign available for listing 
-                   on crowdship, events will be stored on thegraph activated or not, Restricted to campaign managers
-     * @param      _campaignId    ID of the campaign
+                   on crowdship, events will be stored on thegraph activated or not, Restricted to governance
+     * @param      _campaign    Address of the campaign
      */
-    function activateCampaign(uint256 _campaignId)
+    function activateCampaign(Campaign _campaign)
         external
-        campaignOwner(_campaignId)
+        onlyAdmin
         whenNotPaused
     {
-        deployedCampaigns[_campaignId].active = true;
-        deployedCampaigns[_campaignId].updatedAt = block.timestamp;
+        campaigns[_campaign].active = true;
+        campaigns[_campaign].updatedAt = block.timestamp;
 
-        emit CampaignActivation(deployedCampaigns[_campaignId].campaign);
+        emit CampaignActivation(_campaign);
     }
 
     /**
      * @dev        Approves a campaign. By approving your campaign all events will 
                    stored on thegraph and listed on crowdship, Restricted to campaign managers
-     * @param      _campaignId    ID of the campaign
+     * @param      _campaign    Address of the campaign
      */
-    function approveCampaign(uint256 _campaignId)
+    function approveCampaign(Campaign _campaign)
         external
-        campaignOwner(_campaignId)
+        campaignOwner(_campaign)
         whenNotPaused
     {
-        deployedCampaigns[_campaignId].approved = true;
-        deployedCampaigns[_campaignId].updatedAt = block.timestamp;
+        campaigns[_campaign].approved = true;
+        campaigns[_campaign].updatedAt = block.timestamp;
 
-        emit CampaignApproval(deployedCampaigns[_campaignId].campaign);
+        emit CampaignApproval(_campaign);
     }
 
     /**
      * @dev         Modifies a campaign's category.
-     * @param      _campaignId      ID of the campaign
+     * @param      _campaign        Address of the campaign
      * @param      _newCategoryId   ID of the category being switched to
      */
-    function modifyCampaignCategory(uint256 _campaignId, uint256 _newCategoryId)
+    function modifyCampaignCategory(Campaign _campaign, uint256 _newCategoryId)
         external
-        campaignOwner(_campaignId)
+        campaignOwner(_campaign)
         whenNotPaused
     {
-        uint256 _oldCategoryId = deployedCampaigns[_campaignId].category;
+        uint256 _oldCategoryId = campaigns[_campaign].category;
 
         if (_oldCategoryId != _newCategoryId) {
             require(campaignCategories[_newCategoryId].exists);
 
-            deployedCampaigns[_campaignId].category = _newCategoryId;
+            campaigns[_campaign].category = _newCategoryId;
             campaignCategories[_oldCategoryId]
                 .campaignCount = campaignCategories[_oldCategoryId]
                 .campaignCount
@@ -598,12 +576,9 @@ contract CampaignFactory is
                 .campaignCount
                 .add(1);
 
-            deployedCampaigns[_campaignId].updatedAt = block.timestamp;
+            campaigns[_campaign].updatedAt = block.timestamp;
 
-            emit CampaignCategoryChange(
-                deployedCampaigns[_campaignId].campaign,
-                _newCategoryId
-            );
+            emit CampaignCategoryChange(_campaign, _newCategoryId);
         }
     }
 
