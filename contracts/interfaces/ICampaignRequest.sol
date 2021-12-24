@@ -9,6 +9,7 @@ abstract contract ICampaignRequest {
         uint256 againstCount;
         uint256 abstainedCount;
         uint256 duration;
+        string hashedRequest;
         bool complete;
         bool void;
     }

@@ -59,7 +59,7 @@ contract CampaignFactory is
     );
 
     /// @dev `Token Events`
-    event TokenAdded(address indexed token);
+    event TokenAdded(address indexed token, bool approval);
     event TokenApproval(address indexed token, bool state);
 
     /// @dev `User Events`
@@ -85,8 +85,6 @@ contract CampaignFactory is
     mapping(string => bool) public approvedCampaignTransactionConfig;
     mapping(string => uint256) public campaignTransactionConfig;
     mapping(uint256 => uint256) public categoryCommission;
-    mapping(address => bool) public tokenInList;
-    mapping(address => bool) public tokensApproved;
 
     /// @dev Revenue
     uint256 public factoryRevenue; // total from all campaigns
@@ -98,6 +96,7 @@ contract CampaignFactory is
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
+        string hashedCampaignInfo;
         bool active;
         bool approved;
     }
@@ -109,6 +108,7 @@ contract CampaignFactory is
         uint256 campaignCount;
         uint256 createdAt;
         uint256 updatedAt;
+        string hashedCategory;
         bool active;
         bool exists;
     }
@@ -119,11 +119,21 @@ contract CampaignFactory is
     struct User {
         uint256 joined;
         uint256 updatedAt;
+        string hashedUser;
         bool verified;
     }
     mapping(address => User) public users;
     uint256 public userCount;
 
+    /// @dev `Tokens`
+    struct Token {
+        address token;
+        string hashedToken;
+        bool approved;
+    }
+    mapping(address => Token) public tokens;
+
+    /// @dev `Trustees`
     struct Trust {
         address trustee;
         address trustor;
@@ -335,12 +345,14 @@ contract CampaignFactory is
      * @dev        Adds a token that needs approval before being accepted
      * @param      _token  Address of the token
      */
-    function addToken(address _token) external onlyAdmin {
-        require(!tokenInList[_token]);
+    function addToken(
+        address _token,
+        bool _approved,
+        string calldata _hashedToken
+    ) external onlyAdmin {
+        tokens[_token] = Token(_token, _hashedToken, _approved);
 
-        tokenInList[_token] = true;
-
-        emit TokenAdded(_token);
+        emit TokenAdded(_token, _approved);
     }
 
     /**
@@ -352,8 +364,7 @@ contract CampaignFactory is
         external
         onlyAdmin
     {
-        require(tokenInList[_token]);
-        tokensApproved[_token] = _state;
+        tokens[_token].approved = _state;
 
         emit TokenApproval(_token, _state);
     }
@@ -382,8 +393,8 @@ contract CampaignFactory is
     }
 
     /// @dev Keep track of user addresses. sybil resistance purpose
-    function signUp() public whenNotPaused {
-        users[msg.sender] = User(block.timestamp, 0, false);
+    function signUp(string calldata _hashedUser) public whenNotPaused {
+        users[msg.sender] = User(block.timestamp, 0, _hashedUser, false);
         userCount = userCount.add(1);
 
         emit UserAdded(msg.sender);
@@ -450,10 +461,11 @@ contract CampaignFactory is
      * @dev        Deploys and tracks a new campagign
      * @param      _categoryId    ID of category campaign deployer specifies
      */
-    function createCampaign(uint256 _categoryId, bool _approved)
-        external
-        whenNotPaused
-    {
+    function createCampaign(
+        uint256 _categoryId,
+        bool _approved,
+        string calldata _hashedCampaignInfo
+    ) external whenNotPaused {
         // check `_categoryId` exists and active
         require(
             campaignCategories[_categoryId].exists &&
@@ -475,6 +487,7 @@ contract CampaignFactory is
 
         CampaignInfo memory campaignInfo = CampaignInfo({
             category: _categoryId,
+            hashedCampaignInfo: _hashedCampaignInfo,
             owner: msg.sender,
             createdAt: block.timestamp,
             updatedAt: 0,
@@ -586,12 +599,17 @@ contract CampaignFactory is
      * @dev        Creates a category
      * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
      */
-    function createCategory(bool _active) external onlyAdmin whenNotPaused {
+    function createCategory(bool _active, string calldata _hashedCategory)
+        external
+        onlyAdmin
+        whenNotPaused
+    {
         // create category with `campaignCount` default to 0
         CampaignCategory memory newCategory = CampaignCategory({
             campaignCount: 0,
             createdAt: block.timestamp,
             updatedAt: 0,
+            hashedCategory: _hashedCategory,
             active: _active,
             exists: true
         });

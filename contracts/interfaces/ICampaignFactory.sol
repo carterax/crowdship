@@ -10,13 +10,13 @@ abstract contract ICampaignFactory {
 
     mapping(string => uint256) public campaignTransactionConfig;
     mapping(uint256 => uint256) public categoryCommission;
-    mapping(address => bool) public tokensApproved;
 
     struct CampaignInfo {
         address owner;
         uint256 createdAt;
         uint256 updatedAt;
         uint256 category;
+        string hahedCampaignInfo;
         bool active;
         bool approved;
     }
@@ -26,6 +26,7 @@ abstract contract ICampaignFactory {
         uint256 campaignCount;
         uint256 createdAt;
         uint256 updatedAt;
+        string hashedCategory;
         bool active;
         bool exists;
     }
@@ -34,9 +35,17 @@ abstract contract ICampaignFactory {
     struct User {
         uint256 joined;
         uint256 updatedAt;
+        string hashedUser;
         bool verified;
     }
     mapping(address => User) public users;
+
+    struct Token {
+        address token;
+        string hashedToken;
+        bool approved;
+    }
+    mapping(address => Token) public tokens;
 
     mapping(address => mapping(address => bool)) public isUserTrustee;
 

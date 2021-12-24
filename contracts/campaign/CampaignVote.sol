@@ -22,7 +22,8 @@ contract CampaignVote is Initializable, PausableUpgradeable {
     event Voted(
         uint256 indexed voteId,
         uint256 indexed requestId,
-        uint8 support
+        uint8 support,
+        string hashedVote
     );
     event VoteCancelled(
         uint256 indexed voteId,
@@ -35,6 +36,7 @@ contract CampaignVote is Initializable, PausableUpgradeable {
         uint256 id;
         uint8 support;
         uint256 requestId;
+        string hashedVote;
         bool voted;
         address approver;
     }
@@ -73,11 +75,11 @@ contract CampaignVote is Initializable, PausableUpgradeable {
      * @param      _requestId   ID of request being voted on
      * @param      _support     An integer of 0 for against, 1 for in-favor, and 2 for abstain
      */
-    function voteOnRequest(uint256 _requestId, uint8 _support)
-        external
-        userIsVerified(msg.sender)
-        whenNotPaused
-    {
+    function voteOnRequest(
+        uint256 _requestId,
+        uint8 _support,
+        string calldata _hashedVote
+    ) external userIsVerified(msg.sender) whenNotPaused {
         require(campaignInterface.approvers(msg.sender), "non approver");
         require(!votes[msg.sender][_requestId].voted, "voted");
 
@@ -86,6 +88,7 @@ contract CampaignVote is Initializable, PausableUpgradeable {
             voteCount.sub(1),
             _support,
             _requestId,
+            _hashedVote,
             true,
             msg.sender
         );
@@ -93,7 +96,7 @@ contract CampaignVote is Initializable, PausableUpgradeable {
         ICampaignRequest(campaignInterface.campaignRequestContract())
             .signRequestVote(_requestId, _support);
 
-        emit Voted(voteCount.sub(1), _requestId, _support);
+        emit Voted(voteCount.sub(1), _requestId, _support, _hashedVote);
     }
 
     /**

@@ -32,6 +32,7 @@ contract CampaignRequest is
         uint256 indexed requestId,
         uint256 duration,
         uint256 value,
+        string hashedRequest,
         address recipient
     );
     event RequestVoided(uint256 indexed requestId);
@@ -44,6 +45,7 @@ contract CampaignRequest is
         uint256 againstCount;
         uint256 abstainedCount;
         uint256 duration;
+        string hashedRequest;
         bool complete;
         bool void;
     }
@@ -102,7 +104,8 @@ contract CampaignRequest is
     function createRequest(
         address payable _recipient,
         uint256 _value,
-        uint256 _duration
+        uint256 _duration,
+        string calldata _hashedRequest
     ) external onlyAdmin(msg.sender) whenNotPaused {
         require(address(_recipient) != address(0));
 
@@ -175,11 +178,18 @@ contract CampaignRequest is
             0,
             0,
             block.timestamp.add(_duration),
+            _hashedRequest,
             false,
             false
         );
 
-        emit RequestAdded(currentRunningRequest, _duration, _value, _recipient);
+        emit RequestAdded(
+            currentRunningRequest,
+            _duration,
+            _value,
+            _hashedRequest,
+            _recipient
+        );
     }
 
     /**
@@ -253,7 +263,7 @@ contract CampaignRequest is
         );
 
         uint8 support;
-        (support, , , ) = campaignVote.votes(msg.sender, _requestId);
+        (, support, , , , ) = campaignVote.votes(msg.sender, _requestId);
 
         if (support == 0) {
             requests[_requestId].againstCount = requests[_requestId]

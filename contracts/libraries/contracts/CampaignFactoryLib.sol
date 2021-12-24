@@ -44,7 +44,7 @@ library CampaignFactoryLib {
         uint256 campaignCategory;
         bool campaignIsApproved;
 
-        (, , , campaignCategory, , campaignIsApproved) = _factory.campaigns(
+        (, , , campaignCategory, , , campaignIsApproved) = _factory.campaigns(
             _campaign
         );
 
@@ -71,7 +71,7 @@ library CampaignFactoryLib {
         uint256 updatedAt;
         bool verified;
 
-        (joined, updatedAt, verified) = _factory.users(_userAddress);
+        (joined, updatedAt, , verified) = _factory.users(_userAddress);
 
         return (joined, updatedAt, verified);
     }
@@ -103,7 +103,7 @@ library CampaignFactoryLib {
         uint256 campaignCategory;
         uint256 percentCommission;
 
-        (, , , campaignCategory, , ) = _factory.campaigns(_campaign);
+        (, , , campaignCategory, , , ) = _factory.campaigns(_campaign);
         percentCommission = _factory.categoryCommission(campaignCategory);
 
         if (percentCommission == 0) {

@@ -89,8 +89,8 @@ contract Campaign is
     event RequestComplete(uint256 indexed requestId);
 
     /// @dev `Review Events`
-    event CampaignReviewed(address user);
-    event CampaignReported(address user);
+    event CampaignReviewed(address user, string hashedReview);
+    event CampaignReported(address user, string hashedReport);
 
     /// @dev `Campaign State Events`
     event CampaignStateChange(CAMPAIGN_STATE state);
@@ -331,10 +331,6 @@ contract Campaign is
             "contribution deficit"
         );
         require(
-            campaignFactoryContract.tokensApproved(_token),
-            "invalid token"
-        );
-        require(
             _target >=
                 CampaignFactoryLib.getCampaignFactoryConfig(
                     campaignFactoryContract,
@@ -347,6 +343,17 @@ contract Campaign is
                 ),
             "target deficit"
         );
+
+        bool approved;
+        (, , approved) = campaignFactoryContract.tokens(_token);
+        require(approved, "invalid token");
+
+        bool campaignIsApproved;
+        (, campaignIsApproved) = CampaignFactoryLib.campaignInfo(
+            campaignFactoryContract,
+            this
+        );
+        require(!campaignIsApproved, "already approved");
 
         target = _target;
         minimumContribution = _minimumContribution;
@@ -618,7 +625,7 @@ contract Campaign is
     {
         uint256 requestValue;
 
-        (, requestValue, , , , , , ) = campaignRequestContract.requests(
+        (, requestValue, , , , , , , ) = campaignRequestContract.requests(
             _requestId
         );
 
@@ -635,7 +642,7 @@ contract Campaign is
         // ensure campaign state is running
         bool requestComplete;
 
-        (, , , , , , requestComplete, ) = campaignRequestContract.requests(
+        (, , , , , , , requestComplete, ) = campaignRequestContract.requests(
             campaignRequestContract.currentRunningRequest()
         );
 
@@ -657,7 +664,7 @@ contract Campaign is
     }
 
     /// @dev User acknowledgement of review state enabled by the campaign owner
-    function reviewCampaignPerformance()
+    function reviewCampaignPerformance(string calldata _hashedReview)
         external
         userIsVerified(msg.sender)
         whenPaused
@@ -670,7 +677,7 @@ contract Campaign is
 
         reviewCount = reviewCount.add(1);
 
-        emit CampaignReviewed(msg.sender);
+        emit CampaignReviewed(msg.sender, _hashedReview);
     }
 
     /// @dev Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
@@ -700,7 +707,7 @@ contract Campaign is
     }
 
     /// @dev Called by an approver to report a campaign. Campaign must be in collection or live state
-    function reportCampaign()
+    function reportCampaign(string calldata _hashedReport)
         external
         userIsVerified(msg.sender)
         whenNotPaused
@@ -741,7 +748,7 @@ contract Campaign is
             _pause();
         }
 
-        emit CampaignReported(msg.sender);
+        emit CampaignReported(msg.sender, _hashedReport);
     }
 
     /**

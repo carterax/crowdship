@@ -29,6 +29,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 value,
         uint256 deliveryDate,
         uint256 stock,
+        string hashedReward,
         bool active
     );
     event RewardModified(
@@ -62,6 +63,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 value;
         uint256 deliveryDate;
         uint256 stock;
+        string hashed;
         bool exists;
         bool active;
     }
@@ -137,6 +139,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _value,
         uint256 _deliveryDate,
         uint256 _stock,
+        string calldata _hashedReward,
         bool _active
     ) external onlyAdmin userIsVerified(msg.sender) {
         require(
@@ -155,13 +158,16 @@ contract CampaignReward is Initializable, PausableUpgradeable {
                 ),
             "amount too high"
         );
-        rewards.push(Reward(_value, _deliveryDate, _stock, true, _active));
+        rewards.push(
+            Reward(_value, _deliveryDate, _stock, _hashedReward, true, _active)
+        );
 
         emit RewardCreated(
             rewards.length.sub(1),
             _value,
             _deliveryDate,
             _stock,
+            _hashedReward,
             _active
         );
     }
