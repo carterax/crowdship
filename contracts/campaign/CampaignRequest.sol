@@ -105,7 +105,7 @@ contract CampaignRequest is
         address payable _recipient,
         uint256 _value,
         uint256 _duration,
-        string calldata _hashedRequest
+        string memory _hashedRequest
     ) external onlyAdmin(msg.sender) whenNotPaused {
         require(address(_recipient) != address(0));
 

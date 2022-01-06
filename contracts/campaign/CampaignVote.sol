@@ -78,7 +78,7 @@ contract CampaignVote is Initializable, PausableUpgradeable {
     function voteOnRequest(
         uint256 _requestId,
         uint8 _support,
-        string calldata _hashedVote
+        string memory _hashedVote
     ) external userIsVerified(msg.sender) whenNotPaused {
         require(campaignInterface.approvers(msg.sender), "non approver");
         require(!votes[msg.sender][_requestId].voted, "voted");

@@ -24,7 +24,7 @@ contract Factory {
     function createCampaignFactory(
         address _campaignFactoryImplementation,
         address _governance,
-        uint256[15] calldata _config
+        uint256[15] memory _config
     ) public {
         address campaignFactory = ClonesUpgradeable.clone(
             _campaignFactoryImplementation
@@ -33,6 +33,7 @@ contract Factory {
             _governance,
             _config
         );
+
         deployedCampaigns[campaignFactory] = DeployedCampaignFactory({
             factory: campaignFactory
         });

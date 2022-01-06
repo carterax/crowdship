@@ -71,8 +71,12 @@ contract CampaignFactory is
     event TrusteeRemoved(uint256 indexed trusteeId, address trusteeAddress);
 
     /// @dev `Category Events`
-    event CategoryAdded(uint256 indexed categoryId, bool active);
-    event CategoryModified(uint256 indexed categoryId, bool active);
+    event CategoryAdded(uint256 indexed categoryId, bool active, string title);
+    event CategoryModified(
+        uint256 indexed categoryId,
+        bool active,
+        string title
+    );
 
     /// @dev Settings
     address public governance;
@@ -108,11 +112,12 @@ contract CampaignFactory is
         uint256 campaignCount;
         uint256 createdAt;
         uint256 updatedAt;
-        string hashedCategory;
+        string title;
         bool active;
         bool exists;
     }
     CampaignCategory[] public campaignCategories; // array of campaign categories
+    mapping(string => bool) public categoryTitleIsTaken;
     uint256 public categoryCount;
 
     /// @dev `Users`
@@ -173,7 +178,7 @@ contract CampaignFactory is
      */
     function __CampaignFactory_init(
         address _governance,
-        uint256[15] calldata _config
+        uint256[15] memory _config
     ) public initializer {
         require(_governance != address(0));
 
@@ -205,6 +210,8 @@ contract CampaignFactory is
                 index
             ];
         }
+
+        _createCategory(true, "miscellaneous");
     }
 
     /**
@@ -348,7 +355,7 @@ contract CampaignFactory is
     function addToken(
         address _token,
         bool _approved,
-        string calldata _hashedToken
+        string memory _hashedToken
     ) external onlyAdmin {
         tokens[_token] = Token(_token, _hashedToken, _approved);
 
@@ -393,7 +400,7 @@ contract CampaignFactory is
     }
 
     /// @dev Keep track of user addresses. sybil resistance purpose
-    function signUp(string calldata _hashedUser) public whenNotPaused {
+    function signUp(string memory _hashedUser) public whenNotPaused {
         users[msg.sender] = User(block.timestamp, 0, _hashedUser, false);
         userCount = userCount.add(1);
 
@@ -464,7 +471,7 @@ contract CampaignFactory is
     function createCampaign(
         uint256 _categoryId,
         bool _approved,
-        string calldata _hashedCampaignInfo
+        string memory _hashedCampaignInfo
     ) external whenNotPaused {
         // check `_categoryId` exists and active
         require(
@@ -596,20 +603,35 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Creates a category
+     * @dev        Public implementation of createCategory method
      * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param      _title    Title of the category
      */
-    function createCategory(bool _active, string calldata _hashedCategory)
-        external
+    function createCategory(bool _active, string memory _title)
+        public
         onlyAdmin
         whenNotPaused
     {
+        _createCategory(_active, _title);
+    }
+
+    /**
+     * @dev        Creates a category
+     * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param      _title    Title of the category
+     */
+    function _createCategory(bool _active, string memory _title)
+        private
+        whenNotPaused
+    {
+        require(!categoryTitleIsTaken[_title], "title not unique");
+
         // create category with `campaignCount` default to 0
         CampaignCategory memory newCategory = CampaignCategory({
             campaignCount: 0,
             createdAt: block.timestamp,
             updatedAt: 0,
-            hashedCategory: _hashedCategory,
+            title: _title,
             active: _active,
             exists: true
         });
@@ -619,25 +641,39 @@ contract CampaignFactory is
 
         categoryCommission[campaignCategories.length.sub(1)] = 0;
 
-        emit CategoryAdded(campaignCategories.length.sub(1), _active);
+        categoryTitleIsTaken[_title] = true;
+
+        emit CategoryAdded(campaignCategories.length.sub(1), _active, _title);
     }
 
     /**
      * @dev        Modifies details about a category
      * @param      _categoryId   ID of the category
      * @param      _active       Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param      _title        Title of the category
      */
-    function modifyCategory(uint256 _categoryId, bool _active)
-        external
-        onlyAdmin
-        whenNotPaused
-    {
+    function modifyCategory(
+        uint256 _categoryId,
+        bool _active,
+        string memory _title
+    ) external onlyAdmin whenNotPaused {
         require(campaignCategories[_categoryId].exists);
+
+        if (
+            keccak256(
+                abi.encodePacked(campaignCategories[_categoryId].title)
+            ) != keccak256(abi.encodePacked(_title))
+        ) {
+            require(!categoryTitleIsTaken[_title], "title not unique");
+
+            campaignCategories[_categoryId].title = _title;
+            categoryTitleIsTaken[_title] = true;
+        }
 
         campaignCategories[_categoryId].active = _active;
         campaignCategories[_categoryId].updatedAt = block.timestamp;
 
-        emit CategoryModified(_categoryId, _active);
+        emit CategoryModified(_categoryId, _active, _title);
     }
 
     /// @dev Unpauses the factory, transactions in the factory resumes per usual

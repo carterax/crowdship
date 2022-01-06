@@ -16,39 +16,34 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
   campaignCategories(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
 
   campaignFactoryAddress(
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
-
-  campaignToID(
-    arg0: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
 
   campaignTransactionConfig(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
+  campaigns(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<{
+    0: string;
+    1: BN;
+    2: BN;
+    3: BN;
+    4: string;
+    5: boolean;
+    6: boolean;
+  }>;
+
   categoryCommission(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
-
-  deployedCampaigns(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<{
-    0: string;
-    1: string;
-    2: BN;
-    3: BN;
-    4: BN;
-    5: boolean;
-    6: boolean;
-  }>;
 
   factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
@@ -60,17 +55,15 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
 
   root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-  tokensApproved(
+  tokens(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<boolean>;
-
-  userID(arg0: string, txDetails?: Truffle.TransactionDetails): Promise<BN>;
+  ): Promise<{ 0: string; 1: string; 2: boolean }>;
 
   users(
-    arg0: number | BN | string,
+    arg0: string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: string; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+  ): Promise<{ 0: BN; 1: BN; 2: string; 3: boolean }>;
 
   getCampaignTransactionConfig: {
     (_prop: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -119,39 +112,34 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
     campaignCategories(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
 
     campaignFactoryAddress(
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
-
-    campaignToID(
-      arg0: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
 
     campaignTransactionConfig(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
+    campaigns(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<{
+      0: string;
+      1: BN;
+      2: BN;
+      3: BN;
+      4: string;
+      5: boolean;
+      6: boolean;
+    }>;
+
     categoryCommission(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
-
-    deployedCampaigns(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<{
-      0: string;
-      1: string;
-      2: BN;
-      3: BN;
-      4: BN;
-      5: boolean;
-      6: boolean;
-    }>;
 
     factoryWallet(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
@@ -163,17 +151,15 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
 
     root(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-    tokensApproved(
+    tokens(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<boolean>;
-
-    userID(arg0: string, txDetails?: Truffle.TransactionDetails): Promise<BN>;
+    ): Promise<{ 0: string; 1: string; 2: boolean }>;
 
     users(
-      arg0: number | BN | string,
+      arg0: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: string; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+    ): Promise<{ 0: BN; 1: BN; 2: string; 3: boolean }>;
 
     getCampaignTransactionConfig: {
       (_prop: string, txDetails?: Truffle.TransactionDetails): Promise<

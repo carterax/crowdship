@@ -29,8 +29,9 @@ export interface ICampaignRequestInstance extends Truffle.ContractInstance {
     3: BN;
     4: BN;
     5: BN;
-    6: boolean;
+    6: string;
     7: boolean;
+    8: boolean;
   }>;
 
   signRequestFinalization: {
@@ -111,8 +112,9 @@ export interface ICampaignRequestInstance extends Truffle.ContractInstance {
       3: BN;
       4: BN;
       5: BN;
-      6: boolean;
+      6: string;
       7: boolean;
+      8: boolean;
     }>;
 
     signRequestFinalization: {

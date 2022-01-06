@@ -111,8 +111,10 @@ export interface CategoryAdded {
   args: {
     categoryId: BN;
     active: boolean;
+    title: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -131,8 +133,10 @@ export interface CategoryModified {
   args: {
     categoryId: BN;
     active: boolean;
+    title: string;
     0: BN;
     1: boolean;
+    2: string;
   };
 }
 
@@ -148,7 +152,9 @@ export interface TokenAdded {
   name: "TokenAdded";
   args: {
     token: string;
+    approval: boolean;
     0: string;
+    1: boolean;
   };
 }
 
@@ -193,20 +199,18 @@ export interface Unpaused {
 export interface UserAdded {
   name: "UserAdded";
   args: {
-    userId: BN;
-    0: BN;
+    userId: string;
+    0: string;
   };
 }
 
 export interface UserApproval {
   name: "UserApproval";
   args: {
-    userId: BN;
     user: string;
     approval: boolean;
-    0: BN;
-    1: string;
-    2: boolean;
+    0: string;
+    1: boolean;
   };
 }
 
@@ -242,7 +246,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   campaignCategories(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
 
   campaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -259,21 +263,11 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   ): Promise<string>;
 
   campaignRevenueFromCommissions(
-    arg0: number | BN | string,
+    arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
   campaignRewardsImplementation(
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<string>;
-
-  campaignToID(
-    arg0: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
-
-  campaignToOwner(
-    arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
 
@@ -291,6 +285,19 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
 
+  campaigns(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<{
+    0: string;
+    1: BN;
+    2: BN;
+    3: BN;
+    4: string;
+    5: boolean;
+    6: boolean;
+  }>;
+
   categoryCommission(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
@@ -298,18 +305,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   categoryCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-  deployedCampaigns(
-    arg0: number | BN | string,
+  categoryTitleIsTaken(
+    arg0: string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{
-    0: string;
-    1: string;
-    2: BN;
-    3: BN;
-    4: BN;
-    5: boolean;
-    6: boolean;
-  }>;
+  ): Promise<boolean>;
 
   factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -326,15 +325,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    */
   paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
 
-  tokenInList(
+  tokens(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<boolean>;
-
-  tokensApproved(
-    arg0: string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<boolean>;
+  ): Promise<{ 0: string; 1: string; 2: boolean }>;
 
   trustees(
     arg0: number | BN | string,
@@ -343,17 +337,15 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   userCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-  userID(arg0: string, txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
   userTrusteeCount(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<BN>;
 
   users(
-    arg0: number | BN | string,
+    arg0: string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: string; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+  ): Promise<{ 0: BN; 1: BN; 2: string; 3: boolean }>;
 
   /**
    * Contructor
@@ -587,16 +579,28 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * @param _token Address of the token
    */
   addToken: {
-    (_token: string, txDetails?: Truffle.TransactionDetails): Promise<
-      Truffle.TransactionResponse<AllEvents>
-    >;
-    call(_token: string, txDetails?: Truffle.TransactionDetails): Promise<void>;
+    (
+      _token: string,
+      _approved: boolean,
+      _hashedToken: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _token: string,
+      _approved: boolean,
+      _hashedToken: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
     sendTransaction(
       _token: string,
+      _approved: boolean,
+      _hashedToken: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _token: string,
+      _approved: boolean,
+      _hashedToken: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -670,12 +674,21 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * Keep track of user addresses. sybil resistance purpose
    */
   signUp: {
-    (txDetails?: Truffle.TransactionDetails): Promise<
+    (_hashedUser: string, txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
-    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    call(
+      _hashedUser: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _hashedUser: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _hashedUser: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
   };
 
   /**
@@ -735,26 +748,26 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   /**
    * Approves or disapproves a user
    * @param _approval Indicates if the user will be approved or not
-   * @param _userId ID of the user
+   * @param _user Address of the user
    */
   toggleUserApproval: {
     (
-      _userId: number | BN | string,
+      _user: string,
       _approval: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
-      _userId: number | BN | string,
+      _user: string,
       _approval: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _userId: number | BN | string,
+      _user: string,
       _approval: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _userId: number | BN | string,
+      _user: string,
       _approval: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -768,117 +781,125 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     (
       _categoryId: number | BN | string,
       _approved: boolean,
+      _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _categoryId: number | BN | string,
       _approved: boolean,
+      _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _categoryId: number | BN | string,
       _approved: boolean,
+      _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _categoryId: number | BN | string,
       _approved: boolean,
+      _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
 
   /**
-   * Activates a campaign. Activating a campaign simply makes the campaign available for listing  on crowdship, events will be stored on thegraph activated or not, Restricted to campaign managers
-   * @param _campaignId ID of the campaign
+   * Activates a campaign. Activating a campaign simply makes the campaign available for listing  on crowdship, events will be stored on thegraph activated or not, Restricted to governance
+   * @param _campaign Address of the campaign
    */
   activateCampaign: {
-    (
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
     call(
-      _campaignId: number | BN | string,
+      _campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _campaignId: number | BN | string,
+      _campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _campaignId: number | BN | string,
+      _campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
 
   /**
    * Approves a campaign. By approving your campaign all events will  stored on thegraph and listed on crowdship, Restricted to campaign managers
-   * @param _campaignId ID of the campaign
+   * @param _campaign Address of the campaign
    */
   approveCampaign: {
-    (
-      _campaignId: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
     call(
-      _campaignId: number | BN | string,
+      _campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _campaignId: number | BN | string,
+      _campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _campaignId: number | BN | string,
+      _campaign: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
 
   /**
    * Modifies a campaign's category.
-   * @param _campaignId ID of the campaign
+   * @param _campaign Address of the campaign
    * @param _newCategoryId ID of the category being switched to
    */
   modifyCampaignCategory: {
     (
-      _campaignId: number | BN | string,
+      _campaign: string,
       _newCategoryId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
-      _campaignId: number | BN | string,
+      _campaign: string,
       _newCategoryId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
-      _campaignId: number | BN | string,
+      _campaign: string,
       _newCategoryId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
-      _campaignId: number | BN | string,
+      _campaign: string,
       _newCategoryId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
 
   /**
-   * Creates a category
+   * Public implementation of createCategory method
    * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
+   * @param _title Title of the category
    */
   createCategory: {
-    (_active: boolean, txDetails?: Truffle.TransactionDetails): Promise<
-      Truffle.TransactionResponse<AllEvents>
-    >;
+    (
+      _active: boolean,
+      _title: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -887,26 +908,31 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * Modifies details about a category
    * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
    * @param _categoryId ID of the category
+   * @param _title Title of the category
    */
   modifyCategory: {
     (
       _categoryId: number | BN | string,
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _categoryId: number | BN | string,
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _categoryId: number | BN | string,
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _categoryId: number | BN | string,
       _active: boolean,
+      _title: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -944,7 +970,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     campaignCategories(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
 
     campaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -961,21 +987,11 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     ): Promise<string>;
 
     campaignRevenueFromCommissions(
-      arg0: number | BN | string,
+      arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
     campaignRewardsImplementation(
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-
-    campaignToID(
-      arg0: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
-
-    campaignToOwner(
-      arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
 
@@ -993,6 +1009,19 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
 
+    campaigns(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<{
+      0: string;
+      1: BN;
+      2: BN;
+      3: BN;
+      4: string;
+      5: boolean;
+      6: boolean;
+    }>;
+
     categoryCommission(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
@@ -1000,18 +1029,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     categoryCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-    deployedCampaigns(
-      arg0: number | BN | string,
+    categoryTitleIsTaken(
+      arg0: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{
-      0: string;
-      1: string;
-      2: BN;
-      3: BN;
-      4: BN;
-      5: boolean;
-      6: boolean;
-    }>;
+    ): Promise<boolean>;
 
     factoryRevenue(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1028,15 +1049,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      */
     paused(txDetails?: Truffle.TransactionDetails): Promise<boolean>;
 
-    tokenInList(
+    tokens(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<boolean>;
-
-    tokensApproved(
-      arg0: string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<boolean>;
+    ): Promise<{ 0: string; 1: string; 2: boolean }>;
 
     trustees(
       arg0: number | BN | string,
@@ -1045,17 +1061,15 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     userCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
-    userID(arg0: string, txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
     userTrusteeCount(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BN>;
 
     users(
-      arg0: number | BN | string,
+      arg0: string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: string; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+    ): Promise<{ 0: BN; 1: BN; 2: string; 3: boolean }>;
 
     /**
      * Contructor
@@ -1292,19 +1306,28 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * @param _token Address of the token
      */
     addToken: {
-      (_token: string, txDetails?: Truffle.TransactionDetails): Promise<
-        Truffle.TransactionResponse<AllEvents>
-      >;
+      (
+        _token: string,
+        _approved: boolean,
+        _hashedToken: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _token: string,
+        _approved: boolean,
+        _hashedToken: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _token: string,
+        _approved: boolean,
+        _hashedToken: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _token: string,
+        _approved: boolean,
+        _hashedToken: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1378,12 +1401,21 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * Keep track of user addresses. sybil resistance purpose
      */
     signUp: {
-      (txDetails?: Truffle.TransactionDetails): Promise<
+      (_hashedUser: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
-      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+      call(
+        _hashedUser: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _hashedUser: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _hashedUser: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
     };
 
     /**
@@ -1443,26 +1475,26 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     /**
      * Approves or disapproves a user
      * @param _approval Indicates if the user will be approved or not
-     * @param _userId ID of the user
+     * @param _user Address of the user
      */
     toggleUserApproval: {
       (
-        _userId: number | BN | string,
+        _user: string,
         _approval: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
-        _userId: number | BN | string,
+        _user: string,
         _approval: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _userId: number | BN | string,
+        _user: string,
         _approval: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _userId: number | BN | string,
+        _user: string,
         _approval: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
@@ -1476,117 +1508,125 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       (
         _categoryId: number | BN | string,
         _approved: boolean,
+        _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _categoryId: number | BN | string,
         _approved: boolean,
+        _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _categoryId: number | BN | string,
         _approved: boolean,
+        _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _categoryId: number | BN | string,
         _approved: boolean,
+        _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
 
     /**
-     * Activates a campaign. Activating a campaign simply makes the campaign available for listing  on crowdship, events will be stored on thegraph activated or not, Restricted to campaign managers
-     * @param _campaignId ID of the campaign
+     * Activates a campaign. Activating a campaign simply makes the campaign available for listing  on crowdship, events will be stored on thegraph activated or not, Restricted to governance
+     * @param _campaign Address of the campaign
      */
     activateCampaign: {
-      (
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
       call(
-        _campaignId: number | BN | string,
+        _campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _campaignId: number | BN | string,
+        _campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _campaignId: number | BN | string,
+        _campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
 
     /**
      * Approves a campaign. By approving your campaign all events will  stored on thegraph and listed on crowdship, Restricted to campaign managers
-     * @param _campaignId ID of the campaign
+     * @param _campaign Address of the campaign
      */
     approveCampaign: {
-      (
-        _campaignId: number | BN | string,
-        txDetails?: Truffle.TransactionDetails
-      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
       call(
-        _campaignId: number | BN | string,
+        _campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _campaignId: number | BN | string,
+        _campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _campaignId: number | BN | string,
+        _campaign: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
 
     /**
      * Modifies a campaign's category.
-     * @param _campaignId ID of the campaign
+     * @param _campaign Address of the campaign
      * @param _newCategoryId ID of the category being switched to
      */
     modifyCampaignCategory: {
       (
-        _campaignId: number | BN | string,
+        _campaign: string,
         _newCategoryId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
-        _campaignId: number | BN | string,
+        _campaign: string,
         _newCategoryId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
-        _campaignId: number | BN | string,
+        _campaign: string,
         _newCategoryId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
-        _campaignId: number | BN | string,
+        _campaign: string,
         _newCategoryId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
 
     /**
-     * Creates a category
+     * Public implementation of createCategory method
      * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param _title Title of the category
      */
     createCategory: {
-      (_active: boolean, txDetails?: Truffle.TransactionDetails): Promise<
-        Truffle.TransactionResponse<AllEvents>
-      >;
+      (
+        _active: boolean,
+        _title: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1595,26 +1635,31 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * Modifies details about a category
      * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
      * @param _categoryId ID of the category
+     * @param _title Title of the category
      */
     modifyCategory: {
       (
         _categoryId: number | BN | string,
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _categoryId: number | BN | string,
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _categoryId: number | BN | string,
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _categoryId: number | BN | string,
         _active: boolean,
+        _title: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

@@ -664,7 +664,7 @@ contract Campaign is
     }
 
     /// @dev User acknowledgement of review state enabled by the campaign owner
-    function reviewCampaignPerformance(string calldata _hashedReview)
+    function reviewCampaignPerformance(string memory _hashedReview)
         external
         userIsVerified(msg.sender)
         whenPaused
@@ -707,7 +707,7 @@ contract Campaign is
     }
 
     /// @dev Called by an approver to report a campaign. Campaign must be in collection or live state
-    function reportCampaign(string calldata _hashedReport)
+    function reportCampaign(string memory _hashedReport)
         external
         userIsVerified(msg.sender)
         whenNotPaused

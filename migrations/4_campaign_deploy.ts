@@ -21,7 +21,6 @@ module.exports = async function (deployer) {
       campaignRequestImplementation.address,
       campaignVoteImplementation.address,
       '0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e',
-      0,
     ],
     {
       deployer,

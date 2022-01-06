@@ -37,7 +37,9 @@ export interface CampaignReported {
   name: "CampaignReported";
   args: {
     user: string;
+    hashedReport: string;
     0: string;
+    1: string;
   };
 }
 
@@ -45,7 +47,9 @@ export interface CampaignReviewed {
   name: "CampaignReviewed";
   args: {
     user: string;
+    hashedReview: string;
     0: string;
+    1: string;
   };
 }
 
@@ -261,8 +265,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
 
-  campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
-
   campaignRequestContract(
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
@@ -477,7 +479,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   /**
    * Constructor
    * @param _campaignFactory Address of factory
-   * @param _campaignId ID of the campaign from campaign factory
    * @param _campaignRequests Address of campaign request contract
    * @param _campaignRewards Address of campaign reward contract
    * @param _campaignVotes Address of campaign vote contract
@@ -490,7 +491,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
@@ -499,7 +499,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
@@ -508,7 +507,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
@@ -517,7 +515,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       _campaignRequests: string,
       _campaignVotes: string,
       _root: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -792,12 +789,21 @@ export interface CampaignInstance extends Truffle.ContractInstance {
    * User acknowledgement of review state enabled by the campaign owner
    */
   reviewCampaignPerformance: {
-    (txDetails?: Truffle.TransactionDetails): Promise<
+    (_hashedReview: string, txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
-    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    call(
+      _hashedReview: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _hashedReview: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _hashedReview: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
   };
 
   /**
@@ -816,12 +822,21 @@ export interface CampaignInstance extends Truffle.ContractInstance {
    * Called by an approver to report a campaign. Campaign must be in collection or live state
    */
   reportCampaign: {
-    (txDetails?: Truffle.TransactionDetails): Promise<
+    (_hashedReport: string, txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
-    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    call(
+      _hashedReport: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _hashedReport: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _hashedReport: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
   };
 
   /**
@@ -944,8 +959,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     campaignFactoryContract(
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
-
-    campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
     campaignRequestContract(
       txDetails?: Truffle.TransactionDetails
@@ -1163,7 +1176,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     /**
      * Constructor
      * @param _campaignFactory Address of factory
-     * @param _campaignId ID of the campaign from campaign factory
      * @param _campaignRequests Address of campaign request contract
      * @param _campaignRewards Address of campaign reward contract
      * @param _campaignVotes Address of campaign vote contract
@@ -1176,7 +1188,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
@@ -1185,7 +1196,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
@@ -1194,7 +1204,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
@@ -1203,7 +1212,6 @@ export interface CampaignInstance extends Truffle.ContractInstance {
         _campaignRequests: string,
         _campaignVotes: string,
         _root: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1478,12 +1486,21 @@ export interface CampaignInstance extends Truffle.ContractInstance {
      * User acknowledgement of review state enabled by the campaign owner
      */
     reviewCampaignPerformance: {
-      (txDetails?: Truffle.TransactionDetails): Promise<
+      (_hashedReview: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
-      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+      call(
+        _hashedReview: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _hashedReview: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _hashedReview: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
     };
 
     /**
@@ -1502,12 +1519,21 @@ export interface CampaignInstance extends Truffle.ContractInstance {
      * Called by an approver to report a campaign. Campaign must be in collection or live state
      */
     reportCampaign: {
-      (txDetails?: Truffle.TransactionDetails): Promise<
+      (_hashedReport: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
-      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
-      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
-      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+      call(
+        _hashedReport: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _hashedReport: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _hashedReport: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
     };
 
     /**

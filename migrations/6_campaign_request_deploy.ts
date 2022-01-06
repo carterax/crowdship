@@ -11,7 +11,7 @@ module.exports = async function (deployer) {
 
   await deployProxy(
     CampaignRequest,
-    [campaignFactory.address, campaignImplementation.address, 0],
+    [campaignFactory.address, campaignImplementation.address],
     {
       deployer,
       initializer: '__CampaignRequest_init',

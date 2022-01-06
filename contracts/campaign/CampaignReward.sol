@@ -139,7 +139,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _value,
         uint256 _deliveryDate,
         uint256 _stock,
-        string calldata _hashedReward,
+        string memory _hashedReward,
         bool _active
     ) external onlyAdmin userIsVerified(msg.sender) {
         require(

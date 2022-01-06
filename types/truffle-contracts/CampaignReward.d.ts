@@ -33,12 +33,14 @@ export interface RewardCreated {
     value: BN;
     deliveryDate: BN;
     stock: BN;
+    hashedReward: string;
     active: boolean;
     0: BN;
     1: BN;
     2: BN;
     3: BN;
-    4: boolean;
+    4: string;
+    5: boolean;
   };
 }
 
@@ -131,13 +133,11 @@ type AllEvents =
 export interface CampaignRewardInstance extends Truffle.ContractInstance {
   campaign(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-  campaignContract(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
-  campaignFactoryContract(
+  campaignFactoryInterface(
     txDetails?: Truffle.TransactionDetails
   ): Promise<string>;
 
-  campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+  campaignInterface(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
   campaignRewardAddress(
     txDetails?: Truffle.TransactionDetails
@@ -161,7 +161,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
   rewards(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
 
   userRewardCount(
     arg0: string,
@@ -170,32 +170,28 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
 
   /**
    * Constructor
+   * @param _campaign Address of campaign this contract belongs to
    * @param _campaignFactory Address of factory
-   * @param _campaignId ID of campaign reward contract belongs to
    */
   __CampaignReward_init: {
     (
       _campaignFactory: string,
       _campaign: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _campaignFactory: string,
       _campaign: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _campaignFactory: string,
       _campaign: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _campaignFactory: string,
       _campaign: string,
-      _campaignId: number | BN | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -212,6 +208,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _value: number | BN | string,
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
+      _hashedReward: string,
       _active: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
@@ -219,6 +216,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _value: number | BN | string,
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
+      _hashedReward: string,
       _active: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
@@ -226,6 +224,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _value: number | BN | string,
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
+      _hashedReward: string,
       _active: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
@@ -233,6 +232,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _value: number | BN | string,
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
+      _hashedReward: string,
       _active: boolean,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -466,13 +466,11 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
   methods: {
     campaign(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
-    campaignContract(txDetails?: Truffle.TransactionDetails): Promise<string>;
-
-    campaignFactoryContract(
+    campaignFactoryInterface(
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
 
-    campaignID(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+    campaignInterface(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
     campaignRewardAddress(
       txDetails?: Truffle.TransactionDetails
@@ -496,7 +494,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
     rewards(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: boolean; 4: boolean }>;
+    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
 
     userRewardCount(
       arg0: string,
@@ -505,32 +503,28 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
 
     /**
      * Constructor
+     * @param _campaign Address of campaign this contract belongs to
      * @param _campaignFactory Address of factory
-     * @param _campaignId ID of campaign reward contract belongs to
      */
     __CampaignReward_init: {
       (
         _campaignFactory: string,
         _campaign: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _campaignFactory: string,
         _campaign: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _campaignFactory: string,
         _campaign: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _campaignFactory: string,
         _campaign: string,
-        _campaignId: number | BN | string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -547,6 +541,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _value: number | BN | string,
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
+        _hashedReward: string,
         _active: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
@@ -554,6 +549,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _value: number | BN | string,
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
+        _hashedReward: string,
         _active: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
@@ -561,6 +557,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _value: number | BN | string,
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
+        _hashedReward: string,
         _active: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
@@ -568,6 +565,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _value: number | BN | string,
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
+        _hashedReward: string,
         _active: boolean,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;

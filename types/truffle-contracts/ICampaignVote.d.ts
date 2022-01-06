@@ -13,28 +13,18 @@ export interface ICampaignVoteContract
 type AllEvents = never;
 
 export interface ICampaignVoteInstance extends Truffle.ContractInstance {
-  voteId(
+  votes(
     arg0: string,
     arg1: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<BN>;
-
-  votes(
-    arg0: number | BN | string,
-    txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: boolean; 3: string }>;
+  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: string }>;
 
   methods: {
-    voteId(
+    votes(
       arg0: string,
       arg1: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<BN>;
-
-    votes(
-      arg0: number | BN | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: boolean; 3: string }>;
+    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: string }>;
   };
 
   getPastEvents(event: string): Promise<EventData[]>;

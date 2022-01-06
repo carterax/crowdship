@@ -11,7 +11,7 @@ module.exports = async function (deployer, network) {
     CampaignFactory,
     [
       network === 'development' ? ganacheAccount : gnosisAccount,
-      network === 'development' ? ganacheAccount : gnosisAccount,
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ],
     { deployer, initializer: '__CampaignFactory_init' }
   );
