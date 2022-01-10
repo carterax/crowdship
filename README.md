@@ -1,4 +1,4 @@
-# Crowdship 🚩
+# Crowdship
 
 [![Tests](https://github.com/carterax/crowdship/actions/workflows/tests.yml/badge.svg)](https://github.com/carterax/crowdship/actions/workflows/tests.yml) [![codecov](https://codecov.io/gh/carterax/crowdship/branch/main/graph/badge.svg?token=9NQURT1YJD)](https://codecov.io/gh/carterax/crowdship)
 
