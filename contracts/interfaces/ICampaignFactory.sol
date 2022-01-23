@@ -48,6 +48,7 @@ abstract contract ICampaignFactory {
     mapping(address => Token) public tokens;
 
     mapping(address => mapping(address => bool)) public isUserTrustee;
+    mapping(address => bool) public accountInTransit;
 
     function getCampaignTransactionConfig(string memory _prop)
         public

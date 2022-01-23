@@ -23,6 +23,10 @@ contract Factory {
 
     function createCampaignFactory(
         address _campaignFactoryImplementation,
+        address _campaignImplementation,
+        address _campaignRequestImplementation,
+        address _campaignVoteImplementation,
+        address _campaignRewardImplementation,
         address _governance,
         uint256[15] memory _config
     ) public {
@@ -31,6 +35,10 @@ contract Factory {
         );
         CampaignFactory(campaignFactory).__CampaignFactory_init(
             _governance,
+            _campaignImplementation,
+            _campaignRequestImplementation,
+            _campaignVoteImplementation,
+            _campaignRewardImplementation,
             _config
         );
 

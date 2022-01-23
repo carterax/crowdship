@@ -72,6 +72,17 @@ module.exports = {
       gasPrice: 10e9,
       skipDryRun: true,
     },
+    goerli: {
+      provider: function () {
+        return new HDWalletProvider(
+          mnemonic,
+          `wss://goerli.infura.io/ws/v3/${process.env.INFURA_KEY}`
+        );
+      },
+      network_id: 5,
+      gasPrice: 10e9,
+      skipDryRun: true,
+    },
     // bsc: {
     //   provider: () =>
     //     new HDWalletProvider(mnemonic, 'https://bsc-dataseed.binance.org'),

@@ -164,6 +164,15 @@ contract Campaign is
         _;
     }
 
+    /// @dev Ensures user account is not in transit process
+    modifier userTransferNotInTransit() {
+        require(
+            !campaignFactoryContract.accountInTransit(msg.sender),
+            "in transit"
+        );
+        _;
+    }
+
     /**
      * @dev        Constructor
      * @param      _campaignFactory     Address of factory
@@ -227,16 +236,19 @@ contract Campaign is
 
     /**
      * @dev        Transfers campaign ownership from one user to another.
+     * @param      _oldRoot    Address of the user campaign ownership is being transfered from
      * @param      _newRoot    Address of the user campaign ownership is being transfered to
      */
-    function transferCampaignOwnership(address _newRoot)
-        external
+    function transferCampaignOwnership(address _oldRoot, address _newRoot)
+        public
         onlyAdmin
         whenNotPaused
     {
+        require(_oldRoot == root);
+
         root = _newRoot;
         _setupRole(DEFAULT_ADMIN_ROLE, _newRoot);
-        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        renounceRole(DEFAULT_ADMIN_ROLE, _oldRoot);
 
         emit CampaignOwnershipTransferred(_newRoot);
     }
@@ -252,6 +264,11 @@ contract Campaign is
         whenNotPaused
         userIsVerified(_newAddress)
     {
+        // check if in transfer process from parent contract
+        require(
+            campaignFactoryContract.accountInTransit(_oldAddress),
+            "not in transit"
+        );
         require(
             campaignFactoryContract.isUserTrustee(_oldAddress, msg.sender),
             "not a trustee"
@@ -266,7 +283,7 @@ contract Campaign is
             "transfer attempts exhausted"
         );
         require(
-            timeUntilNextTransferConfirmation[msg.sender] >= block.timestamp,
+            timeUntilNextTransferConfirmation[_oldAddress] >= block.timestamp,
             "time until next confirmation not expired"
         );
 
@@ -274,9 +291,9 @@ contract Campaign is
             transferAttemptCount[_oldAddress] = transferAttemptCount[
                 _oldAddress
             ].add(1);
-            timeUntilNextTransferConfirmation[msg.sender] = block.timestamp.add(
-                30 minutes
-            );
+            timeUntilNextTransferConfirmation[_oldAddress] = block
+                .timestamp
+                .add(30 minutes);
             return;
         } else {
             // transfer balance
@@ -294,6 +311,10 @@ contract Campaign is
                 _oldAddress,
                 _newAddress
             );
+
+            if (_oldAddress == root) {
+                transferCampaignOwnership(_oldAddress, _newAddress);
+            }
 
             emit CampaignUserDataTransferred(_oldAddress, _newAddress);
         }
@@ -315,7 +336,7 @@ contract Campaign is
         uint256 _goalType,
         address _token,
         bool _allowContributionAfterTargetIsMet
-    ) external onlyAdmin {
+    ) external userTransferNotInTransit onlyAdmin {
         require(approversCount < 1, "approvers found");
         require(
             _minimumContribution >=
@@ -379,6 +400,7 @@ contract Campaign is
     function extendDeadline(uint256 _time)
         external
         onlyAdmin
+        userTransferNotInTransit
         nonReentrant
         whenNotPaused
     {
@@ -420,6 +442,7 @@ contract Campaign is
     function setDeadlineSetTimes(uint8 _count)
         external
         onlyAdmin
+        userTransferNotInTransit
         whenNotPaused
     {
         deadlineSetTimes = _count;
@@ -437,7 +460,14 @@ contract Campaign is
         address _token,
         uint256 _rewardId,
         bool _withReward
-    ) external payable userIsVerified(msg.sender) whenNotPaused nonReentrant {
+    )
+        external
+        payable
+        userIsVerified(msg.sender)
+        userTransferNotInTransit
+        whenNotPaused
+        nonReentrant
+    {
         // campaign owner cannot contribute to own campaign
         // token must be accepted
         // contrubution amount must be less than or equal to allowed value from factory
@@ -514,6 +544,7 @@ contract Campaign is
      */
     function withdrawOwnContribution(address payable _wallet)
         external
+        userTransferNotInTransit
         nonReentrant
     {
         require(!withdrawalsPaused);
@@ -620,6 +651,7 @@ contract Campaign is
     function finalizeRequest(uint256 _requestId)
         external
         onlyAdmin
+        userTransferNotInTransit
         whenNotPaused
         nonReentrant
     {
@@ -636,7 +668,12 @@ contract Campaign is
     }
 
     /// @dev Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over
-    function reviewMode() external onlyAdmin whenNotPaused {
+    function reviewMode()
+        external
+        onlyAdmin
+        userTransferNotInTransit
+        whenNotPaused
+    {
         // ensure finalized requests is more than 1
         // ensure no pending request
         // ensure campaign state is running
@@ -666,6 +703,7 @@ contract Campaign is
     /// @dev User acknowledgement of review state enabled by the campaign owner
     function reviewCampaignPerformance(string memory _hashedReview)
         external
+        userTransferNotInTransit
         userIsVerified(msg.sender)
         whenPaused
     {
@@ -681,7 +719,12 @@ contract Campaign is
     }
 
     /// @dev Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
-    function markCampaignComplete() external onlyAdmin whenPaused {
+    function markCampaignComplete()
+        external
+        onlyAdmin
+        userTransferNotInTransit
+        whenPaused
+    {
         // check if reviewers count > 80% of approvers set campaign state to complete
         DecimalMath.UFixed memory percentOfApprovals = DecimalMath.muld(
             DecimalMath.divd(
@@ -709,6 +752,7 @@ contract Campaign is
     /// @dev Called by an approver to report a campaign. Campaign must be in collection or live state
     function reportCampaign(string memory _hashedReport)
         external
+        userTransferNotInTransit
         userIsVerified(msg.sender)
         whenNotPaused
     {

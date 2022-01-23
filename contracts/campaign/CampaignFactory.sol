@@ -147,10 +147,13 @@ contract CampaignFactory is
     }
     Trust[] public trustees;
     mapping(address => uint256) public userTrusteeCount;
+    mapping(address => bool) public accountInTransit;
+    mapping(address => address) public accountTransitStartedBy;
 
     // { trustor -> trustee -> isTrusted }
     mapping(address => mapping(address => bool)) public isUserTrustee;
 
+    /// @dev Ensures caller is owner of contract
     modifier onlyAdmin() {
         // check is governance address
         require(governance == msg.sender, "forbidden");
@@ -178,9 +181,17 @@ contract CampaignFactory is
      */
     function __CampaignFactory_init(
         address _governance,
+        address _campaignImplementation,
+        address _campaignRequestImplementation,
+        address _campaignVoteImplementation,
+        address _campaignRewardImplementation,
         uint256[15] memory _config
     ) public initializer {
         require(_governance != address(0));
+        require(_campaignImplementation != address(0));
+        require(_campaignRequestImplementation != address(0));
+        require(_campaignVoteImplementation != address(0));
+        require(_campaignRewardImplementation != address(0));
 
         governance = _governance;
         campaignFactoryAddress = address(this);
@@ -210,6 +221,11 @@ contract CampaignFactory is
                 index
             ];
         }
+
+        campaignImplementation = _campaignImplementation;
+        campaignRequestsImplementation = _campaignRequestImplementation;
+        campaignVotesImplementation = _campaignVoteImplementation;
+        campaignRewardsImplementation = _campaignRewardImplementation;
 
         _createCategory(true, "miscellaneous");
     }
@@ -416,6 +432,33 @@ contract CampaignFactory is
     }
 
     /**
+     * @dev        Initiates user account transfer proces
+     * @param      _user        Address of user
+     * @param      _forSelf     Indicates if the transfer is made on behalf of a trustee
+     */
+    function initiateUserTransfer(address _user, bool _forSelf) external {
+        if (_forSelf) {
+            accountInTransit[msg.sender] = true;
+            accountTransitStartedBy[msg.sender] = msg.sender;
+        } else {
+            require(isUserTrustee[_user][msg.sender], "not a trustee");
+
+            if (!accountInTransit[_user]) {
+                accountInTransit[_user] = true;
+                accountTransitStartedBy[_user] = msg.sender;
+            }
+        }
+    }
+
+    /// @dev calls off the user account transfer process
+    function deactivateAccountTransfer() external {
+        if (accountInTransit[msg.sender]) {
+            accountInTransit[msg.sender] = false;
+            accountTransitStartedBy[msg.sender] = address(0);
+        }
+    }
+
+    /**
      * @dev        Trustees are people the user can add to help recover their account in the case they lose access to ther wallets
      * @param      _trustee    Address of the trustee, must be a verified user
      */
@@ -478,6 +521,11 @@ contract CampaignFactory is
             campaignCategories[_categoryId].exists &&
                 campaignCategories[_categoryId].active
         );
+
+        require(campaignImplementation != address(0), "zero address");
+        require(campaignRewardsImplementation != address(0), "zero address");
+        require(campaignRequestsImplementation != address(0), "zero address");
+        require(campaignVotesImplementation != address(0), "zero address");
 
         Campaign campaign = Campaign(
             ClonesUpgradeable.clone(campaignImplementation)

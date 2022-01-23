@@ -354,21 +354,37 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   __CampaignFactory_init: {
     (
       _governance: string,
+      _campaignImplementation: string,
+      _campaignRequestImplementation: string,
+      _campaignVoteImplementation: string,
+      _campaignRewardImplementation: string,
       _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _governance: string,
+      _campaignImplementation: string,
+      _campaignRequestImplementation: string,
+      _campaignVoteImplementation: string,
+      _campaignRewardImplementation: string,
       _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _governance: string,
+      _campaignImplementation: string,
+      _campaignRequestImplementation: string,
+      _campaignVoteImplementation: string,
+      _campaignRewardImplementation: string,
       _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _governance: string,
+      _campaignImplementation: string,
+      _campaignRequestImplementation: string,
+      _campaignVoteImplementation: string,
+      _campaignRewardImplementation: string,
       _config: (number | BN | string)[],
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -1078,21 +1094,37 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     __CampaignFactory_init: {
       (
         _governance: string,
+        _campaignImplementation: string,
+        _campaignRequestImplementation: string,
+        _campaignVoteImplementation: string,
+        _campaignRewardImplementation: string,
         _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _governance: string,
+        _campaignImplementation: string,
+        _campaignRequestImplementation: string,
+        _campaignVoteImplementation: string,
+        _campaignRewardImplementation: string,
         _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _governance: string,
+        _campaignImplementation: string,
+        _campaignRequestImplementation: string,
+        _campaignVoteImplementation: string,
+        _campaignRewardImplementation: string,
         _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _governance: string,
+        _campaignImplementation: string,
+        _campaignRequestImplementation: string,
+        _campaignVoteImplementation: string,
+        _campaignRewardImplementation: string,
         _config: (number | BN | string)[],
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;

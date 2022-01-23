@@ -211,13 +211,15 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      * @param      _deliveryDate    Time in which reward will be deliverd to contriutors
      * @param      _stock           Quantity available for dispatch
      * @param      _active          Indicates if contributors can attain the reward
+     * @param      _hashedReward    Initial or new CID refrence of the reward on IPFS
      */
     function modifyReward(
         uint256 _rewardId,
         uint256 _value,
         uint256 _deliveryDate,
         uint256 _stock,
-        bool _active
+        bool _active,
+        string memory _hashedReward
     ) external onlyAdmin {
         /**
          * To modify a reward:
@@ -247,6 +249,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         rewards[_rewardId].deliveryDate = _deliveryDate;
         rewards[_rewardId].stock = _stock;
         rewards[_rewardId].active = _active;
+        rewards[_rewardId].hashed = _hashedReward;
 
         emit RewardModified(_rewardId, _value, _deliveryDate, _stock, _active);
     }

@@ -10,6 +10,7 @@
     "truffle-console:bsc-testnet": "npx truffle console --network bsc-testnet",
     "migrate:rinkeby": "npx truffle migrate --network rinkeby",
     "migrate:ropsten": "npx truffle migrate --network ropsten",
+    "migrate:goerli": "npx truffle migrate --network goerli",
     "migrate:bsc-testnet": "npx truffle migrate --network bsc-testnet",
     "contract-size": "npx truffle run contract-size",
     "coverage": "npx truffle run coverage",
