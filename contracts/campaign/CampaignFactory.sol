@@ -128,6 +128,7 @@ contract CampaignFactory is
         bool verified;
     }
     mapping(address => User) public users;
+    mapping(address => bool) public userExists;
     uint256 public userCount;
 
     /// @dev `Tokens`
@@ -205,8 +206,8 @@ contract CampaignFactory is
             "maximumRequestAmountAllowed",
             "minimumCampaignTarget",
             "maximumCampaignTarget",
-            "maxDeadlineExtension",
             "minDeadlineExtension",
+            "maxDeadlineExtension",
             "minRequestDuration",
             "maxRequestDuration",
             "reviewThresholdMark",
@@ -417,7 +418,10 @@ contract CampaignFactory is
 
     /// @dev Keep track of user addresses. sybil resistance purpose
     function signUp(string memory _hashedUser) public whenNotPaused {
+        require(!userExists[msg.sender], "already exists");
+
         users[msg.sender] = User(block.timestamp, 0, _hashedUser, false);
+        userExists[msg.sender] = true;
         userCount = userCount.add(1);
 
         emit UserAdded(msg.sender);

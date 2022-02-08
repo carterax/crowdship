@@ -14,10 +14,18 @@ export interface CampaignFactoryDeployed {
   args: {
     campaignFactory: string;
     governance: string;
+    campaignImplementation: string;
+    campaignRequestImplementation: string;
+    campaignVoteImplementation: string;
+    campaignRewardImplementation: string;
     campaignIndex: BN;
     0: string;
     1: string;
-    2: BN;
+    2: string;
+    3: string;
+    4: string;
+    5: string;
+    6: BN;
   };
 }
 

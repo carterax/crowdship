@@ -275,6 +275,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
    * Modifies a reward by id
    * @param _active Indicates if contributors can attain the reward
    * @param _deliveryDate Time in which reward will be deliverd to contriutors
+   * @param _hashedReward Initial or new CID refrence of the reward on IPFS
    * @param _rewardId Reward unique id
    * @param _stock Quantity available for dispatch
    * @param _value Reward cost
@@ -286,6 +287,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
       _active: boolean,
+      _hashedReward: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
@@ -294,6 +296,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
       _active: boolean,
+      _hashedReward: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
@@ -302,6 +305,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
       _active: boolean,
+      _hashedReward: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
@@ -310,6 +314,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
       _deliveryDate: number | BN | string,
       _stock: number | BN | string,
       _active: boolean,
+      _hashedReward: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -608,6 +613,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
      * Modifies a reward by id
      * @param _active Indicates if contributors can attain the reward
      * @param _deliveryDate Time in which reward will be deliverd to contriutors
+     * @param _hashedReward Initial or new CID refrence of the reward on IPFS
      * @param _rewardId Reward unique id
      * @param _stock Quantity available for dispatch
      * @param _value Reward cost
@@ -619,6 +625,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
         _active: boolean,
+        _hashedReward: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
@@ -627,6 +634,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
         _active: boolean,
+        _hashedReward: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
@@ -635,6 +643,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
         _active: boolean,
+        _hashedReward: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
@@ -643,6 +652,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
         _deliveryDate: number | BN | string,
         _stock: number | BN | string,
         _active: boolean,
+        _hashedReward: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

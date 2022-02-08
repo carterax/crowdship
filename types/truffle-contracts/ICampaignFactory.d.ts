@@ -13,6 +13,11 @@ export interface ICampaignFactoryContract
 type AllEvents = never;
 
 export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
+  accountInTransit(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
   campaignCategories(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
@@ -109,6 +114,11 @@ export interface ICampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   methods: {
+    accountInTransit(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
     campaignCategories(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails

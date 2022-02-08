@@ -238,6 +238,16 @@ type AllEvents =
   | UserApproval;
 
 export interface CampaignFactoryInstance extends Truffle.ContractInstance {
+  accountInTransit(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
+  accountTransitStartedBy(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   approvedCampaignTransactionConfig(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
@@ -336,6 +346,11 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   ): Promise<{ 0: string; 1: string; 2: BN; 3: boolean }>;
 
   userCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  userExists(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
 
   userTrusteeCount(
     arg0: string,
@@ -717,6 +732,46 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   ): Promise<boolean>;
 
   /**
+   * Initiates user account transfer proces
+   * @param _forSelf Indicates if the transfer is made on behalf of a trustee
+   * @param _user Address of user
+   */
+  initiateUserTransfer: {
+    (
+      _user: string,
+      _forSelf: boolean,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
+    call(
+      _user: string,
+      _forSelf: boolean,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _user: string,
+      _forSelf: boolean,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _user: string,
+      _forSelf: boolean,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * calls off the user account transfer process
+   */
+  deactivateAccountTransfer: {
+    (txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+    sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+    estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+  };
+
+  /**
    * Trustees are people the user can add to help recover their account in the case they lose access to ther wallets
    * @param _trustee Address of the trustee, must be a verified user
    */
@@ -978,6 +1033,16 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   methods: {
+    accountInTransit(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
+    accountTransitStartedBy(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     approvedCampaignTransactionConfig(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
@@ -1076,6 +1141,11 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     ): Promise<{ 0: string; 1: string; 2: BN; 3: boolean }>;
 
     userCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    userExists(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
 
     userTrusteeCount(
       arg0: string,
@@ -1458,6 +1528,46 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
       _user: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
+
+    /**
+     * Initiates user account transfer proces
+     * @param _forSelf Indicates if the transfer is made on behalf of a trustee
+     * @param _user Address of user
+     */
+    initiateUserTransfer: {
+      (
+        _user: string,
+        _forSelf: boolean,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
+      call(
+        _user: string,
+        _forSelf: boolean,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _user: string,
+        _forSelf: boolean,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _user: string,
+        _forSelf: boolean,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * calls off the user account transfer process
+     */
+    deactivateAccountTransfer: {
+      (txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(txDetails?: Truffle.TransactionDetails): Promise<void>;
+      sendTransaction(txDetails?: Truffle.TransactionDetails): Promise<string>;
+      estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
+    };
 
     /**
      * Trustees are people the user can add to help recover their account in the case they lose access to ther wallets

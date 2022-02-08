@@ -545,20 +545,26 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   /**
    * Transfers campaign ownership from one user to another.
    * @param _newRoot Address of the user campaign ownership is being transfered to
+   * @param _oldRoot Address of the user campaign ownership is being transfered from
    */
   transferCampaignOwnership: {
-    (_newRoot: string, txDetails?: Truffle.TransactionDetails): Promise<
-      Truffle.TransactionResponse<AllEvents>
-    >;
+    (
+      _oldRoot: string,
+      _newRoot: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
+      _oldRoot: string,
       _newRoot: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
+      _oldRoot: string,
       _newRoot: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
+      _oldRoot: string,
       _newRoot: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -1242,20 +1248,26 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     /**
      * Transfers campaign ownership from one user to another.
      * @param _newRoot Address of the user campaign ownership is being transfered to
+     * @param _oldRoot Address of the user campaign ownership is being transfered from
      */
     transferCampaignOwnership: {
-      (_newRoot: string, txDetails?: Truffle.TransactionDetails): Promise<
-        Truffle.TransactionResponse<AllEvents>
-      >;
+      (
+        _oldRoot: string,
+        _newRoot: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
+        _oldRoot: string,
         _newRoot: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
+        _oldRoot: string,
         _newRoot: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
+        _oldRoot: string,
         _newRoot: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;

@@ -12,6 +12,10 @@ contract Factory {
     event CampaignFactoryDeployed(
         address indexed campaignFactory,
         address governance,
+        address campaignImplementation,
+        address campaignRequestImplementation,
+        address campaignVoteImplementation,
+        address campaignRewardImplementation,
         uint256 campaignIndex
     );
 
@@ -51,6 +55,10 @@ contract Factory {
         emit CampaignFactoryDeployed(
             campaignFactory,
             _governance,
+            _campaignImplementation,
+            _campaignRequestImplementation,
+            _campaignVoteImplementation,
+            _campaignRewardImplementation,
             deployedCampaignCount
         );
     }
