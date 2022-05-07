@@ -645,7 +645,7 @@ contract Campaign is
     }
 
     /**
-     * @dev        Withdrawal method called only when a request receives the right amount votes
+     * @dev        Withdrawal method called only when a request receives the right amount of votes
      * @param      _requestId      ID of request being withdrawn
      */
     function finalizeRequest(uint256 _requestId)

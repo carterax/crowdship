@@ -757,7 +757,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   ): Promise<BN>;
 
   /**
-   * Withdrawal method called only when a request receives the right amount votes
+   * Withdrawal method called only when a request receives the right amount of votes
    * @param _requestId ID of request being withdrawn
    */
   finalizeRequest: {
@@ -1460,7 +1460,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<BN>;
 
     /**
-     * Withdrawal method called only when a request receives the right amount votes
+     * Withdrawal method called only when a request receives the right amount of votes
      * @param _requestId ID of request being withdrawn
      */
     finalizeRequest: {

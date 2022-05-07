@@ -898,7 +898,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Approves a campaign. By approving your campaign all events will  stored on thegraph and listed on crowdship, Restricted to campaign managers
+   * Approves a campaign. By approving your campaign all events will be stored on thegraph and listed on crowdship, Restricted to campaign managers
    * @param _campaign Address of the campaign
    */
   approveCampaign: {
@@ -1696,7 +1696,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Approves a campaign. By approving your campaign all events will  stored on thegraph and listed on crowdship, Restricted to campaign managers
+     * Approves a campaign. By approving your campaign all events will be stored on thegraph and listed on crowdship, Restricted to campaign managers
      * @param _campaign Address of the campaign
      */
     approveCampaign: {

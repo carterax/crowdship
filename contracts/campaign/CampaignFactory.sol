@@ -526,6 +526,9 @@ contract CampaignFactory is
                 campaignCategories[_categoryId].active
         );
 
+        // check user exists
+        require(userExists[msg.sender], "user does not exist");
+
         require(campaignImplementation != address(0), "zero address");
         require(campaignRewardsImplementation != address(0), "zero address");
         require(campaignRequestsImplementation != address(0), "zero address");
@@ -608,7 +611,7 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Approves a campaign. By approving your campaign all events will 
+     * @dev        Approves a campaign. By approving your campaign all events will be
                    stored on thegraph and listed on crowdship, Restricted to campaign managers
      * @param      _campaign    Address of the campaign
      */
