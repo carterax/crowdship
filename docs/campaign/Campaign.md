@@ -14,7 +14,6 @@
 
 | Var | Type |
 | --- | --- |
-| MANAGER | bytes32 |
 | goalType | enum Campaign.GOALTYPE |
 | campaignState | enum Campaign.CAMPAIGN_STATE |
 | campaignFactoryContract | contract ICampaignFactory |
@@ -25,13 +24,13 @@
 | contributionId | mapping(address => uint256) |
 | reviewCount | uint256 |
 | reviewed | mapping(address => bool) |
+| reviewHash | mapping(address => string) |
 | root | address |
 | acceptedToken | address |
 | allowContributionAfterTargetIsMet | bool |
 | withdrawalsPaused | bool |
 | percentBase | uint8 |
 | percent | uint256 |
-| campaignID | uint256 |
 | totalCampaignContribution | uint256 |
 | campaignBalance | uint256 |
 | minimumContribution | uint256 |
@@ -40,8 +39,10 @@
 | deadline | uint256 |
 | deadlineSetTimes | uint256 |
 | reportCount | uint256 |
+| allowedToContribute | mapping(address => bool) |
 | approvers | mapping(address => bool) |
 | reported | mapping(address => bool) |
+| reportHash | mapping(address => string) |
 | transferAttemptCount | mapping(address => uint256) |
 | timeUntilNextTransferConfirmation | mapping(address => uint256) |
 
@@ -49,7 +50,7 @@
 ## Modifiers
 
 ### onlyFactory
-> Ensures caller is only factory, works only if campaign is approved
+> Ensures caller is only factory
 
 #### Declaration
 ```solidity
@@ -63,6 +64,15 @@
 #### Declaration
 ```solidity
   modifier userIsVerified
+```
+
+
+### userTransferNotInTransit
+> Ensures user account is not in transit process
+
+#### Declaration
+```solidity
+  modifier userTransferNotInTransit
 ```
 
 
@@ -80,8 +90,7 @@
     contract CampaignReward _campaignRewards,
     contract CampaignRequest _campaignRequests,
     contract CampaignVote _campaignVotes,
-    address _root,
-    uint256 _campaignId
+    address _root
   ) public initializer
 ```
 
@@ -98,7 +107,6 @@
 |`_campaignRequests` | contract CampaignRequest |    Address of campaign request contract
 |`_campaignVotes` | contract CampaignVote |       Address of campaign vote contract
 |`_root` | address |                Address of campaign owner
-|`_campaignId` | uint256 |          ID of the campaign from campaign factory
 ---  
 ### isCampaignAdmin
 >        Checks if a provided address is a campaign admin
@@ -107,6 +115,25 @@
 #### Declaration
 ```solidity
   function isCampaignAdmin(
+    address _user
+  ) external returns (bool)
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_user` | address |     Address of the user
+---  
+### isCampaignManager
+>        Checks if a provided address is a campaign admin
+
+
+#### Declaration
+```solidity
+  function isCampaignManager(
     address _user
   ) external returns (bool)
 ```
@@ -159,8 +186,9 @@ No modifiers
 #### Declaration
 ```solidity
   function transferCampaignOwnership(
+    address _oldRoot,
     address _newRoot
-  ) external onlyAdmin whenNotPaused
+  ) public onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
@@ -172,6 +200,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
+|`_oldRoot` | address |    Address of the user campaign ownership is being transfered from
 |`_newRoot` | address |    Address of the user campaign ownership is being transfered to
 ---  
 ### transferCampaignUserData
@@ -200,7 +229,7 @@ No modifiers
 |`_newAddress` | address |    Address of the user being transferred to
 ---  
 ### setCampaignSettings
->         Modifies campaign details while it's not approved
+>         Modifies campaign details
 
 
 #### Declaration
@@ -212,12 +241,13 @@ No modifiers
     uint256 _goalType,
     address _token,
     bool _allowContributionAfterTargetIsMet
-  ) external onlyAdmin
+  ) external userTransferNotInTransit onlyAdmin
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| userTransferNotInTransit |
 | onlyAdmin |
 
 #### Args:
@@ -228,7 +258,7 @@ No modifiers
 |`_duration` | uint256 |                            How long until the campaign stops receiving contributions
 |`_goalType` | uint256 |                            If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
 |`_token` | address |                               Address of token to be used for transactions by default
-|`_allowContributionAfterTargetIsMet` | bool |   Indicates if the campaign can receive contributions after duration expires
+|`_allowContributionAfterTargetIsMet` | bool |   Indicates if the campaign can receive contributions after the target is met
 ---  
 ### extendDeadline
 >        Extends campaign contribution deadline
@@ -238,13 +268,14 @@ No modifiers
 ```solidity
   function extendDeadline(
     uint256 _time
-  ) external onlyAdmin nonReentrant whenNotPaused
+  ) external onlyAdmin userTransferNotInTransit nonReentrant whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| userTransferNotInTransit |
 | nonReentrant |
 | whenNotPaused |
 
@@ -254,26 +285,49 @@ No modifiers
 |`_time` | uint256 |    How long until the campaign stops receiving contributions
 ---  
 ### setDeadlineSetTimes
->        Sets the number of times the campaign owner can extended deadlines.
+>        Sets the number of times the campaign owner can extend deadlines.
 
 
 #### Declaration
 ```solidity
   function setDeadlineSetTimes(
     uint8 _count
-  ) external onlyAdmin whenNotPaused
+  ) external onlyAdmin userTransferNotInTransit whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| userTransferNotInTransit |
 | whenNotPaused |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_count` | uint8 |   Number of times a campaign owner can extend the deadline
+---  
+### toggleContributorApproval
+>        Approves or unapproves a potential contributor
+
+
+#### Declaration
+```solidity
+  function toggleContributorApproval(
+    address _contributor
+  ) external onlyAdmin onlyManager
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyAdmin |
+| onlyManager |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_contributor` | address |     Address of the potential contributor
 ---  
 ### contribute
 >        Contribute method enables a user become an approver in the campaign
@@ -285,13 +339,14 @@ No modifiers
     address _token,
     uint256 _rewardId,
     bool _withReward
-  ) external userIsVerified whenNotPaused nonReentrant
+  ) external userIsVerified userTransferNotInTransit whenNotPaused nonReentrant
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | userIsVerified |
+| userTransferNotInTransit |
 | whenNotPaused |
 | nonReentrant |
 
@@ -302,20 +357,21 @@ No modifiers
 |`_rewardId` | uint256 |    Reward unique id
 |`_withReward` | bool |  Indicates if the user wants a reward alongside their contribution
 ---  
-### withdrawOwnContribution
+### withdrawContribution
 >        Allows withdrawal of contribution by a user, works if campaign target isn't met
 
 
 #### Declaration
 ```solidity
-  function withdrawOwnContribution(
+  function withdrawContribution(
     address payable _wallet
-  ) external nonReentrant
+  ) external userTransferNotInTransit nonReentrant
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| userTransferNotInTransit |
 | nonReentrant |
 
 #### Args:
@@ -343,20 +399,22 @@ No modifiers
 |`_user` | address |    Address of user check is carried out on
 ---  
 ### finalizeRequest
->        Withdrawal method called only when a request receives the right amount votes
+>        Withdrawal method called only when a request receives the right amount of votes
 
 
 #### Declaration
 ```solidity
   function finalizeRequest(
     uint256 _requestId
-  ) external onlyAdmin whenNotPaused nonReentrant
+  ) external onlyAdmin onlyManager userTransferNotInTransit whenNotPaused nonReentrant
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
+| userTransferNotInTransit |
 | whenNotPaused |
 | nonReentrant |
 
@@ -371,33 +429,41 @@ No modifiers
 #### Declaration
 ```solidity
   function reviewMode(
-  ) external onlyAdmin whenNotPaused
+  ) external onlyAdmin onlyManager userTransferNotInTransit whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
+| userTransferNotInTransit |
 | whenNotPaused |
 
 
 ---  
 ### reviewCampaignPerformance
-> User acknowledgement of review state enabled by the campaign owner
+>        User acknowledgement of review state enabled by the campaign owner
+
 
 #### Declaration
 ```solidity
   function reviewCampaignPerformance(
-  ) external userIsVerified whenPaused
+    string _hashedReview
+  ) external userTransferNotInTransit userIsVerified whenPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| userTransferNotInTransit |
 | userIsVerified |
 | whenPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_hashedReview` | string |    CID reference of the review on IPFS
 ---  
 ### markCampaignComplete
 > Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
@@ -405,33 +471,61 @@ No modifiers
 #### Declaration
 ```solidity
   function markCampaignComplete(
-  ) external onlyAdmin whenPaused
+  ) external onlyAdmin userTransferNotInTransit whenPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| userTransferNotInTransit |
 | whenPaused |
 
 
 ---  
 ### reportCampaign
-> Called by an approver to report a campaign. Campaign must be in collection or live state
+>        Called by an approver to report a campaign. Campaign must be in collection or live state
+
 
 #### Declaration
 ```solidity
   function reportCampaign(
-  ) external userIsVerified whenNotPaused
+    string _hashedReport
+  ) external userTransferNotInTransit userIsVerified whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
+| userTransferNotInTransit |
 | userIsVerified |
 | whenNotPaused |
 
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_hashedReport` | string |    CID reference of the report on IPFS
+---  
+### setCampaignState
+>        Sets the campaign state
 
+
+#### Declaration
+```solidity
+  function setCampaignState(
+    uint256 _state
+  ) external onlyFactory
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyFactory |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_state` | uint256 |      Indicates pause or unpause state
 ---  
 ### toggleWithdrawalState
 >        Pauses or Unpauses withdrawals depending on state passed in argument
@@ -522,8 +616,13 @@ No modifiers
   
 
 
-### ContributionMade
+### ContributorApprovalToggled
 > `Contribution Events`
+  
+
+
+### ContributionMade
+
   
 
 
@@ -549,6 +648,11 @@ No modifiers
 
 ### CampaignStateChange
 > `Campaign State Events`
+  
+
+
+### WithdrawalStateUpdated
+
   
 
 

@@ -117,6 +117,16 @@ export interface ContributionWithdrawn {
   };
 }
 
+export interface ContributorApprovalToggled {
+  name: "ContributorApprovalToggled";
+  args: {
+    contributor: string;
+    isApproved: boolean;
+    0: string;
+    1: boolean;
+  };
+}
+
 export interface DeadlineThresholdExtended {
   name: "DeadlineThresholdExtended";
   args: {
@@ -204,6 +214,7 @@ type AllEvents =
   | CampaignUserDataTransferred
   | ContributionMade
   | ContributionWithdrawn
+  | ContributorApprovalToggled
   | DeadlineThresholdExtended
   | Paused
   | RequestComplete
@@ -249,6 +260,11 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   allowContributionAfterTargetIsMet(
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
+  allowedToContribute(
+    arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
@@ -410,12 +426,22 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   reportCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+  reportHash(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
+
   reported(
     arg0: string,
     txDetails?: Truffle.TransactionDetails
   ): Promise<boolean>;
 
   reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+  reviewHash(
+    arg0: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<string>;
 
   reviewed(
     arg0: string,
@@ -529,6 +555,15 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   ): Promise<boolean>;
 
   /**
+   * Checks if a provided address is a campaign admin
+   * @param _user Address of the user
+   */
+  isCampaignManager(
+    _user: string,
+    txDetails?: Truffle.TransactionDetails
+  ): Promise<boolean>;
+
+  /**
    * Returns the campaigns funding goal type
    */
   getCampaignGoalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
@@ -600,7 +635,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   /**
    * Modifies campaign details
-   * @param _allowContributionAfterTargetIsMet Indicates if the campaign can receive contributions after duration expires
+   * @param _allowContributionAfterTargetIsMet Indicates if the campaign can receive contributions after the target is met
    * @param _duration How long until the campaign stops receiving contributions
    * @param _goalType If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
    * @param _minimumContribution The minimum amout required to be an approver
@@ -670,7 +705,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Sets the number of times the campaign owner can extended deadlines.
+   * Sets the number of times the campaign owner can extend deadlines.
    * @param _count Number of times a campaign owner can extend the deadline
    */
   setDeadlineSetTimes: {
@@ -688,6 +723,28 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<string>;
     estimateGas(
       _count: number | BN | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  /**
+   * Approves or unapproves a potential contributor
+   * @param _contributor Address of the potential contributor
+   */
+  toggleContributorApproval: {
+    (_contributor: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(
+      _contributor: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<void>;
+    sendTransaction(
+      _contributor: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _contributor: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -729,7 +786,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
    * Allows withdrawal of contribution by a user, works if campaign target isn't met
    * @param _wallet Address where amount is delivered
    */
-  withdrawOwnContribution: {
+  withdrawContribution: {
     (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
@@ -793,6 +850,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   /**
    * User acknowledgement of review state enabled by the campaign owner
+   * @param _hashedReview CID reference of the review on IPFS
    */
   reviewCampaignPerformance: {
     (_hashedReview: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -826,6 +884,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
   /**
    * Called by an approver to report a campaign. Campaign must be in collection or live state
+   * @param _hashedReport CID reference of the report on IPFS
    */
   reportCampaign: {
     (_hashedReport: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -846,7 +905,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Sets the campaign state, only ever called if campaign is approved with factory
+   * Sets the campaign state
    * @param _state Indicates pause or unpause state
    */
   setCampaignState: {
@@ -950,6 +1009,11 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     allowContributionAfterTargetIsMet(
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
+    allowedToContribute(
+      arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
@@ -1113,12 +1177,22 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     reportCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
+    reportHash(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+
     reported(
       arg0: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<boolean>;
 
     reviewCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
+
+    reviewHash(
+      arg0: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
 
     reviewed(
       arg0: string,
@@ -1232,6 +1306,15 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     ): Promise<boolean>;
 
     /**
+     * Checks if a provided address is a campaign admin
+     * @param _user Address of the user
+     */
+    isCampaignManager(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+
+    /**
      * Returns the campaigns funding goal type
      */
     getCampaignGoalType(txDetails?: Truffle.TransactionDetails): Promise<BN>;
@@ -1303,7 +1386,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     /**
      * Modifies campaign details
-     * @param _allowContributionAfterTargetIsMet Indicates if the campaign can receive contributions after duration expires
+     * @param _allowContributionAfterTargetIsMet Indicates if the campaign can receive contributions after the target is met
      * @param _duration How long until the campaign stops receiving contributions
      * @param _goalType If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
      * @param _minimumContribution The minimum amout required to be an approver
@@ -1373,7 +1456,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Sets the number of times the campaign owner can extended deadlines.
+     * Sets the number of times the campaign owner can extend deadlines.
      * @param _count Number of times a campaign owner can extend the deadline
      */
     setDeadlineSetTimes: {
@@ -1391,6 +1474,28 @@ export interface CampaignInstance extends Truffle.ContractInstance {
       ): Promise<string>;
       estimateGas(
         _count: number | BN | string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    /**
+     * Approves or unapproves a potential contributor
+     * @param _contributor Address of the potential contributor
+     */
+    toggleContributorApproval: {
+      (_contributor: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(
+        _contributor: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<void>;
+      sendTransaction(
+        _contributor: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _contributor: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };
@@ -1432,7 +1537,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
      * Allows withdrawal of contribution by a user, works if campaign target isn't met
      * @param _wallet Address where amount is delivered
      */
-    withdrawOwnContribution: {
+    withdrawContribution: {
       (_wallet: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
@@ -1496,6 +1601,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     /**
      * User acknowledgement of review state enabled by the campaign owner
+     * @param _hashedReview CID reference of the review on IPFS
      */
     reviewCampaignPerformance: {
       (_hashedReview: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -1529,6 +1635,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
 
     /**
      * Called by an approver to report a campaign. Campaign must be in collection or live state
+     * @param _hashedReport CID reference of the report on IPFS
      */
     reportCampaign: {
       (_hashedReport: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -1549,7 +1656,7 @@ export interface CampaignInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Sets the campaign state, only ever called if campaign is approved with factory
+     * Sets the campaign state
      * @param _state Indicates pause or unpause state
      */
     setCampaignState: {

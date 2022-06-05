@@ -42,13 +42,13 @@ library CampaignFactoryLib {
         returns (uint256, bool)
     {
         uint256 campaignCategory;
-        bool campaignIsApproved;
+        bool privateCampaign;
 
-        (, , , campaignCategory, , , campaignIsApproved) = _factory.campaigns(
+        (, , , campaignCategory, , , privateCampaign) = _factory.campaigns(
             _campaign
         );
 
-        return (campaignCategory, campaignIsApproved);
+        return (campaignCategory, privateCampaign);
     }
 
     /**

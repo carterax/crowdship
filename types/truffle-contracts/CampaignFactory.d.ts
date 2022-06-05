@@ -14,15 +14,9 @@ export interface CampaignActivation {
   name: "CampaignActivation";
   args: {
     campaign: string;
+    active: boolean;
     0: string;
-  };
-}
-
-export interface CampaignApproval {
-  name: "CampaignApproval";
-  args: {
-    campaign: string;
-    0: string;
+    1: boolean;
   };
 }
 
@@ -53,7 +47,8 @@ export interface CampaignDeployed {
     campaignRequests: string;
     campaignVotes: string;
     category: BN;
-    approved: boolean;
+    privateCampaign: boolean;
+    hashedCampaignInfo: string;
     0: string;
     1: string;
     2: string;
@@ -61,6 +56,7 @@ export interface CampaignDeployed {
     4: string;
     5: BN;
     6: boolean;
+    7: string;
   };
 }
 
@@ -69,6 +65,16 @@ export interface CampaignImplementationUpdated {
   args: {
     campaignImplementation: string;
     0: string;
+  };
+}
+
+export interface CampaignPrivacyChange {
+  name: "CampaignPrivacyChange";
+  args: {
+    campaign: string;
+    privateCampaign: boolean;
+    0: string;
+    1: boolean;
   };
 }
 
@@ -112,9 +118,11 @@ export interface CategoryAdded {
     categoryId: BN;
     active: boolean;
     title: string;
+    hashedCategory: string;
     0: BN;
     1: boolean;
     2: string;
+    3: string;
   };
 }
 
@@ -153,8 +161,10 @@ export interface TokenAdded {
   args: {
     token: string;
     approval: boolean;
+    hashedToken: string;
     0: string;
     1: boolean;
+    2: string;
   };
 }
 
@@ -200,7 +210,9 @@ export interface UserAdded {
   name: "UserAdded";
   args: {
     userId: string;
+    hashedUser: string;
     0: string;
+    1: string;
   };
 }
 
@@ -216,11 +228,11 @@ export interface UserApproval {
 
 type AllEvents =
   | CampaignActivation
-  | CampaignApproval
   | CampaignCategoryChange
   | CampaignDefaultCommissionUpdated
   | CampaignDeployed
   | CampaignImplementationUpdated
+  | CampaignPrivacyChange
   | CampaignRequestImplementationUpdated
   | CampaignRewardImplementationUpdated
   | CampaignTransactionConfigUpdated
@@ -256,7 +268,15 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   campaignCategories(
     arg0: number | BN | string,
     txDetails?: Truffle.TransactionDetails
-  ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
+  ): Promise<{
+    0: BN;
+    1: BN;
+    2: BN;
+    3: string;
+    4: string;
+    5: boolean;
+    6: boolean;
+  }>;
 
   campaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -607,6 +627,8 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   /**
    * Adds a token that needs approval before being accepted
+   * @param _approved Status of token approval
+   * @param _hashedToken CID reference of the token on IPFS
    * @param _token Address of the token
    */
   addToken: {
@@ -638,7 +660,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   /**
    * Sets if a token is accepted or not provided it's in the list of token
-   * @param _state Indicates if the token is approved or not
+   * @param _state Status of token approval
    * @param _token Address of the token
    */
   toggleAcceptedToken: {
@@ -703,6 +725,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   /**
    * Keep track of user addresses. sybil resistance purpose
+   * @param _hashedUser CID reference of the user on IPFS
    */
   signUp: {
     (_hashedUser: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -846,30 +869,32 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
   /**
    * Deploys and tracks a new campagign
-   * @param _categoryId ID of category campaign deployer specifies
+   * @param _categoryId ID of the category the campaign belongs to
+   * @param _hashedCampaignInfo CID reference of the reward on IPFS
+   * @param _privateCampaign Indicates approval status of the campaign
    */
   createCampaign: {
     (
       _categoryId: number | BN | string,
-      _approved: boolean,
+      _privateCampaign: boolean,
       _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _categoryId: number | BN | string,
-      _approved: boolean,
+      _privateCampaign: boolean,
       _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _categoryId: number | BN | string,
-      _approved: boolean,
+      _privateCampaign: boolean,
       _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _categoryId: number | BN | string,
-      _approved: boolean,
+      _privateCampaign: boolean,
       _hashedCampaignInfo: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
@@ -879,7 +904,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
    * Activates a campaign. Activating a campaign simply makes the campaign available for listing  on crowdship, events will be stored on thegraph activated or not, Restricted to governance
    * @param _campaign Address of the campaign
    */
-  activateCampaign: {
+  toggleCampaignActivation: {
     (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
@@ -898,10 +923,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   };
 
   /**
-   * Approves a campaign. By approving your campaign all events will be stored on thegraph and listed on crowdship, Restricted to campaign managers
+   * Toggles the campaign privacy setting, Restricted to campaign managers
    * @param _campaign Address of the campaign
    */
-  approveCampaign: {
+  toggleCampaignPrivacy: {
     (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
     >;
@@ -950,27 +975,32 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
   /**
    * Public implementation of createCategory method
    * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
+   * @param _hashedCategory CID reference of the category on IPFS
    * @param _title Title of the category
    */
   createCategory: {
     (
       _active: boolean,
       _title: string,
+      _hashedCategory: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse<AllEvents>>;
     call(
       _active: boolean,
       _title: string,
+      _hashedCategory: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       _active: boolean,
       _title: string,
+      _hashedCategory: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       _active: boolean,
       _title: string,
+      _hashedCategory: string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
@@ -1051,7 +1081,15 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     campaignCategories(
       arg0: number | BN | string,
       txDetails?: Truffle.TransactionDetails
-    ): Promise<{ 0: BN; 1: BN; 2: BN; 3: string; 4: boolean; 5: boolean }>;
+    ): Promise<{
+      0: BN;
+      1: BN;
+      2: BN;
+      3: string;
+      4: string;
+      5: boolean;
+      6: boolean;
+    }>;
 
     campaignCount(txDetails?: Truffle.TransactionDetails): Promise<BN>;
 
@@ -1405,6 +1443,8 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     /**
      * Adds a token that needs approval before being accepted
+     * @param _approved Status of token approval
+     * @param _hashedToken CID reference of the token on IPFS
      * @param _token Address of the token
      */
     addToken: {
@@ -1436,7 +1476,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     /**
      * Sets if a token is accepted or not provided it's in the list of token
-     * @param _state Indicates if the token is approved or not
+     * @param _state Status of token approval
      * @param _token Address of the token
      */
     toggleAcceptedToken: {
@@ -1501,6 +1541,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     /**
      * Keep track of user addresses. sybil resistance purpose
+     * @param _hashedUser CID reference of the user on IPFS
      */
     signUp: {
       (_hashedUser: string, txDetails?: Truffle.TransactionDetails): Promise<
@@ -1644,30 +1685,32 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
 
     /**
      * Deploys and tracks a new campagign
-     * @param _categoryId ID of category campaign deployer specifies
+     * @param _categoryId ID of the category the campaign belongs to
+     * @param _hashedCampaignInfo CID reference of the reward on IPFS
+     * @param _privateCampaign Indicates approval status of the campaign
      */
     createCampaign: {
       (
         _categoryId: number | BN | string,
-        _approved: boolean,
+        _privateCampaign: boolean,
         _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _categoryId: number | BN | string,
-        _approved: boolean,
+        _privateCampaign: boolean,
         _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _categoryId: number | BN | string,
-        _approved: boolean,
+        _privateCampaign: boolean,
         _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _categoryId: number | BN | string,
-        _approved: boolean,
+        _privateCampaign: boolean,
         _hashedCampaignInfo: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
@@ -1677,7 +1720,7 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
      * Activates a campaign. Activating a campaign simply makes the campaign available for listing  on crowdship, events will be stored on thegraph activated or not, Restricted to governance
      * @param _campaign Address of the campaign
      */
-    activateCampaign: {
+    toggleCampaignActivation: {
       (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
@@ -1696,10 +1739,10 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     };
 
     /**
-     * Approves a campaign. By approving your campaign all events will be stored on thegraph and listed on crowdship, Restricted to campaign managers
+     * Toggles the campaign privacy setting, Restricted to campaign managers
      * @param _campaign Address of the campaign
      */
-    approveCampaign: {
+    toggleCampaignPrivacy: {
       (_campaign: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;
@@ -1748,27 +1791,32 @@ export interface CampaignFactoryInstance extends Truffle.ContractInstance {
     /**
      * Public implementation of createCategory method
      * @param _active Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param _hashedCategory CID reference of the category on IPFS
      * @param _title Title of the category
      */
     createCategory: {
       (
         _active: boolean,
         _title: string,
+        _hashedCategory: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<Truffle.TransactionResponse<AllEvents>>;
       call(
         _active: boolean,
         _title: string,
+        _hashedCategory: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<void>;
       sendTransaction(
         _active: boolean,
         _title: string,
+        _hashedCategory: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<string>;
       estimateGas(
         _active: boolean,
         _title: string,
+        _hashedCategory: string,
         txDetails?: Truffle.TransactionDetails
       ): Promise<number>;
     };

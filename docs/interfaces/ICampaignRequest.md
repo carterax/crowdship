@@ -14,7 +14,7 @@
 
 | Var | Type |
 | --- | --- |
-| requests | struct ICampaignRequest.Request[] |
+| requests | mapping(uint256 => struct ICampaignRequest.Request) |
 | requestCount | uint256 |
 | finalizedRequestCount | uint256 |
 | currentRunningRequest | uint256 |

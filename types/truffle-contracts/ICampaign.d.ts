@@ -65,6 +65,24 @@ export interface ICampaignInstance extends Truffle.ContractInstance {
     ): Promise<number>;
   };
 
+  isCampaignManager: {
+    (_user: string, txDetails?: Truffle.TransactionDetails): Promise<
+      Truffle.TransactionResponse<AllEvents>
+    >;
+    call(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<boolean>;
+    sendTransaction(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      _user: string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
   getCampaignGoalType: {
     (txDetails?: Truffle.TransactionDetails): Promise<
       Truffle.TransactionResponse<AllEvents>
@@ -132,6 +150,24 @@ export interface ICampaignInstance extends Truffle.ContractInstance {
     ): Promise<BN>;
 
     isCampaignAdmin: {
+      (_user: string, txDetails?: Truffle.TransactionDetails): Promise<
+        Truffle.TransactionResponse<AllEvents>
+      >;
+      call(
+        _user: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<boolean>;
+      sendTransaction(
+        _user: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<string>;
+      estimateGas(
+        _user: string,
+        txDetails?: Truffle.TransactionDetails
+      ): Promise<number>;
+    };
+
+    isCampaignManager: {
       (_user: string, txDetails?: Truffle.TransactionDetails): Promise<
         Truffle.TransactionResponse<AllEvents>
       >;

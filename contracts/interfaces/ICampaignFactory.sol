@@ -18,7 +18,7 @@ abstract contract ICampaignFactory {
         uint256 category;
         string hahedCampaignInfo;
         bool active;
-        bool approved;
+        bool privateCampaign;
     }
     mapping(Campaign => CampaignInfo) public campaigns;
 

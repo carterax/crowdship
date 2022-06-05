@@ -14,11 +14,10 @@
 
 | Var | Type |
 | --- | --- |
-| votes | struct CampaignVote.Vote[] |
-| voteId | mapping(address => mapping(uint256 => uint256)) |
-| campaignID | uint256 |
-| campaignFactoryContract | contract ICampaignFactory |
-| campaignContract | contract ICampaign |
+| votes | mapping(address => mapping(uint256 => struct CampaignVote.Vote)) |
+| voteCount | uint256 |
+| campaignFactoryInterface | contract ICampaignFactory |
+| campaignInterface | contract ICampaign |
 
 
 ## Modifiers
@@ -43,8 +42,7 @@
 ```solidity
   function __CampaignVote_init(
     contract CampaignFactory _campaignFactory,
-    contract Campaign _campaign,
-    uint256 _campaignId
+    contract Campaign _campaign
   ) public initializer
 ```
 
@@ -57,8 +55,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaignFactory` | contract CampaignFactory |     Address of factory
-|`_campaign` | contract Campaign |            Address of campaign contract
-|`_campaignId` | uint256 |          ID of it's campaign contract
+|`_campaign` | contract Campaign |            Address of campaign contract this contract belongs to
 ---  
 ### voteOnRequest
 >        Approvers only method which approves spending request issued by the campaign manager

@@ -51,6 +51,8 @@ type AllEvents = RoleAdminChanged | RoleGranted | RoleRevoked;
 export interface AccessControlInstance extends Truffle.ContractInstance {
   DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
+  MANAGER(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
   /**
    * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.
    */
@@ -224,6 +226,8 @@ export interface AccessControlInstance extends Truffle.ContractInstance {
 
   methods: {
     DEFAULT_ADMIN_ROLE(txDetails?: Truffle.TransactionDetails): Promise<string>;
+
+    MANAGER(txDetails?: Truffle.TransactionDetails): Promise<string>;
 
     /**
      * Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.

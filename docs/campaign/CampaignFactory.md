@@ -14,12 +14,8 @@
 
 | Var | Type |
 | --- | --- |
-| MANAGE_CATEGORIES | bytes32 |
-| MANAGE_CAMPAIGNS | bytes32 |
-| MANAGE_USERS | bytes32 |
-| root | address |
+| governance | address |
 | campaignFactoryAddress | address |
-| factoryWallet | address payable |
 | campaignImplementation | address |
 | campaignRewardsImplementation | address |
 | campaignVotesImplementation | address |
@@ -28,25 +24,34 @@
 | approvedCampaignTransactionConfig | mapping(string => bool) |
 | campaignTransactionConfig | mapping(string => uint256) |
 | categoryCommission | mapping(uint256 => uint256) |
-| tokenInList | mapping(address => bool) |
-| tokensApproved | mapping(address => bool) |
 | factoryRevenue | uint256 |
-| campaignRevenueFromCommissions | mapping(uint256 => uint256) |
-| deployedCampaigns | struct CampaignFactory.CampaignInfo[] |
+| campaignRevenueFromCommissions | mapping(address => uint256) |
+| campaigns | mapping(contract Campaign => struct CampaignFactory.CampaignInfo) |
 | campaignCount | uint256 |
-| campaignToOwner | mapping(address => address) |
-| campaignToID | mapping(address => uint256) |
 | campaignCategories | struct CampaignFactory.CampaignCategory[] |
+| categoryTitleIsTaken | mapping(string => bool) |
 | categoryCount | uint256 |
-| users | struct CampaignFactory.User[] |
+| users | mapping(address => struct CampaignFactory.User) |
+| userExists | mapping(address => bool) |
 | userCount | uint256 |
-| userID | mapping(address => uint256) |
+| tokens | mapping(address => struct CampaignFactory.Token) |
 | trustees | struct CampaignFactory.Trust[] |
 | userTrusteeCount | mapping(address => uint256) |
+| accountInTransit | mapping(address => bool) |
+| accountTransitStartedBy | mapping(address => address) |
 | isUserTrustee | mapping(address => mapping(address => bool)) |
 
 
 ## Modifiers
+
+### onlyAdmin
+> Ensures caller is owner of contract
+
+#### Declaration
+```solidity
+  modifier onlyAdmin
+```
+
 
 ### campaignOwner
 > Ensures caller is campaign owner alone
@@ -76,7 +81,7 @@
 #### Declaration
 ```solidity
   function __CampaignFactory_init(
-    address payable _wallet
+    address _governance
   ) public initializer
 ```
 
@@ -88,17 +93,36 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_wallet` | address payable |     Address where all revenue gets deposited
+|`_governance` | address |     Address where all revenue gets deposited
 ---  
-### setFactoryConfig
->        Set Factory controlled values dictating how campaigns should run
+### setCampaignImplementation
+>        Updates campaign implementation address
 
 
 #### Declaration
 ```solidity
-  function setFactoryConfig(
-    address payable _wallet,
-    contract Campaign _campaignImplementation,
+  function setCampaignImplementation(
+    contract Campaign _campaignImplementation
+  ) external onlyAdmin
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyAdmin |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignImplementation` | contract Campaign |  Address of base contract to deploy minimal proxies
+---  
+### setCampaignRewardImplementation
+>        Updates campaign reward implementation address
+
+
+#### Declaration
+```solidity
+  function setCampaignRewardImplementation(
     contract CampaignReward _campaignRewardsImplementation
   ) external onlyAdmin
 ```
@@ -111,9 +135,49 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_wallet` | address payable |                          Address where all revenue gets deposited
-|`_campaignImplementation` | contract Campaign |          Address of base contract to deploy minimal proxies to campaigns
-|`_campaignRewardsImplementation` | contract CampaignReward |   Address of base contract to deploy minimal proxies to campaign rewards
+|`_campaignRewardsImplementation` | contract CampaignReward |   Address of base contract to deploy minimal proxies
+---  
+### setCampaignRequestImplementation
+>        Updates campaign request implementation address
+
+
+#### Declaration
+```solidity
+  function setCampaignRequestImplementation(
+    contract CampaignRequest _campaignRequestsImplementation
+  ) external onlyAdmin
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyAdmin |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignRequestsImplementation` | contract CampaignRequest |   Address of base contract to deploy minimal proxies
+---  
+### setCampaignVoteImplementation
+>        Updates campaign request implementation address
+
+
+#### Declaration
+```solidity
+  function setCampaignVoteImplementation(
+    contract CampaignVote _campaignVotesImplementation
+  ) external onlyAdmin
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyAdmin |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaignVotesImplementation` | contract CampaignVote |   Address of base contract to deploy minimal proxies
 ---  
 ### addFactoryTransactionConfig
 >        Adds a new transaction setting
@@ -214,7 +278,9 @@
 #### Declaration
 ```solidity
   function addToken(
-    address _token
+    address _token,
+    bool _approved,
+    string _hashedToken
   ) external onlyAdmin
 ```
 
@@ -226,7 +292,9 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_token` | address |  Address of the token
+|`_token` | address |       Address of the token
+|`_approved` | bool |    Status of token approval
+|`_hashedToken` | string | CID reference of the token on IPFS
 ---  
 ### toggleAcceptedToken
 >        Sets if a token is accepted or not provided it's in the list of token
@@ -249,7 +317,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_token` | address |   Address of the token
-|`_state` | bool |   Indicates if the token is approved or not
+|`_state` | bool |   Status of token approval
 ---  
 ### canManageCampaigns
 >        Checks if a user can manage a campaign. Called but not restricted to external campaign proxies
@@ -294,11 +362,13 @@ No modifiers
 |`_campaign` | uint256 |    Address of campaign instance
 ---  
 ### signUp
-> Keep track of user addresses. sybil resistance purpose
+>        Keep track of user addresses. sybil resistance purpose
+
 
 #### Declaration
 ```solidity
   function signUp(
+    string _hashedUser
   ) public whenNotPaused
 ```
 
@@ -307,7 +377,10 @@ No modifiers
 | --- |
 | whenNotPaused |
 
-
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_hashedUser` | string |  CID reference of the user on IPFS
 ---  
 ### userIsVerified
 >        Ensures user specified is verified
@@ -327,6 +400,41 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_user` | address |    Address of user
+---  
+### initiateUserTransfer
+>        Initiates user account transfer proces
+
+
+#### Declaration
+```solidity
+  function initiateUserTransfer(
+    address _user,
+    bool _forSelf
+  ) external
+```
+
+#### Modifiers:
+No modifiers
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_user` | address |        Address of user
+|`_forSelf` | bool |     Indicates if the transfer is made on behalf of a trustee
+---  
+### deactivateAccountTransfer
+> calls off the user account transfer process
+
+#### Declaration
+```solidity
+  function deactivateAccountTransfer(
+  ) external
+```
+
+#### Modifiers:
+No modifiers
+
+
 ---  
 ### addTrustee
 >        Trustees are people the user can add to help recover their account in the case they lose access to ther wallets
@@ -377,21 +485,21 @@ No modifiers
 #### Declaration
 ```solidity
   function toggleUserApproval(
-    uint256 _userId,
+    address _user,
     bool _approval
-  ) external onlyManager whenNotPaused
+  ) external onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyManager |
+| onlyAdmin |
 | whenNotPaused |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_userId` | uint256 |      ID of the user
+|`_user` | address |        Address of the user
 |`_approval` | bool |    Indicates if the user will be approved or not
 ---  
 ### createCampaign
@@ -401,7 +509,9 @@ No modifiers
 #### Declaration
 ```solidity
   function createCampaign(
-    uint256 _categoryId
+    uint256 _categoryId,
+    bool _privateCampaign,
+    string _hashedCampaignInfo
   ) external whenNotPaused
 ```
 
@@ -413,17 +523,41 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_categoryId` | uint256 |    ID of category campaign deployer specifies
+|`_categoryId` | uint256 |           ID of the category the campaign belongs to
+|`_privateCampaign` | bool |             Indicates approval status of the campaign
+|`_hashedCampaignInfo` | string |   CID reference of the reward on IPFS
 ---  
-### toggleCampaignApproval
->        Approves or disapproves a campaign. Restricted to campaign managers
+### activateCampaign
+>        Activates a campaign. Activating a campaign simply makes the campaign available for listing 
+                   on crowdship, events will be stored on thegraph activated or not, Restricted to governance
 
 
 #### Declaration
 ```solidity
-  function toggleCampaignApproval(
-    uint256 _campaignId,
-    bool _approval
+  function activateCampaign(
+    contract Campaign _campaign
+  ) external onlyAdmin whenNotPaused
+```
+
+#### Modifiers:
+| Modifier |
+| --- |
+| onlyAdmin |
+| whenNotPaused |
+
+#### Args:
+| Arg | Type | Description |
+| --- | --- | --- |
+|`_campaign` | contract Campaign |    Address of the campaign
+---  
+### toggleCampaignPrivacy
+>        Toggles the campaign privacy setting, Restricted to campaign managers
+
+
+#### Declaration
+```solidity
+  function toggleCampaignPrivacy(
+    contract Campaign _campaign
   ) external campaignOwner whenNotPaused
 ```
 
@@ -436,8 +570,7 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignId` | uint256 |    ID of the campaign
-|`_approval` | bool |      Indicates if the campaign will be approved or not. Affects campaign listing and transactions
+|`_campaign` | contract Campaign |    Address of the campaign
 ---  
 ### modifyCampaignCategory
 >         Modifies a campaign's category.
@@ -446,7 +579,7 @@ No modifiers
 #### Declaration
 ```solidity
   function modifyCampaignCategory(
-    uint256 _campaignId,
+    contract Campaign _campaign,
     uint256 _newCategoryId
   ) external campaignOwner whenNotPaused
 ```
@@ -460,30 +593,34 @@ No modifiers
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_campaignId` | uint256 |      ID of the campaign
+|`_campaign` | contract Campaign |        Address of the campaign
 |`_newCategoryId` | uint256 |   ID of the category being switched to
 ---  
 ### createCategory
->        Creates a category
+>        Public implementation of createCategory method
 
 
 #### Declaration
 ```solidity
   function createCategory(
-    bool _active
-  ) external onlyManager whenNotPaused
+    bool _active,
+    string _title,
+    string _hashedCategory
+  ) public onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyManager |
+| onlyAdmin |
 | whenNotPaused |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_active` | bool |   Indicates if a category is active allowing for campaigns to be assigned to it
+|`_active` | bool |              Indicates if a category is active allowing for campaigns to be assigned to it
+|`_title` | string |               Title of the category
+|`_hashedCategory` | string |      CID reference of the category on IPFS
 ---  
 ### modifyCategory
 >        Modifies details about a category
@@ -493,21 +630,23 @@ No modifiers
 ```solidity
   function modifyCategory(
     uint256 _categoryId,
-    bool _active
-  ) external onlyManager whenNotPaused
+    bool _active,
+    string _title
+  ) external onlyAdmin whenNotPaused
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
-| onlyManager |
+| onlyAdmin |
 | whenNotPaused |
 
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_categoryId` | uint256 |   ID of the category
-|`_active` | bool |       Indicates if a category is active allowing for campaigns to be assigned to it
+|`_categoryId` | uint256 |         ID of the category
+|`_active` | bool |             Indicates if a category is active allowing for campaigns to be assigned to it
+|`_title` | string |              Title of the category
 ---  
 ### unpauseCampaign
 > Unpauses the factory, transactions in the factory resumes per usual
@@ -547,8 +686,23 @@ No modifiers
 
 ## Events
 
-### FactoryConfigUpdated
+### CampaignImplementationUpdated
 > `Factory Config Events`
+  
+
+
+### CampaignRewardImplementationUpdated
+
+  
+
+
+### CampaignRequestImplementationUpdated
+
+  
+
+
+### CampaignVoteImplementationUpdated
+
   
 
 
@@ -572,12 +726,12 @@ No modifiers
   
 
 
-### CampaignApproval
+### CampaignActivation
 
   
 
 
-### CampaignActiveToggle
+### CampaignPrivacyChange
 
   
 

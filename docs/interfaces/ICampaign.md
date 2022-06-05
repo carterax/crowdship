@@ -47,6 +47,20 @@ No modifiers
 
 
 ---  
+### isCampaignManager
+
+
+#### Declaration
+```solidity
+  function isCampaignManager(
+  ) external returns (bool)
+```
+
+#### Modifiers:
+No modifiers
+
+
+---  
 ### getCampaignGoalType
 
 

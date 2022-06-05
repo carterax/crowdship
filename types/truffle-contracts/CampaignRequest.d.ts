@@ -122,6 +122,7 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
   /**
    * Creates a formal request to withdraw funds from user contributions called by the campagn manager Restricted unless target is met and deadline is expired
    * @param _duration Duration until users aren't able to vote on the request
+   * @param _hashedRequest CID reference of the request on IPFS
    * @param _recipient Address where requested funds are deposited
    * @param _value Amount being requested by the campaign manager
    */
@@ -323,6 +324,7 @@ export interface CampaignRequestInstance extends Truffle.ContractInstance {
     /**
      * Creates a formal request to withdraw funds from user contributions called by the campagn manager Restricted unless target is met and deadline is expired
      * @param _duration Duration until users aren't able to vote on the request
+     * @param _hashedRequest CID reference of the request on IPFS
      * @param _recipient Address where requested funds are deposited
      * @param _value Amount being requested by the campaign manager
      */

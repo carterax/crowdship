@@ -8,6 +8,13 @@
 <!-- START doctoc -->
 <!-- END doctoc -->
 
+## Globals
+
+> Note this contains internal vars as well due to a bug in the docgen procedure
+
+| Var | Type |
+| --- | --- |
+| MANAGER | bytes32 |
 
 
 ## Modifiers
@@ -24,18 +31,12 @@
 ### onlyManager
 > Restricted to members of the manager role.
 
-
 #### Declaration
 ```solidity
-  modifier onlyManager(
-    bytes32 role
-  )
+  modifier onlyManager
 ```
 
-#### Args:
-| Arg | Type | Description |
-| --- | --- | --- |
-|`role` | bytes32 | Role to be checked
+
 
 ## Functions
 

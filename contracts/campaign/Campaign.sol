@@ -35,8 +35,6 @@ contract Campaign is
     using DecimalMath for int256;
     using DecimalMath for uint256;
 
-    bytes32 public constant MANAGER = keccak256("MANAGER");
-
     enum GOALTYPE {
         FIXED,
         FLEXIBLE
@@ -72,6 +70,7 @@ contract Campaign is
     event CampaignUserDataTransferred(address oldAddress, address newAddress);
 
     /// @dev `Contribution Events`
+    event ContributorApprovalToggled(address contributor, bool isApproved);
     event ContributionMade(
         uint256 indexed contributionId,
         uint256 amount,
@@ -112,6 +111,7 @@ contract Campaign is
     /// @dev `Review`
     uint256 public reviewCount;
     mapping(address => bool) public reviewed;
+    mapping(address => string) public reviewHash;
 
     address public root;
     address public acceptedToken;
@@ -127,29 +127,23 @@ contract Campaign is
     uint256 public deadline;
     uint256 public deadlineSetTimes;
     uint256 public reportCount;
+    mapping(address => bool) public allowedToContribute;
     mapping(address => bool) public approvers;
     mapping(address => bool) public reported;
+    mapping(address => string) public reportHash;
 
     mapping(address => uint256) public transferAttemptCount;
     mapping(address => uint256) public timeUntilNextTransferConfirmation;
 
-    /// @dev Ensures caller is only factory, works only if campaign is approved
+    /// @dev Ensures caller is only factory
     modifier onlyFactory() {
-        bool campaignIsApproved;
-        (, campaignIsApproved) = CampaignFactoryLib.campaignInfo(
-            campaignFactoryContract,
-            this
+        require(
+            CampaignFactoryLib.canManageCampaigns(
+                campaignFactoryContract,
+                msg.sender
+            ),
+            "only factory"
         );
-
-        if (campaignIsApproved) {
-            require(
-                CampaignFactoryLib.canManageCampaigns(
-                    campaignFactoryContract,
-                    msg.sender
-                ),
-                "only factory"
-            );
-        }
         _;
     }
 
@@ -217,9 +211,24 @@ contract Campaign is
         return hasRole(DEFAULT_ADMIN_ROLE, _user);
     }
 
-    /// @dev Returns the campaigns funding goal type
-    function getCampaignGoalType() external view returns (GOALTYPE) {
-        return goalType;
+    /**
+     * @dev        Checks if a provided address is a campaign admin
+     * @param      _user     Address of the user
+     */
+    function isCampaignManager(address _user) external view returns (bool) {
+        return hasRole(MANAGER, _user);
+    }
+
+    /**
+     * @dev        Returns the campaigns funding goal type
+     * @param      _goalType    Integer representing a goal type
+     */
+    function getCampaignGoalType(uint256 _goalType)
+        external
+        view
+        returns (GOALTYPE)
+    {
+        return GOALTYPE(_goalType);
     }
 
     /**
@@ -275,7 +284,8 @@ contract Campaign is
         );
         require(
             campaignState == CAMPAIGN_STATE.COLLECTION ||
-                campaignState == CAMPAIGN_STATE.LIVE
+                campaignState == CAMPAIGN_STATE.LIVE,
+            "not live or in collection"
         );
         require(approvers[_oldAddress], "not an approver");
         require(
@@ -327,7 +337,7 @@ contract Campaign is
      * @param      _duration                            How long until the campaign stops receiving contributions
      * @param      _goalType                            If flexible the campaign owner is able to create requests if targe isn't met, fixed opposite
      * @param      _token                               Address of token to be used for transactions by default
-     * @param      _allowContributionAfterTargetIsMet   Indicates if the campaign can receive contributions after duration expires
+     * @param      _allowContributionAfterTargetIsMet   Indicates if the campaign can receive contributions after the target is met
      */
     function setCampaignSettings(
         uint256 _target,
@@ -436,7 +446,7 @@ contract Campaign is
     }
 
     /**
-     * @dev        Sets the number of times the campaign owner can extended deadlines.
+     * @dev        Sets the number of times the campaign owner can extend deadlines.
      * @param      _count   Number of times a campaign owner can extend the deadline
      */
     function setDeadlineSetTimes(uint8 _count)
@@ -448,6 +458,34 @@ contract Campaign is
         deadlineSetTimes = _count;
 
         emit DeadlineThresholdExtended(_count);
+    }
+
+    /**
+     * @dev        Approves or unapproves a potential contributor
+     * @param      _contributor     Address of the potential contributor
+     */
+    function toggleContributorApproval(address _contributor)
+        external
+        onlyAdmin
+        onlyManager
+    {
+        require(_contributor != address(0), "invalid address");
+
+        if (allowedToContribute[_contributor]) {
+            // check there are no finalized requests
+            require(
+                campaignRequestContract.finalizedRequestCount() < 1,
+                "request(s) finalized"
+            );
+            allowedToContribute[_contributor] = false;
+        } else {
+            allowedToContribute[_contributor] = true;
+        }
+
+        emit ContributorApprovalToggled(
+            _contributor,
+            allowedToContribute[_contributor]
+        );
     }
 
     /**
@@ -468,6 +506,21 @@ contract Campaign is
         whenNotPaused
         nonReentrant
     {
+        // check if campaign is private, if it is check if user is approved contributor
+        bool privateCampaign;
+
+        (, privateCampaign) = CampaignFactoryLib.campaignInfo(
+            campaignFactoryContract,
+            this
+        );
+
+        if (privateCampaign) {
+            require(
+                allowedToContribute[msg.sender],
+                "not an approved contributor"
+            );
+        }
+
         // campaign owner cannot contribute to own campaign
         // token must be accepted
         // contrubution amount must be less than or equal to allowed value from factory
@@ -489,8 +542,7 @@ contract Campaign is
         if (!allowContributionAfterTargetIsMet) {
             // check user contribution added to current total contribution doesn't exceed target
             require(
-                msg.value <= target &&
-                    totalCampaignContribution.add(msg.value) <= target,
+                totalCampaignContribution.add(msg.value) <= target,
                 "exceeds target"
             );
         }
@@ -542,13 +594,85 @@ contract Campaign is
      * @dev        Allows withdrawal of contribution by a user, works if campaign target isn't met
      * @param      _wallet    Address where amount is delivered
      */
-    function withdrawOwnContribution(address payable _wallet)
+    function withdrawContribution(address payable _wallet)
         external
         userTransferNotInTransit
         nonReentrant
     {
         require(!withdrawalsPaused);
-        _withdrawContribution(msg.sender, _wallet);
+
+        // if the campaign state is neither unsuccessful and in review and there are reviews
+        // allow withdrawls
+        require(address(_wallet) != address(0));
+        require(
+            !contributions[contributionId[msg.sender]].withdrawn,
+            "withdrawn"
+        );
+        require(approvers[msg.sender], "non approver");
+
+        if (
+            campaignState != CAMPAIGN_STATE.UNSUCCESSFUL &&
+            campaignState != CAMPAIGN_STATE.REVIEW &&
+            reviewCount < 1
+        ) {
+            // pledge collection ongoing and no request was successful
+            require(
+                campaignState == CAMPAIGN_STATE.COLLECTION ||
+                    campaignState == CAMPAIGN_STATE.LIVE,
+                "not in collection or live stage"
+            );
+            require(
+                campaignRequestContract.finalizedRequestCount() < 1,
+                "request(s) finalized"
+            );
+        }
+        uint256 maxBalance = contributions[contributionId[msg.sender]]
+            .amount
+            .sub(userContributionLoss(msg.sender));
+
+        // no longer eligible for any reward if campaign is not unsuccessful or in review
+        // for record keeping purposes
+        if (
+            campaignState != CAMPAIGN_STATE.UNSUCCESSFUL &&
+            campaignState != CAMPAIGN_STATE.REVIEW
+        ) {
+            CampaignRewardLib._renounceRewards(
+                campaignRewardContract,
+                msg.sender
+            );
+
+            // decrement total contributions to campaign
+            campaignBalance = campaignBalance.sub(maxBalance);
+            totalCampaignContribution = totalCampaignContribution.sub(
+                maxBalance
+            );
+
+            // mark user as a non contributor
+            approvers[msg.sender] = false;
+
+            // reduce approvers count
+            approversCount = approversCount.sub(1);
+
+            contributions[contributionId[msg.sender]].amount = 0;
+        } else {
+            contributions[contributionId[msg.sender]].amount = contributions[
+                contributionId[msg.sender]
+            ].amount.sub(maxBalance);
+        }
+        contributions[contributionId[msg.sender]].withdrawn = true;
+
+        // transfer to msg.sender
+        SafeERC20Upgradeable.safeTransfer(
+            IERC20Upgradeable(acceptedToken),
+            _wallet,
+            maxBalance
+        );
+
+        emit ContributionWithdrawn(
+            contributionId[msg.sender],
+            maxBalance,
+            msg.sender
+        );
     }
 
     /**
@@ -576,81 +700,13 @@ contract Campaign is
     }
 
     /**
-     * @dev        Private `_withdrawContribution` implemented by `withdrawOwnContribution` and `withdrawContributionForUser`
-     * @param      _user      User whose funds are being requested
-     * @param      _wallet    Address where amount is delivered
-     */
-    function _withdrawContribution(address _user, address _wallet) private {
-        // if the campaign state is neither unsuccessful and in review and there are reviews
-        // allow withdrawls
-        require(address(_wallet) != address(0));
-        require(!contributions[contributionId[_user]].withdrawn, "withdrawn");
-        require(approvers[_user], "non approver");
-
-        if (
-            campaignState != CAMPAIGN_STATE.UNSUCCESSFUL &&
-            campaignState != CAMPAIGN_STATE.REVIEW &&
-            reviewCount < 1
-        ) {
-            // pledge collection ongoing and no request was successful
-            require(
-                campaignState == CAMPAIGN_STATE.COLLECTION,
-                "not in collection stage"
-            );
-            require(
-                campaignRequestContract.finalizedRequestCount() < 1,
-                "request(s) finalized"
-            );
-        }
-        uint256 maxBalance = contributions[contributionId[_user]].amount.sub(
-            userContributionLoss(_user)
-        );
-
-        // no longer eligible for any reward if campaign is not unsuccessful or in review
-        // for record keeping purposes
-        if (
-            campaignState != CAMPAIGN_STATE.UNSUCCESSFUL &&
-            campaignState != CAMPAIGN_STATE.REVIEW
-        ) {
-            CampaignRewardLib._renounceRewards(campaignRewardContract, _user);
-
-            // decrement total contributions to campaign
-            campaignBalance = campaignBalance.sub(maxBalance);
-            totalCampaignContribution = totalCampaignContribution.sub(
-                maxBalance
-            );
-
-            // mark user as a non contributor
-            approvers[_user] = false;
-
-            // reduce approvers count
-            approversCount = approversCount.sub(1);
-
-            contributions[contributionId[_user]].amount = 0;
-        } else {
-            contributions[contributionId[_user]].amount = contributions[
-                contributionId[_user]
-            ].amount.sub(maxBalance);
-        }
-        contributions[contributionId[_user]].withdrawn = true;
-
-        // transfer to _user
-        SafeERC20Upgradeable.safeTransfer(
-            IERC20Upgradeable(acceptedToken),
-            _wallet,
-            maxBalance
-        );
-
-        emit ContributionWithdrawn(contributionId[_user], maxBalance, _user);
-    }
-
-    /**
      * @dev        Withdrawal method called only when a request receives the right amount of votes
      * @param      _requestId      ID of request being withdrawn
      */
     function finalizeRequest(uint256 _requestId)
         external
         onlyAdmin
+        onlyManager
         userTransferNotInTransit
         whenNotPaused
         nonReentrant
@@ -671,10 +727,11 @@ contract Campaign is
     function reviewMode()
         external
         onlyAdmin
+        onlyManager
         userTransferNotInTransit
         whenNotPaused
     {
-        // ensure finalized requests is more than 1
+        // ensure finalized requests is more than or equal to 1
         // ensure no pending request
         // ensure campaign state is running
         bool requestComplete;
@@ -700,7 +757,10 @@ contract Campaign is
         emit CampaignStateChange(CAMPAIGN_STATE.REVIEW);
     }
 
-    /// @dev User acknowledgement of review state enabled by the campaign owner
+    /**
+     * @dev        User acknowledgement of review state enabled by the campaign owner
+     * @param      _hashedReview    CID reference of the review on IPFS
+     */
     function reviewCampaignPerformance(string memory _hashedReview)
         external
         userTransferNotInTransit
@@ -712,6 +772,7 @@ contract Campaign is
         require(approvers[msg.sender], "non approver");
 
         reviewed[msg.sender] = true;
+        reviewHash[msg.sender] = _hashedReview;
 
         reviewCount = reviewCount.add(1);
 
@@ -749,7 +810,10 @@ contract Campaign is
         emit CampaignStateChange(CAMPAIGN_STATE.COMPLETE);
     }
 
-    /// @dev Called by an approver to report a campaign. Campaign must be in collection or live state
+    /**
+     * @dev        Called by an approver to report a campaign. Campaign must be in collection or live state
+     * @param      _hashedReport    CID reference of the report on IPFS
+     */
     function reportCampaign(string memory _hashedReport)
         external
         userTransferNotInTransit
@@ -766,6 +830,7 @@ contract Campaign is
         require(!reported[msg.sender], "reported");
 
         reported[msg.sender] = true;
+        reportHash[msg.sender] = _hashedReport;
         reportCount = reportCount.add(1);
 
         DecimalMath.UFixed memory percentOfReports = DecimalMath.muld(
@@ -796,7 +861,7 @@ contract Campaign is
     }
 
     /**
-     * @dev        Sets the campaign state, only ever called if campaign is approved with factory
+     * @dev        Sets the campaign state
      * @param      _state      Indicates pause or unpause state
      */
     function setCampaignState(uint256 _state) external onlyFactory {

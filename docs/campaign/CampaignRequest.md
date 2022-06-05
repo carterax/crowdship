@@ -14,13 +14,14 @@
 
 | Var | Type |
 | --- | --- |
-| requests | struct CampaignRequest.Request[] |
+| requests | mapping(uint256 => struct CampaignRequest.Request) |
 | requestCount | uint256 |
 | finalizedRequestCount | uint256 |
 | currentRunningRequest | uint256 |
-| campaignID | uint256 |
-| campaignFactoryContract | contract ICampaignFactory |
-| campaignContract | contract ICampaign |
+| campaignFactoryContract | contract CampaignFactory |
+| campaignContract | contract Campaign |
+| campaignInterface | contract ICampaign |
+| campaignFactoryInterface | contract ICampaignFactory |
 
 
 ## Modifiers
@@ -31,6 +32,15 @@
 #### Declaration
 ```solidity
   modifier onlyAdmin
+```
+
+
+### onlyManager
+
+
+#### Declaration
+```solidity
+  modifier onlyManager
 ```
 
 
@@ -54,8 +64,7 @@
 ```solidity
   function __CampaignRequest_init(
     contract CampaignFactory _campaignFactory,
-    contract Campaign _campaign,
-    uint256 _campaignId
+    contract Campaign _campaign
   ) public initializer
 ```
 
@@ -68,8 +77,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaignFactory` | contract CampaignFactory |     Address of factory
-|`_campaign` | contract Campaign |            Address of campaign contract
-|`_campaignId` | uint256 |          ID of it's campaign contract
+|`_campaign` | contract Campaign |            Address of campaign contract this contract belongs to
 ---  
 ### createRequest
 >        Creates a formal request to withdraw funds from user contributions called by the campagn manager
@@ -81,7 +89,8 @@
   function createRequest(
     address payable _recipient,
     uint256 _value,
-    uint256 _duration
+    uint256 _duration,
+    string _hashedRequest
   ) external onlyAdmin whenNotPaused
 ```
 
@@ -94,9 +103,10 @@
 #### Args:
 | Arg | Type | Description |
 | --- | --- | --- |
-|`_recipient` | address payable |   Address where requested funds are deposited
-|`_value` | uint256 |       Amount being requested by the campaign manager
-|`_duration` | uint256 |    Duration until users aren't able to vote on the request
+|`_recipient` | address payable |       Address where requested funds are deposited
+|`_value` | uint256 |           Amount being requested by the campaign manager
+|`_duration` | uint256 |        Duration until users aren't able to vote on the request
+|`_hashedRequest` | string |   CID reference of the request on IPFS
 ---  
 ### voidRequest
 >        Renders a request void and useless

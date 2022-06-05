@@ -49,21 +49,25 @@ contract CampaignFactory is
         address campaignRequests,
         address campaignVotes,
         uint256 category,
-        bool approved
+        bool privateCampaign,
+        string hashedCampaignInfo
     );
-    event CampaignApproval(Campaign indexed campaign);
-    event CampaignActivation(Campaign indexed campaign);
+    event CampaignActivation(Campaign indexed campaign, bool active);
+    event CampaignPrivacyChange(
+        Campaign indexed campaign,
+        bool privateCampaign
+    );
     event CampaignCategoryChange(
         Campaign indexed campaign,
         uint256 newCategory
     );
 
     /// @dev `Token Events`
-    event TokenAdded(address indexed token, bool approval);
+    event TokenAdded(address indexed token, bool approval, string hashedToken);
     event TokenApproval(address indexed token, bool state);
 
     /// @dev `User Events`
-    event UserAdded(address indexed userId);
+    event UserAdded(address indexed userId, string hashedUser);
     event UserApproval(address indexed user, bool approval);
 
     /// @dev `Trustee Events`
@@ -71,7 +75,12 @@ contract CampaignFactory is
     event TrusteeRemoved(uint256 indexed trusteeId, address trusteeAddress);
 
     /// @dev `Category Events`
-    event CategoryAdded(uint256 indexed categoryId, bool active, string title);
+    event CategoryAdded(
+        uint256 indexed categoryId,
+        bool active,
+        string title,
+        string hashedCategory
+    );
     event CategoryModified(
         uint256 indexed categoryId,
         bool active,
@@ -102,7 +111,7 @@ contract CampaignFactory is
         uint256 category;
         string hashedCampaignInfo;
         bool active;
-        bool approved;
+        bool privateCampaign;
     }
     mapping(Campaign => CampaignInfo) public campaigns;
     uint256 public campaignCount;
@@ -113,6 +122,7 @@ contract CampaignFactory is
         uint256 createdAt;
         uint256 updatedAt;
         string title;
+        string hashedCategory;
         bool active;
         bool exists;
     }
@@ -228,7 +238,7 @@ contract CampaignFactory is
         campaignVotesImplementation = _campaignVoteImplementation;
         campaignRewardsImplementation = _campaignRewardImplementation;
 
-        _createCategory(true, "miscellaneous");
+        _createCategory(true, "miscellaneous", "");
     }
 
     /**
@@ -367,7 +377,9 @@ contract CampaignFactory is
 
     /**
      * @dev        Adds a token that needs approval before being accepted
-     * @param      _token  Address of the token
+     * @param      _token       Address of the token
+     * @param      _approved    Status of token approval
+     * @param      _hashedToken CID reference of the token on IPFS
      */
     function addToken(
         address _token,
@@ -376,13 +388,13 @@ contract CampaignFactory is
     ) external onlyAdmin {
         tokens[_token] = Token(_token, _hashedToken, _approved);
 
-        emit TokenAdded(_token, _approved);
+        emit TokenAdded(_token, _approved, _hashedToken);
     }
 
     /**
      * @dev        Sets if a token is accepted or not provided it's in the list of token
      * @param      _token   Address of the token
-     * @param      _state   Indicates if the token is approved or not
+     * @param      _state   Status of token approval
      */
     function toggleAcceptedToken(address _token, bool _state)
         external
@@ -416,7 +428,10 @@ contract CampaignFactory is
         factoryRevenue = factoryRevenue.add(_amount);
     }
 
-    /// @dev Keep track of user addresses. sybil resistance purpose
+    /**
+     * @dev        Keep track of user addresses. sybil resistance purpose
+     * @param      _hashedUser  CID reference of the user on IPFS
+     */
     function signUp(string memory _hashedUser) public whenNotPaused {
         require(!userExists[msg.sender], "already exists");
 
@@ -424,7 +439,7 @@ contract CampaignFactory is
         userExists[msg.sender] = true;
         userCount = userCount.add(1);
 
-        emit UserAdded(msg.sender);
+        emit UserAdded(msg.sender, _hashedUser);
     }
 
     /**
@@ -513,11 +528,13 @@ contract CampaignFactory is
 
     /**
      * @dev        Deploys and tracks a new campagign
-     * @param      _categoryId    ID of category campaign deployer specifies
+     * @param      _categoryId           ID of the category the campaign belongs to
+     * @param      _privateCampaign      Indicates approval status of the campaign
+     * @param      _hashedCampaignInfo   CID reference of the reward on IPFS
      */
     function createCampaign(
         uint256 _categoryId,
-        bool _approved,
+        bool _privateCampaign,
         string memory _hashedCampaignInfo
     ) external whenNotPaused {
         // check `_categoryId` exists and active
@@ -554,7 +571,7 @@ contract CampaignFactory is
             createdAt: block.timestamp,
             updatedAt: 0,
             active: false,
-            approved: _approved
+            privateCampaign: _privateCampaign
         });
         campaigns[campaign] = campaignInfo;
 
@@ -590,7 +607,8 @@ contract CampaignFactory is
             address(campaignRequests),
             address(campaignVotes),
             _categoryId,
-            _approved
+            _privateCampaign,
+            _hashedCampaignInfo
         );
     }
 
@@ -599,31 +617,43 @@ contract CampaignFactory is
                    on crowdship, events will be stored on thegraph activated or not, Restricted to governance
      * @param      _campaign    Address of the campaign
      */
-    function activateCampaign(Campaign _campaign)
+    function toggleCampaignActivation(Campaign _campaign)
         external
         onlyAdmin
         whenNotPaused
     {
-        campaigns[_campaign].active = true;
+        if (campaigns[_campaign].active) {
+            campaigns[_campaign].active = false;
+        } else {
+            campaigns[_campaign].active = true;
+        }
+
         campaigns[_campaign].updatedAt = block.timestamp;
 
-        emit CampaignActivation(_campaign);
+        emit CampaignActivation(_campaign, campaigns[_campaign].active);
     }
 
     /**
-     * @dev        Approves a campaign. By approving your campaign all events will be
-                   stored on thegraph and listed on crowdship, Restricted to campaign managers
+     * @dev        Toggles the campaign privacy setting, Restricted to campaign managers
      * @param      _campaign    Address of the campaign
      */
-    function approveCampaign(Campaign _campaign)
+    function toggleCampaignPrivacy(Campaign _campaign)
         external
         campaignOwner(_campaign)
         whenNotPaused
     {
-        campaigns[_campaign].approved = true;
+        if (campaigns[_campaign].privateCampaign) {
+            campaigns[_campaign].privateCampaign = false;
+        } else {
+            campaigns[_campaign].privateCampaign = true;
+        }
+
         campaigns[_campaign].updatedAt = block.timestamp;
 
-        emit CampaignApproval(_campaign);
+        emit CampaignPrivacyChange(
+            _campaign,
+            campaigns[_campaign].privateCampaign
+        );
     }
 
     /**
@@ -659,26 +689,29 @@ contract CampaignFactory is
 
     /**
      * @dev        Public implementation of createCategory method
-     * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
-     * @param      _title    Title of the category
+     * @param      _active              Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param      _title               Title of the category
+     * @param      _hashedCategory      CID reference of the category on IPFS
      */
-    function createCategory(bool _active, string memory _title)
-        public
-        onlyAdmin
-        whenNotPaused
-    {
-        _createCategory(_active, _title);
+    function createCategory(
+        bool _active,
+        string memory _title,
+        string memory _hashedCategory
+    ) public onlyAdmin whenNotPaused {
+        _createCategory(_active, _title, _hashedCategory);
     }
 
     /**
      * @dev        Creates a category
-     * @param      _active   Indicates if a category is active allowing for campaigns to be assigned to it
-     * @param      _title    Title of the category
+     * @param      _active              Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param      _title               Title of the category
+     * @param      _hashedCategory      CID reference of the category on IPFS
      */
-    function _createCategory(bool _active, string memory _title)
-        private
-        whenNotPaused
-    {
+    function _createCategory(
+        bool _active,
+        string memory _title,
+        string memory _hashedCategory
+    ) private whenNotPaused {
         require(!categoryTitleIsTaken[_title], "title not unique");
 
         // create category with `campaignCount` default to 0
@@ -688,7 +721,8 @@ contract CampaignFactory is
             updatedAt: 0,
             title: _title,
             active: _active,
-            exists: true
+            exists: true,
+            hashedCategory: _hashedCategory
         });
         campaignCategories.push(newCategory);
 
@@ -698,14 +732,19 @@ contract CampaignFactory is
 
         categoryTitleIsTaken[_title] = true;
 
-        emit CategoryAdded(campaignCategories.length.sub(1), _active, _title);
+        emit CategoryAdded(
+            campaignCategories.length.sub(1),
+            _active,
+            _title,
+            _hashedCategory
+        );
     }
 
     /**
      * @dev        Modifies details about a category
-     * @param      _categoryId   ID of the category
-     * @param      _active       Indicates if a category is active allowing for campaigns to be assigned to it
-     * @param      _title        Title of the category
+     * @param      _categoryId         ID of the category
+     * @param      _active             Indicates if a category is active allowing for campaigns to be assigned to it
+     * @param      _title              Title of the category
      */
     function modifyCategory(
         uint256 _categoryId,

@@ -67,6 +67,14 @@ contract CampaignRequest is
         _;
     }
 
+    modifier onlyManager(address _user) {
+        require(
+            campaignInterface.isCampaignManager(_user),
+            "not campaign manager"
+        );
+        _;
+    }
+
     /// @dev Ensures caller is a verified user
     modifier userIsVerified(address _user) {
         bool verified;
@@ -97,9 +105,10 @@ contract CampaignRequest is
     /**
      * @dev        Creates a formal request to withdraw funds from user contributions called by the campagn manager
                    Restricted unless target is met and deadline is expired
-     * @param      _recipient   Address where requested funds are deposited
-     * @param      _value       Amount being requested by the campaign manager
-     * @param      _duration    Duration until users aren't able to vote on the request
+     * @param      _recipient       Address where requested funds are deposited
+     * @param      _value           Amount being requested by the campaign manager
+     * @param      _duration        Duration until users aren't able to vote on the request
+     * @param      _hashedRequest   CID reference of the request on IPFS
      */
     function createRequest(
         address payable _recipient,
@@ -118,9 +127,10 @@ contract CampaignRequest is
                 "deadline not expired"
             );
 
+        // check if goaltype is FIXED
         if (
             campaignInterface.goalType() ==
-            campaignInterface.getCampaignGoalType()
+            campaignInterface.getCampaignGoalType(0)
         ) {
             require(
                 campaignInterface.totalCampaignContribution() >=

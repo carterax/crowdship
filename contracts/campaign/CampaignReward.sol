@@ -63,7 +63,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 value;
         uint256 deliveryDate;
         uint256 stock;
-        string hashed;
+        string hashedReward;
         bool exists;
         bool active;
     }
@@ -97,16 +97,16 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         _;
     }
 
-    modifier onlyAdmin() {
-        // make external call to campaign contract
-        bool isAdmin;
+    modifier onlyAdmin(address _user) {
+        require(campaignInterface.isCampaignAdmin(_user), "not campaign admin");
+        _;
+    }
 
-        (isAdmin) = CampaignFactoryLib.canManageCampaigns(
-            campaignFactoryInterface,
-            msg.sender
+    modifier onlyManager(address _user) {
+        require(
+            campaignInterface.isCampaignManager(_user),
+            "not campaign manager"
         );
-
-        require(isAdmin, "restricted");
         _;
     }
 
@@ -133,6 +133,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      * @param      _value        Reward cost
      * @param      _deliveryDate Time in which reward will be deliverd to contriutors
      * @param      _stock        Quantity available for dispatch
+     * @param      _hashedReward CID reference of the reward on IPFS
      * @param      _active       Indicates if contributors can attain the reward
      */
     function createReward(
@@ -141,7 +142,12 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _stock,
         string memory _hashedReward,
         bool _active
-    ) external onlyAdmin userIsVerified(msg.sender) {
+    )
+        external
+        onlyAdmin(msg.sender)
+        onlyManager(msg.sender)
+        userIsVerified(msg.sender)
+    {
         require(
             _value >
                 CampaignFactoryLib.getCampaignFactoryConfig(
@@ -220,7 +226,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _stock,
         bool _active,
         string memory _hashedReward
-    ) external onlyAdmin {
+    ) external onlyAdmin(msg.sender) onlyManager(msg.sender) {
         /**
          * To modify a reward:
          * check reward has no backers
@@ -249,7 +255,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         rewards[_rewardId].deliveryDate = _deliveryDate;
         rewards[_rewardId].stock = _stock;
         rewards[_rewardId].active = _active;
-        rewards[_rewardId].hashed = _hashedReward;
+        rewards[_rewardId].hashedReward = _hashedReward;
 
         emit RewardModified(_rewardId, _value, _deliveryDate, _stock, _active);
     }
@@ -261,7 +267,8 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function increaseRewardStock(uint256 _rewardId, uint256 _count)
         external
-        onlyAdmin
+        onlyAdmin(msg.sender)
+        onlyManager(msg.sender)
     {
         require(rewards[_rewardId].exists, "not found");
         rewards[_rewardId].stock = rewards[_rewardId].stock.add(_count);
@@ -273,7 +280,11 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      * @dev        Deletes a reward by id
      * @param      _rewardId    Reward unique id
      */
-    function destroyReward(uint256 _rewardId) external onlyAdmin {
+    function destroyReward(uint256 _rewardId)
+        external
+        onlyAdmin(msg.sender)
+        onlyManager(msg.sender)
+    {
         // check reward has no backers
         require(rewardToRewardRecipientCount[_rewardId] < 1, "has backers");
         require(rewards[_rewardId].exists, "not found");
@@ -290,7 +301,8 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function campaignSentReward(uint256 _rewardRecipientId, bool _status)
         external
-        onlyAdmin
+        onlyAdmin(msg.sender)
+        onlyManager(msg.sender)
     {
         require(
             rewardToRewardRecipientCount[

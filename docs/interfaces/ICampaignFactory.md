@@ -19,13 +19,12 @@
 | factoryWallet | address payable |
 | campaignTransactionConfig | mapping(string => uint256) |
 | categoryCommission | mapping(uint256 => uint256) |
-| tokensApproved | mapping(address => bool) |
-| deployedCampaigns | struct ICampaignFactory.CampaignInfo[] |
-| campaignToID | mapping(address => uint256) |
+| campaigns | mapping(contract Campaign => struct ICampaignFactory.CampaignInfo) |
 | campaignCategories | struct ICampaignFactory.CampaignCategory[] |
-| users | struct ICampaignFactory.User[] |
-| userID | mapping(address => uint256) |
+| users | mapping(address => struct ICampaignFactory.User) |
+| tokens | mapping(address => struct ICampaignFactory.Token) |
 | isUserTrustee | mapping(address => mapping(address => bool)) |
+| accountInTransit | mapping(address => bool) |
 
 
 

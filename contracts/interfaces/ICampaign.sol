@@ -34,7 +34,12 @@ abstract contract ICampaign {
 
     function isCampaignAdmin(address _user) external virtual returns (bool);
 
-    function getCampaignGoalType() external virtual returns (GOALTYPE);
+    function isCampaignManager(address _user) external virtual returns (bool);
+
+    function getCampaignGoalType(uint256 _goalType)
+        external
+        virtual
+        returns (GOALTYPE);
 
     function getCampaignState(uint256 state)
         external

@@ -14,11 +14,10 @@
 
 | Var | Type |
 | --- | --- |
-| campaignFactoryContract | contract ICampaignFactory |
-| campaignContract | contract ICampaign |
+| campaignFactoryInterface | contract ICampaignFactory |
+| campaignInterface | contract ICampaign |
 | campaignRewardAddress | address |
 | campaign | contract Campaign |
-| campaignID | uint256 |
 | rewards | struct CampaignReward.Reward[] |
 | rewardToRewardRecipientCount | mapping(uint256 => uint256) |
 | rewardRecipients | struct CampaignReward.RewardRecipient[] |
@@ -54,6 +53,15 @@
 ```
 
 
+### onlyManager
+
+
+#### Declaration
+```solidity
+  modifier onlyManager
+```
+
+
 
 ## Functions
 
@@ -65,7 +73,7 @@
 ```solidity
   function __CampaignReward_init(
     contract CampaignFactory _campaignFactory,
-    contract Campaign _campaignId
+    contract Campaign _campaign
   ) public initializer
 ```
 
@@ -78,7 +86,7 @@
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_campaignFactory` | contract CampaignFactory |     Address of factory
-|`_campaignId` | contract Campaign |          ID of campaign reward contract belongs to
+|`_campaign` | contract Campaign |            Address of campaign this contract belongs to
 ---  
 ### createReward
 >        Creates rewards contributors can attain
@@ -90,14 +98,16 @@
     uint256 _value,
     uint256 _deliveryDate,
     uint256 _stock,
+    string _hashedReward,
     bool _active
-  ) external onlyAdmin userIsVerified
+  ) external onlyAdmin onlyManager userIsVerified
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
 | userIsVerified |
 
 #### Args:
@@ -106,6 +116,7 @@
 |`_value` | uint256 |        Reward cost
 |`_deliveryDate` | uint256 | Time in which reward will be deliverd to contriutors
 |`_stock` | uint256 |        Quantity available for dispatch
+|`_hashedReward` | string | CID reference of the reward on IPFS
 |`_active` | bool |       Indicates if contributors can attain the reward
 ---  
 ### assignReward
@@ -145,14 +156,16 @@
     uint256 _value,
     uint256 _deliveryDate,
     uint256 _stock,
-    bool _active
-  ) external onlyAdmin
+    bool _active,
+    string _hashedReward
+  ) external onlyAdmin onlyManager
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
 
 #### Args:
 | Arg | Type | Description |
@@ -162,6 +175,7 @@
 |`_deliveryDate` | uint256 |    Time in which reward will be deliverd to contriutors
 |`_stock` | uint256 |           Quantity available for dispatch
 |`_active` | bool |          Indicates if contributors can attain the reward
+|`_hashedReward` | string |    Initial or new CID refrence of the reward on IPFS
 ---  
 ### increaseRewardStock
 >        Increases a reward stock count
@@ -172,13 +186,14 @@
   function increaseRewardStock(
     uint256 _rewardId,
     uint256 _count
-  ) external onlyAdmin
+  ) external onlyAdmin onlyManager
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
 
 #### Args:
 | Arg | Type | Description |
@@ -194,13 +209,14 @@
 ```solidity
   function destroyReward(
     uint256 _rewardId
-  ) external onlyAdmin
+  ) external onlyAdmin onlyManager
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
 
 #### Args:
 | Arg | Type | Description |
@@ -216,13 +232,14 @@
   function campaignSentReward(
     uint256 _rewardRecipientId,
     bool _status
-  ) external onlyAdmin
+  ) external onlyAdmin onlyManager
 ```
 
 #### Modifiers:
 | Modifier |
 | --- |
 | onlyAdmin |
+| onlyManager |
 
 #### Args:
 | Arg | Type | Description |

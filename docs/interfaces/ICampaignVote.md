@@ -14,8 +14,7 @@
 
 | Var | Type |
 | --- | --- |
-| votes | struct ICampaignVote.Vote[] |
-| voteId | mapping(address => mapping(uint256 => uint256)) |
+| votes | mapping(address => mapping(uint256 => struct ICampaignVote.Vote)) |
 
 
 

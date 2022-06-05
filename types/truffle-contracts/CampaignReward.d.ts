@@ -200,6 +200,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
    * Creates rewards contributors can attain
    * @param _active Indicates if contributors can attain the reward
    * @param _deliveryDate Time in which reward will be deliverd to contriutors
+   * @param _hashedReward CID reference of the reward on IPFS
    * @param _stock Quantity available for dispatch
    * @param _value Reward cost
    */
@@ -538,6 +539,7 @@ export interface CampaignRewardInstance extends Truffle.ContractInstance {
      * Creates rewards contributors can attain
      * @param _active Indicates if contributors can attain the reward
      * @param _deliveryDate Time in which reward will be deliverd to contriutors
+     * @param _hashedReward CID reference of the reward on IPFS
      * @param _stock Quantity available for dispatch
      * @param _value Reward cost
      */

@@ -5,6 +5,19 @@ pragma solidity >=0.4.22 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 contract AccessControl is AccessControlUpgradeable {
+    bytes32 public constant MANAGER = keccak256("MANAGER");
+
+    // campaign roles
+    bytes32 public constant SET_CAMPAIGN_SETTINGS =
+        keccak256("SET_CAMPAIGN_SETTINGS");
+    bytes32 public constant EXTEND_DEADLINE = keccak256("EXTEND_DEADLINE");
+    bytes32 public constant CONTRIBUTOR_APPROVAL =
+        keccak256("CONTRIBUTOR_APPROVAL");
+    bytes32 public constant FINALIZE_REQUEST = keccak256("FINALIZE_REQUEST");
+    bytes public constant REVIEW_MODE = keccak256("REVIEW_MODE");
+    bytes public constant MARK_CAMPAIGN_COMPLETE =
+        keccak256("MARK_CAMPAIGN_COMPLETE");
+
     /// @dev Restricted to members of the admin role.
     modifier onlyAdmin() {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
@@ -12,9 +25,8 @@ contract AccessControl is AccessControlUpgradeable {
     }
 
     /// @dev Restricted to members of the manager role.
-    /// @param  role Role to be checked
-    modifier onlyManager(bytes32 role) {
-        require(hasRole(role, msg.sender));
+    modifier onlyManager() {
+        require(hasRole(MANAGER, msg.sender));
         _;
     }
 

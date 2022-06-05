@@ -63,8 +63,8 @@ No modifiers
 ```solidity
   function campaignInfo(
     contract ICampaignFactory _factory,
-    uint256 _campaignId
-  ) internal returns (address, uint256, bool)
+    contract Campaign _campaign
+  ) internal returns (uint256, bool)
 ```
 
 #### Modifiers:
@@ -74,7 +74,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_factory` | contract ICampaignFactory |     Campaign factory interface
-|`_campaignId` | uint256 |  ID of the campaign
+|`_campaign` | contract Campaign |    Address of the campaign
 ---  
 ### userInfo
 >        Returns information about a user from the factory
@@ -85,7 +85,7 @@ No modifiers
   function userInfo(
     contract ICampaignFactory _factory,
     address _userAddress
-  ) internal returns (address, bool)
+  ) internal returns (uint256, uint256, bool)
 ```
 
 #### Modifiers:
@@ -105,7 +105,7 @@ No modifiers
 ```solidity
   function sendCommissionFee(
     contract ICampaignFactory _factory,
-    address _campaign,
+    contract Campaign _campaign,
     uint256 _amount
   ) internal
 ```
@@ -117,7 +117,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_factory` | contract ICampaignFactory |     Campaign factory interface
-|`_campaign` | address |    Address of campaign sending fee
+|`_campaign` | contract Campaign |    Address of campaign sending fee
 |`_amount` | uint256 |      Amount being sent
 ---  
 ### factoryPercentFee
@@ -128,7 +128,7 @@ No modifiers
 ```solidity
   function factoryPercentFee(
     contract ICampaignFactory _factory,
-    uint256 _campaignId
+    contract Campaign _campaign
   ) internal returns (uint256)
 ```
 
@@ -139,7 +139,7 @@ No modifiers
 | Arg | Type | Description |
 | --- | --- | --- |
 |`_factory` | contract ICampaignFactory |     Campaign factory interface
-|`_campaignId` | uint256 |  ID of the campaign
+|`_campaign` | contract Campaign |    Address of the campaign
 ---  
 
 
