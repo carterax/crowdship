@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "./CampaignFactory.sol";
 import "./Campaign.sol";
 import "./CampaignVote.sol";
+import "../utils/Roles.sol";
 
 import "../libraries/contracts/CampaignFactoryLib.sol";
 
@@ -22,6 +23,7 @@ import "../libraries/math/DecimalMath.sol";
 
 contract CampaignRequest is
     Initializable,
+    Roles,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable
 {
@@ -62,16 +64,8 @@ contract CampaignRequest is
     ICampaignFactory public campaignFactoryInterface;
 
     /// @dev Ensures caller is campaign owner
-    modifier onlyAdmin(address _user) {
-        require(campaignInterface.isCampaignAdmin(_user), "not campaign admin");
-        _;
-    }
-
-    modifier onlyManager(address _user) {
-        require(
-            campaignInterface.isCampaignManager(_user),
-            "not campaign manager"
-        );
+    modifier hasRole(bytes32 _permission, address _user) {
+        require(campaignInterface.isAllowed(_permission, _user));
         _;
     }
 
@@ -115,7 +109,7 @@ contract CampaignRequest is
         uint256 _value,
         uint256 _duration,
         string memory _hashedRequest
-    ) external onlyAdmin(msg.sender) whenNotPaused {
+    ) external hasRole(CREATE_REQUEST, msg.sender) whenNotPaused {
         require(address(_recipient) != address(0));
 
         if (
@@ -208,7 +202,7 @@ contract CampaignRequest is
      */
     function voidRequest(uint256 _requestId)
         external
-        onlyAdmin(msg.sender)
+        hasRole(VOID_REQUEST, msg.sender)
         whenNotPaused
     {
         // request must not be void

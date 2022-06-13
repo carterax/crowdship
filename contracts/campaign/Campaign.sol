@@ -196,9 +196,19 @@ contract Campaign is
         withdrawalsPaused = false;
 
         _setupRole(DEFAULT_ADMIN_ROLE, root);
-        _setupRole(MANAGER, root);
+        _setupRole(SET_CAMPAIGN_SETTINGS, root);
+        _setupRole(EXTEND_DEADLINE, root);
+        _setupRole(CONTRIBUTOR_APPROVAL, root);
+        _setupRole(FINALIZE_REQUEST, root);
+        _setupRole(REVIEW_MODE, root);
+        _setupRole(MARK_CAMPAIGN_COMPLETE, root);
 
-        _setRoleAdmin(MANAGER, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(SET_CAMPAIGN_SETTINGS, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(EXTEND_DEADLINE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(CONTRIBUTOR_APPROVAL, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(FINALIZE_REQUEST, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(REVIEW_MODE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(MARK_CAMPAIGN_COMPLETE, DEFAULT_ADMIN_ROLE);
 
         emit CampaignOwnerSet(root);
     }
@@ -212,11 +222,16 @@ contract Campaign is
     }
 
     /**
-     * @dev        Checks if a provided address is a campaign admin
-     * @param      _user     Address of the user
+     * @dev        Checks if a provided address has role
+     * @param      _permission     Role being checked
+     * @param      _account        Address of the user
      */
-    function isCampaignManager(address _user) external view returns (bool) {
-        return hasRole(MANAGER, _user);
+    function isAllowed(bytes32 _permission, address _account)
+        external
+        view
+        returns (bool)
+    {
+        return hasRole(_permission, _account);
     }
 
     /**
@@ -225,7 +240,7 @@ contract Campaign is
      */
     function getCampaignGoalType(uint256 _goalType)
         external
-        view
+        pure
         returns (GOALTYPE)
     {
         return GOALTYPE(_goalType);
@@ -322,10 +337,6 @@ contract Campaign is
                 _newAddress
             );
 
-            if (_oldAddress == root) {
-                transferCampaignOwnership(_oldAddress, _newAddress);
-            }
-
             emit CampaignUserDataTransferred(_oldAddress, _newAddress);
         }
     }
@@ -346,7 +357,7 @@ contract Campaign is
         uint256 _goalType,
         address _token,
         bool _allowContributionAfterTargetIsMet
-    ) external userTransferNotInTransit onlyAdmin {
+    ) external userTransferNotInTransit hasPermission(SET_CAMPAIGN_SETTINGS) {
         require(approversCount < 1, "approvers found");
         require(
             _minimumContribution >=
@@ -409,7 +420,7 @@ contract Campaign is
      */
     function extendDeadline(uint256 _time)
         external
-        onlyAdmin
+        hasPermission(EXTEND_DEADLINE)
         userTransferNotInTransit
         nonReentrant
         whenNotPaused
@@ -451,7 +462,7 @@ contract Campaign is
      */
     function setDeadlineSetTimes(uint8 _count)
         external
-        onlyAdmin
+        hasPermission(EXTEND_DEADLINE)
         userTransferNotInTransit
         whenNotPaused
     {
@@ -466,16 +477,15 @@ contract Campaign is
      */
     function toggleContributorApproval(address _contributor)
         external
-        onlyAdmin
-        onlyManager
+        hasPermission(CONTRIBUTOR_APPROVAL)
     {
-        require(_contributor != address(0), "invalid address");
+        require(_contributor != address(0));
 
         if (allowedToContribute[_contributor]) {
             // check there are no finalized requests
             require(
                 campaignRequestContract.finalizedRequestCount() < 1,
-                "request(s) finalized"
+                "request finalized"
             );
             allowedToContribute[_contributor] = false;
         } else {
@@ -515,10 +525,7 @@ contract Campaign is
         );
 
         if (privateCampaign) {
-            require(
-                allowedToContribute[msg.sender],
-                "not an approved contributor"
-            );
+            require(allowedToContribute[msg.sender], "not approved");
         }
 
         // campaign owner cannot contribute to own campaign
@@ -676,7 +683,7 @@ contract Campaign is
     }
 
     /**
-     * @dev        Used to measure user funds left after request finalizations
+     * @dev        Used to measure user funds left after request finalization
      * @param      _user    Address of user check is carried out on
      */
     function userContributionLoss(address _user) public view returns (uint256) {
@@ -705,8 +712,7 @@ contract Campaign is
      */
     function finalizeRequest(uint256 _requestId)
         external
-        onlyAdmin
-        onlyManager
+        hasPermission(FINALIZE_REQUEST)
         userTransferNotInTransit
         whenNotPaused
         nonReentrant
@@ -724,10 +730,9 @@ contract Campaign is
     }
 
     /// @dev Pauses the campaign and switches `campaignState` to `REVIEW` indicating it's ready to be reviewd by it's approvers after the campaign is over
-    function reviewMode()
+    function markReviewMode()
         external
-        onlyAdmin
-        onlyManager
+        hasPermission(REVIEW_MODE)
         userTransferNotInTransit
         whenNotPaused
     {
@@ -782,7 +787,7 @@ contract Campaign is
     /// @dev Called by campaign manager to mark the campaign as complete right after it secured enough reviews from users
     function markCampaignComplete()
         external
-        onlyAdmin
+        hasPermission(MARK_CAMPAIGN_COMPLETE)
         userTransferNotInTransit
         whenPaused
     {

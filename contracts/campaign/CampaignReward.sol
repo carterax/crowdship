@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 import "./CampaignFactory.sol";
 import "./Campaign.sol";
+import "../utils/Roles.sol";
 
 import "../interfaces/ICampaignFactory.sol";
 import "../interfaces/ICampaign.sol";
@@ -17,7 +18,7 @@ import "../utils/AccessControl.sol";
 import "../libraries/contracts/CampaignFactoryLib.sol";
 import "../libraries/contracts/CampaignLib.sol";
 
-contract CampaignReward is Initializable, PausableUpgradeable {
+contract CampaignReward is Initializable, Roles, PausableUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     /// @dev `Initializer Event`
@@ -97,16 +98,9 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         _;
     }
 
-    modifier onlyAdmin(address _user) {
-        require(campaignInterface.isCampaignAdmin(_user), "not campaign admin");
-        _;
-    }
-
-    modifier onlyManager(address _user) {
-        require(
-            campaignInterface.isCampaignManager(_user),
-            "not campaign manager"
-        );
+    /// @dev Ensures caller is campaign owner
+    modifier hasRole(bytes32 _permission, address _user) {
+        require(campaignInterface.isAllowed(_permission, _user));
         _;
     }
 
@@ -142,12 +136,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _stock,
         string memory _hashedReward,
         bool _active
-    )
-        external
-        onlyAdmin(msg.sender)
-        onlyManager(msg.sender)
-        userIsVerified(msg.sender)
-    {
+    ) external hasRole(CREATE_REWARD, msg.sender) userIsVerified(msg.sender) {
         require(
             _value >
                 CampaignFactoryLib.getCampaignFactoryConfig(
@@ -226,7 +215,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
         uint256 _stock,
         bool _active,
         string memory _hashedReward
-    ) external onlyAdmin(msg.sender) onlyManager(msg.sender) {
+    ) external hasRole(MODIFY_REWARD, msg.sender) {
         /**
          * To modify a reward:
          * check reward has no backers
@@ -267,8 +256,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function increaseRewardStock(uint256 _rewardId, uint256 _count)
         external
-        onlyAdmin(msg.sender)
-        onlyManager(msg.sender)
+        hasRole(MODIFY_REWARD, msg.sender)
     {
         require(rewards[_rewardId].exists, "not found");
         rewards[_rewardId].stock = rewards[_rewardId].stock.add(_count);
@@ -282,8 +270,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function destroyReward(uint256 _rewardId)
         external
-        onlyAdmin(msg.sender)
-        onlyManager(msg.sender)
+        hasRole(DESTROY_REWARD, msg.sender)
     {
         // check reward has no backers
         require(rewardToRewardRecipientCount[_rewardId] < 1, "has backers");
@@ -301,8 +288,7 @@ contract CampaignReward is Initializable, PausableUpgradeable {
      */
     function campaignSentReward(uint256 _rewardRecipientId, bool _status)
         external
-        onlyAdmin(msg.sender)
-        onlyManager(msg.sender)
+        hasRole(MODIFY_REWARD, msg.sender)
     {
         require(
             rewardToRewardRecipientCount[

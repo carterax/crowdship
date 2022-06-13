@@ -451,12 +451,16 @@ contract CampaignFactory is
     }
 
     /**
-     * @dev        Initiates user account transfer proces
-     * @param      _user        Address of user
+     * @dev        Initiates user account transfer process
+     * @param      _user        Address of user account being transferred
      * @param      _forSelf     Indicates if the transfer is made on behalf of a trustee
      */
     function initiateUserTransfer(address _user, bool _forSelf) external {
         if (_forSelf) {
+            require(
+                msg.sender == _user,
+                "only the user can initiate the transfer"
+            );
             accountInTransit[msg.sender] = true;
             accountTransitStartedBy[msg.sender] = msg.sender;
         } else {

@@ -32,9 +32,10 @@ abstract contract ICampaign {
 
     mapping(address => bool) public approvers;
 
-    function isCampaignAdmin(address _user) external virtual returns (bool);
-
-    function isCampaignManager(address _user) external virtual returns (bool);
+    function isAllowed(bytes32 _permission, address _account)
+        external
+        virtual
+        returns (bool);
 
     function getCampaignGoalType(uint256 _goalType)
         external
